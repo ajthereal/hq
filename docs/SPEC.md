@@ -41,7 +41,7 @@ Stays outside: CapCut editing, Claude chat, Claude Design/Motion for carousels, 
 
 - **App:** React + TypeScript + Vite + Tailwind, as a PWA (vite-plugin-pwa), supabase-js.
 - **Hosting:** Cloudflare Pages at `hq.alvacy.com` (DNS at Namecheap). Free, deploys on every push, preview link per pull request.
-- **Data, login, files, jobs:** Supabase (Postgres, Auth with email + 6-digit code, Storage, Edge Functions, pg_cron). Region: Singapore.
+- **Data, login, files, jobs:** Supabase (Postgres, Auth with email magic link + 6-digit code, Storage, Edge Functions, pg_cron). Region: Singapore.
 - **Code home:** private GitHub repo `ajthereal/hq`.
 - **Google access:** one service account; AJ shares each calendar, sheet and folder with it once.
 - `alvacy.com` stays on GitHub Pages. HQ is separate because it needs secrets and server code.
@@ -171,7 +171,7 @@ Per session: open Claude Code on this repo, pick **Sonnet**, say "Do phase N fro
 
 One-time setup (AJ, in Safari):
 - GitHub private repo `ajthereal/hq` ✅
-- Supabase project (Singapore) with Email login; edit the Magic Link email template to show the 6-digit code
+- Supabase project (Singapore) with Email login; edit the Magic Link email template to include both the link and the 6-digit code
 - Cloudflare Pages connected to the repo; `hq.alvacy.com` from Namecheap
 - Google Cloud: Calendar, Sheets, Drive APIs; service account; share AJ Jonathan + Family calendars, PT sheet, PT_Receipts with it (needed from Phase 1)
 - claude.ai: Supabase connector
@@ -186,7 +186,7 @@ One-time setup (AJ, in Safari):
 
 ## 11. Decisions log
 - Name: keep **HQ**.
-- Users: **AJ only, forever.** No multi-user, no sharing, no roles. Keep auth simple (email + 6-digit code, one account; no emailed link because it opens Safari and does not log in the iOS Home Screen app; no GitHub login).
+- Users: **AJ only, forever.** No multi-user, no sharing, no roles. Keep auth simple (email magic link plus 6-digit code in the same email, one account; the code is what logs in the iOS Home Screen app because a tapped link opens Safari; no GitHub login).
 - Bible: **YouVersion and Logos.**
 - Tiimo: drop once Today is live; Today must be better, and must never hide a task.
 - VNG = Volume & Genealogy, the data source for Team.

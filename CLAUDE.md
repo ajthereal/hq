@@ -18,7 +18,7 @@ React + TypeScript + Vite + Tailwind + vite-plugin-pwa + supabase-js. Supabase E
 - Time zone WIB (Asia/Jakarta). Money in IDR formatting. UI copy in AJ's mixed Indonesian-English, aku/kamu voice.
 - **Nothing-missed rule:** Today must never hide a task. Overdue items stay pinned until done or snoozed to a date. Undated items show in an Inbox strip with a count. See SPEC section 3. Do not weaken this.
 - Calendar meetings added from HQ default to 2 hours on the AJ Jonathan calendar.
-- Design must not look AI-generated or templated: Cloudlight direction (softer blue, white canvas, orange accent), real content, restrained, no generic gradients or stock-looking cards. Use the frontend-design skill for new screens.
+- Design must not look AI-generated or templated: Tiimo-style direction approved by AJ (see `app/index.html`): near-black or warm off-white canvas, soft pastel icon chips, pill section headers, Fraunces + DM Sans, small type. Dark and light mode. Real content, restrained, no generic gradients or stock-looking cards. Layouts for iPhone, iPad and Mac. Use the frontend-design skill for new screens.
 - Copy that is in AJ's voice must not read as AI-written. No colon setups like "Yang bikin beda: ...", no filler hype.
 
 ## Workflow

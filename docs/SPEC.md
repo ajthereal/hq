@@ -41,7 +41,7 @@ Stays outside: CapCut editing, Claude chat, Claude Design/Motion for carousels, 
 
 - **App:** React + TypeScript + Vite + Tailwind, as a PWA (vite-plugin-pwa), supabase-js.
 - **Hosting:** Cloudflare Pages at `hq.alvacy.com` (DNS at Namecheap). Free, deploys on every push, preview link per pull request.
-- **Data, login, files, jobs:** Supabase (Postgres, Auth magic link, Storage, Edge Functions, pg_cron). Region: Singapore.
+- **Data, login, files, jobs:** Supabase (Postgres, Auth with GitHub sign-in, Storage, Edge Functions, pg_cron). Region: Singapore.
 - **Code home:** private GitHub repo `ajthereal/hq`.
 - **Google access:** one service account; AJ shares each calendar, sheet and folder with it once.
 - `alvacy.com` stays on GitHub Pages. HQ is separate because it needs secrets and server code.
@@ -171,7 +171,7 @@ Per session: open Claude Code on this repo, pick **Sonnet**, say "Do phase N fro
 
 One-time setup (AJ, in Safari):
 - GitHub private repo `ajthereal/hq` ✅
-- Supabase project (Singapore, magic-link login)
+- Supabase project (Singapore) with GitHub sign-in (GitHub OAuth app)
 - Cloudflare Pages connected to the repo; `hq.alvacy.com` from Namecheap
 - Google Cloud: Calendar, Sheets, Drive APIs; service account; share AJ Jonathan + Family calendars, PT sheet, PT_Receipts with it (needed from Phase 1)
 - claude.ai: Supabase connector

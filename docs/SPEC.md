@@ -186,7 +186,7 @@ One-time setup (AJ, in Safari):
 
 ## 11. Decisions log
 - Name: keep **HQ**.
-- Users: **AJ only, forever.** No multi-user, no sharing, no roles. Keep auth simple (single magic-link account).
+- Users: **AJ only, forever.** No multi-user, no sharing, no roles. Keep auth simple (GitHub sign-in, one account; no email magic link because it does not carry into the iOS Home Screen app).
 - Bible: **YouVersion and Logos.**
 - Tiimo: drop once Today is live; Today must be better, and must never hide a task.
 - VNG = Volume & Genealogy, the data source for Team.

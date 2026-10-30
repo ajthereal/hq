@@ -9,7 +9,7 @@ Cloudflare Workers Builds is connected to this repo (Worker name `hq`). `wrangle
 
 - **Production:** every push to `main` builds and goes live at `hq.alvacy.com`.
 - **Previews:** every pull request branch gets a preview URL. Cloudflare posts it on the PR (the "Workers Builds: hq" check, Details link). Open it on the iPhone to test before merging.
-- **Build settings:** build command `npm run build`, deploy command `npx wrangler deploy`, non-production branch deploy command `npx wrangler versions upload`, with non-production builds and preview URLs turned on. Node 22 comes from `.node-version`.
+- **Build settings:** build command `npm run build`, deploy command `npx wrangler deploy`, non-production branch deploy command `npx wrangler preview` (needs the `previews` block in `wrangler.jsonc`). Non-production builds on, and Preview URLs on under Settings → Domains & Routes, or the PR comment shows "No Preview URL". Node 22 comes from `.node-version`.
 - **Build variables** (Worker → Settings → Build → Variables and secrets; they must be *build* variables because Vite bakes them in at build time):
   - `VITE_SUPABASE_URL`
   - `VITE_SUPABASE_ANON_KEY`

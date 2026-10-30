@@ -5,18 +5,18 @@ The spec is in `docs/SPEC.md`, the build plan in `docs/phases/`.
 
 ## How deploys work
 
-Cloudflare Pages is connected to this repo.
+Cloudflare Workers Builds is connected to this repo (Worker name `hq`). `wrangler.jsonc` tells it to serve `dist/` as a single-page app.
 
 - **Production:** every push to `main` builds and goes live at `hq.alvacy.com`.
-- **Previews:** every pull request gets its own preview link. Cloudflare posts it on the PR (the "Cloudflare Pages" check or comment). Open that link on the iPhone to test before merging.
-- **Build settings:** framework preset None, build command `npm run build`, output directory `dist`. Node 22 comes from `.node-version`.
-- **Environment variables** (Pages project → Settings → Variables, set for both Production and Preview):
+- **Previews:** every pull request branch gets a preview URL. Cloudflare posts it on the PR (the "Workers Builds: hq" check, Details link). Open it on the iPhone to test before merging.
+- **Build settings:** build command `npm run build`, deploy command `npx wrangler deploy`, non-production branch deploy command `npx wrangler versions upload`, with non-production builds and preview URLs turned on. Node 22 comes from `.node-version`.
+- **Build variables** (Worker → Settings → Build → Variables and secrets; they must be *build* variables because Vite bakes them in at build time):
   - `VITE_SUPABASE_URL`
   - `VITE_SUPABASE_ANON_KEY`
 
   These are public by design (the anon key only works within RLS). Real secrets go in Supabase Edge Function secrets, never here.
 
-If the app shows "Supabase belum disambung", the two variables are missing for that environment. Add them and retry the deploy.
+If the app shows "Supabase belum disambung", the two build variables are missing. Add them and retry the build.
 
 ## Login
 
@@ -28,7 +28,7 @@ Email only. Supabase sends one email with a magic link and a 6-digit code.
 Supabase settings this depends on:
 
 - Auth → Email provider on. Email template "Magic Link" contains both `{{ .ConfirmationURL }}` and `{{ .Token }}`.
-- Auth → URL Configuration: Site URL `https://hq.alvacy.com`. Redirect URLs include `https://hq.alvacy.com/**` and the preview pattern `https://*.<pages-project>.pages.dev/**`, otherwise the magic link on a preview falls back to production.
+- Auth → URL Configuration: Site URL `https://hq.alvacy.com`. Redirect URLs include `https://hq.alvacy.com/**` and the preview pattern `https://*-hq.<your-subdomain>.workers.dev/**`, otherwise the magic link on a preview falls back to production.
 - After AJ's first login, "Allow new users to sign up" can be switched off.
 
 ## Database

@@ -1,0 +1,10 @@
+// Cloudflare Workers Builds serves the Vite output as static assets.
+// single-page-application: unknown paths like /people return index.html instead of 404.
+{
+  "name": "hq",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}

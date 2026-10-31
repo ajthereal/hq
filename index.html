@@ -238,6 +238,17 @@ pre{margin:10px 0 0;font:12px/1.55 ui-monospace,Menlo,monospace;white-space:pre-
 .sd h3{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:0 0 8px;font-weight:600}
 .tline{padding:9px 0;border-top:1px solid var(--line);font-size:13px}.tline:first-of-type{border-top:0}
 .tline b{font-weight:600}.tline small{display:block;color:var(--mute);font-size:12px}
+
+.tp h2{margin-top:2px}.tp-top{display:flex;justify-content:space-between;align-items:center;gap:8px}.tp-top small,.tp-stop small,.tp-leg small,.tp-date small,.tp-facts dt,.tp-stay small,.tp-ref small{color:var(--mute);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.tp-pill{font-size:11px;font-weight:700;border-radius:99px;padding:3px 9px;background:var(--card2);color:var(--mute)}.tp-pill.ok{background:var(--ok);color:var(--ok-ink)}.tp-pill.warn{background:var(--warn);color:#fff}
+.tp-route{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-top:10px}.tp-stop{display:flex;flex-direction:column;min-width:0}.tp-stop.end{align-items:flex-end;text-align:right}.tp-stop b{font-family:var(--display);font-weight:500;font-size:34px;line-height:1}.tp-stop span{font-weight:700;font-size:18px;margin-top:4px}.tp-leg{display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--mute)}
+.tp-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px 12px;margin:12px 0 0;padding-top:10px;border-top:1px dashed var(--line)}.tp-facts div{min-width:0}.tp-facts dd{margin:0;font-weight:600;font-size:13.5px;overflow-wrap:anywhere}
+.tp-note{margin-top:10px;padding:9px 12px;border-radius:14px;background:var(--card2);font-size:13px;line-height:1.45}.tp-note.warn{background:var(--late-bg);color:var(--late-ink)}
+.tp-foot{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}.tp-foot>small{margin-left:auto;color:var(--mute)}.tp-ref{display:inline-flex;gap:6px;align-items:center}.tp-ref code{font-weight:600;font-size:13px}.chip.sm{height:28px;padding:0 10px;font-size:12px;text-decoration:none;color:var(--ink)}
+.tp-stay{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.tp-stay b{display:block;font-size:15px}
+.tp-day{display:grid;grid-template-columns:46px minmax(0,1fr);gap:10px;margin-top:6px}.tp-date{display:flex;flex-direction:column;padding-top:12px}.tp-date b{font-family:var(--display);font-weight:500;font-size:26px;line-height:1}
+.tp-board{margin-top:12px;border-radius:24px;background:var(--blue);color:#fff;padding:16px 18px}.tp-board small{opacity:.75;font-size:12px}.tp-board div{display:flex;justify-content:space-between;align-items:flex-end;gap:8px;margin:6px 0}.tp-board b{font-family:var(--display);font-weight:500;font-size:36px;line-height:1}.tp-board span{font-weight:700;font-size:17px}
+.tp-fold{margin-top:12px;border-radius:18px;background:var(--card);border:1px solid var(--line);padding:12px 14px;font-size:13px;color:var(--mute)}.tp-fold summary{cursor:pointer;font-weight:600;color:var(--ink)}.tp-fold p{margin:10px 0 0;line-height:1.5}.tp-soon{color:var(--warn)!important;font-weight:700}
 </style>
 
 <div id="chrome" role="group" aria-label="Pengaturan mockup">
@@ -264,6 +275,7 @@ var I={
  dots:'<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>',
  chev:'<path d="M6 9l6 6 6-6"/>',
  right:'<path d="M9 6l6 6-6 6"/>',
+ left:'<path d="M15 6l-6 6 6 6"/>',
  search:'<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/>',
  flame:'<path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 .3 1.4 1 2 2 2-.5-3 0-5 1-8z"/>',
  spark:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',
@@ -326,7 +338,7 @@ try{var _t=JSON.parse(localStorage.getItem('hq-tasks2')||'null');if(_t&&(_t.leng
 function setSync(s){syncState=s;var d=document.getElementById('sdot');if(d){d.dataset.s=s;d.title={ok:'Tersimpan',err:'Belum tersinkron',idle:'Menyinkron',off:'Hanya di perangkat ini'}[s]}}
 var idSeq=0;function normTask(r){var dd=r.date?dn(r.date):null;return {id:Number(r.id)||(Date.now()+(idSeq++)),t:r.t,day:dd!=null?dd:(r.day===''||r.day==null)?null:Number(r.day),part:r.part||undefined,dur:r.dur||undefined,at:r.at||undefined,ic:r.ic||'spark',c:r.c||'sand',ev:r.ev||undefined,go:r.go||undefined,done:r.done==='true'||r.done===true}}
 function pushTasks(){if(!CFG.url)return;setSync('idle');fetch(CFG.url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({token:CFG.token,name:'tasks',rows:tasks})}).then(function(r){return r.json()}).then(function(j){setSync(j.ok?'ok':'err')}).catch(function(){setSync('err')})}
-function pullTasks(){if(!CFG.url)return;pullPeople();pullEvents();pullHabits();pullContent();fetch(CFG.url+'?token='+encodeURIComponent(CFG.token)+'&name=tasks').then(function(r){return r.json()}).then(function(j){if(j.error){setSync('err');return}tasks=j.rows.filter(function(r){return r.t}).map(normTask);try{localStorage.setItem('hq-tasks2',JSON.stringify(tasks))}catch(e){}setSync('ok');if(j.rows.some(function(r){return !r.id||r.date}))pushTasks();if(!document.querySelector('.sheet-bg'))render(true)}).catch(function(){setSync('err')})}
+function pullTasks(){if(!CFG.url)return;pullPeople();pullEvents();pullHabits();pullContent();pullTrips();fetch(CFG.url+'?token='+encodeURIComponent(CFG.token)+'&name=tasks').then(function(r){return r.json()}).then(function(j){if(j.error){setSync('err');return}tasks=j.rows.filter(function(r){return r.t}).map(normTask);try{localStorage.setItem('hq-tasks2',JSON.stringify(tasks))}catch(e){}setSync('ok');if(j.rows.some(function(r){return !r.id||r.date}))pushTasks();if(!document.querySelector('.sheet-bg'))render(true)}).catch(function(){setSync('err')})}
 var EV=[];try{EV=JSON.parse(localStorage.getItem('hq-events')||'[]')}catch(e){}
 function pullEvents(){if(!CFG.url)return;fetch(CFG.url+'?token='+encodeURIComponent(CFG.token)+'&name=events&from='+isoOf(TD-7)+'&to='+isoOf(TD+15)).then(function(r){return r.json()}).then(function(j){if(j.error||!j.rows)return;EV=j.rows;try{localStorage.setItem('hq-events',JSON.stringify(EV))}catch(e){}if(!document.querySelector('.sheet-bg'))render(true)}).catch(function(){})}
 function hm(s){return s.slice(11,13)+'.'+s.slice(14,16)}
@@ -674,8 +686,9 @@ function content(){
  h+='<div class="gp"><span class="gpb nod">'+ic('spark',16)+'Tangkap ide</span></div><div class="card" style="margin-top:0"><div class="search" style="position:static;padding:0"><label><input id="idea" type="text" placeholder="Ide baru, tulis singkat saja"><button data-idea="1" aria-label="Simpan ide" style="color:var(--ink)">'+ic('plus',20)+'</button></label></div><div class="tline"><b>Gula di minuman kemasan</b><small>Pillar Kebiasaan</small></div><div class="tline"><b>Kenapa lapar jam 4 sore</b><small>Pillar Kebiasaan</small></div></div>';
  return h+'<div class="card"><h2>Pipeline lengkap ada di iPad dan Mac</h2><p>Board, jadwal posting, dan detail turunan butuh layar lebar. Di iPhone kamu cukup menangkap ide dan menyelesaikan hal yang menunggu kamu.</p></div>'}
 function more(){
- var t=[['Sinkron',CFG.url?'Terhubung ke Sheet-mu':'Hubungkan Google Sheet','link'],['Impor kontak',RAW.length?RAW.length+' orang dari CRM lama':'Tempel dari CRM lama','users'],['Trips','KL, 13 sampai 15 Nov','tasks'],['Word','Hari ini: Mazmur 23','book'],['PT AHU','Tutup buku Oktober','chart'],['Launcher','VNG, Zoom, CapCut, Canva','grid'],['Calendar','Minggu ini','clock'],['Templates','8 template WhatsApp','chat']];
- return '<div class="top"><div class="stats"></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button></div></div><div class="hrow"><h1>More</h1></div><span class="sample">Contoh data</span><div class="tiles2">'+t.map(function(x,i){return '<button class="tile2" '+(i===0?'data-sync="1"':i===1?'data-impor="1"':'data-act="item"')+'><span class="ic sky">'+ic(x[2],17)+'</span><span><b>'+x[0]+'</b><small>'+x[1]+'</small></span></button>'}).join('')+'</div>'}
+ if(moreView==='trips')return tripsPage();
+ var t=[['Sinkron',CFG.url?'Terhubung ke Sheet-mu':'Hubungkan Google Sheet','link'],['Impor kontak',RAW.length?RAW.length+' orang dari CRM lama':'Tempel dari CRM lama','users'],['Trips',tripSub(),'tasks'],['Word','Hari ini: Mazmur 23','book'],['PT AHU','Tutup buku Oktober','chart'],['Launcher','VNG, Zoom, CapCut, Canva','grid'],['Calendar','Minggu ini','clock'],['Templates','8 template WhatsApp','chat']];
+ return '<div class="top"><div class="stats"></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button></div></div><div class="hrow"><h1>More</h1></div><span class="sample">Contoh data</span><div class="tiles2">'+t.map(function(x,i){return '<button class="tile2" '+(i===0?'data-sync="1"':i===1?'data-impor="1"':i===2?'data-trips="1"':'data-act="item"')+'><span class="ic sky">'+ic(x[2],17)+'</span><span><b>'+x[0]+'</b><small>'+x[1]+'</small></span></button>'}).join('')+'</div>'}
 
 /* ---------- shell ---------- */
 var NAV=[['today','tasks','Today'],['people','users','People'],['team','chart','Team'],['content','video','Content'],['more','grid','More']];
@@ -704,6 +717,62 @@ function addSheet(part){
    fetch(CFG.url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({token:CFG.token,action:'event',title:v,date:isoOf(dd),time:tm,minutes:120})}).then(function(r){return r.json()}).then(function(j){if(j.ok){toast('Masuk kalender, 2 jam');haptic(true);pullEvents()}else toast('Gagal menambah. Update Apps Script dulu')}).catch(function(){toast('Gagal menambah')});return}
   tasks.push({id:Date.now(),t:v,day:when==='nod'?null:when==='tom'?TD+1:TD,part:pt,dur:du,ic:'spark',c:'sand',done:false});saveTasks();s.remove();tab='today';sel=TD;render();haptic();toast(when==='nod'?'Masuk ke No date':'Masuk ke Today')}}
 
+/* ---------- Trips (data lives in the Sheet tab "trips", Claude keeps it fresh) ---------- */
+var TR={trips:[],cards:[],past:[],upd:''},TK=[],moreView='';
+try{TR=JSON.parse(localStorage.getItem('hq-trips')||'null')||TR;TK=JSON.parse(localStorage.getItem('hq-tticks')||'[]')}catch(e){}
+function jparse(s,d){try{return JSON.parse(s)}catch(e){return d}}
+function pullTrips(){if(!CFG.url)return;Promise.all([getTab('trips'),getTab('tripticks')]).then(function(a){if(a[0].error||a[1].error)return;
+ var n={trips:[],cards:[],past:[],upd:''};a[0].rows.forEach(function(r){var j=jparse(r.json,null);if(!j)return;if(r.kind==='trip'){j.id=r.id;n.trips.push(j)}else if(r.kind==='cards')n.cards=j;else if(r.kind==='past')n.past=j;else if(r.kind==='meta')n.upd=j.updated||''});
+ n.trips.sort(function(x,y){return x.start<y.start?-1:1});TR=n;TK=a[1].rows.map(function(r){return r.id});
+ try{localStorage.setItem('hq-trips',JSON.stringify(TR));localStorage.setItem('hq-tticks',JSON.stringify(TK))}catch(e){}
+ if(!document.querySelector('.sheet-bg')&&tab==='more')render(true)}).catch(function(){})}
+function tripSub(){if(!CFG.url||!TR.trips.length)return 'Belum ada trip';var t=upTrips()[0];return t?t.name+', '+fmtShort(t.start)+' sampai '+fmtShort(t.end):'Tidak ada trip mendatang'}
+function tzDate(d){return new Date(d.length===10?d+'T00:00:00+07:00':d)}
+function upTrips(){var now=Date.now();return TR.trips.filter(function(t){return tzDate(t.end).getTime()+864e5>now})}
+function fmtShort(d){var x=new Date(d.slice(0,10)+'T12:00:00Z');return WD[x.getUTCDay()].slice(0,3)+' '+x.getUTCDate()+' '+MON[x.getUTCMonth()]}
+function dUntil(d){return Math.ceil((tzDate(d)-Date.now())/864e5)}
+function relD(n){return n<0?'lewat':n===0?'hari ini':n===1?'besok':n+' hari lagi'}
+function lhm(iso){return iso.slice(11,16)}
+function offOf(iso){var m=iso.match(/([+-])(\d\d):(\d\d)$/);return m?(m[1]==='-'?-1:1)*(+m[2]+ +m[3]/60):0}
+function homeHM(iso){var d=new Date(new Date(iso).getTime()+7*36e5);return String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0')}
+function allFl(){var o=[];TR.trips.forEach(function(t){(t.days||[]).forEach(function(d){(d.items||[]).forEach(function(i){if(i.type==='flight')o.push({t:t,f:i})})})});return o.sort(function(a,b){return new Date(a.f.dep)-new Date(b.f.dep)})}
+function tRefs(r){return (r||[]).map(function(x){return '<span class="tp-ref"><small>'+esc(x[0])+'</small><code>'+esc(x[1])+'</code>'+(x[2]?'<button class="chip sm" data-tcopy="'+esc(x[1])+'">Copy</button>':'')+'</span>'}).join('')}
+function tFacts(f){return f&&f.length?'<dl class="tp-facts">'+f.map(function(x){return '<div><dt>'+esc(x[0])+'</dt><dd>'+esc(x[1])+'</dd></div>'}).join('')+'</dl>':''}
+function tStop(s,iso,end){var home=offOf(iso)!==7?esc(s.tz)+' · '+homeHM(iso)+' Jakarta':esc(s.tz);return '<div class="tp-stop'+(end?' end':'')+'"><b>'+esc(s.code)+'</b><small>'+esc(s.city)+'</small><span>'+lhm(iso)+'</span><small>'+home+'</small></div>'}
+function tFlight(f){var past=new Date(f.arr)<new Date(),h='<div class="card tp"><div class="tp-top"><small>'+esc(f.carrier)+' · '+esc(f.fno)+'</small><span class="tp-pill '+(past?'':f.status==='waitlisted'?'warn':'ok')+'">'+(past?'Flown':f.status==='waitlisted'?'Waitlist':'Confirmed')+'</span></div>';
+ h+='<div class="tp-route">'+tStop(f.from,f.dep)+'<div class="tp-leg">'+ic('right',18)+'<small>'+esc(f.dur||'')+'</small></div>'+tStop(f.to,f.arr,1)+'</div>'+tFacts(f.facts);
+ if(f.live&&!past)h+='<div class="tp-note '+(/delay|changed|cancel/.test(f.live.state)?'warn':'')+'"><b>'+esc(f.live.state)+'</b> · '+esc(f.live.text)+'</div>';
+ if(f.tip)h+='<div class="tp-note">'+esc(f.tip)+'</div>';
+ if(f.lounge&&!past)h+='<div class="tp-note"><b>Lounge</b> · '+esc(f.lounge.name)+'<br>'+esc(f.lounge.how)+(f.lounge.warn?'<br><b>'+esc(f.lounge.warn)+'</b>':'')+'</div>';
+ return h+'<div class="tp-foot">'+tRefs(f.refs)+(f.paid?'<small>'+esc(f.paid)+'</small>':'')+'</div></div>'}
+function tHotel(x){var h='<div class="card tp"><div class="tp-top"><small>'+esc(x.kind||'Stay')+'</small></div><h2>'+esc(x.name)+'</h2><p>'+esc(x.addr||'')+'</p><div class="tp-stay"><div><small>Check in</small><b>'+esc(x.inDate)+'</b><small>'+esc(x.inRule||'')+'</small></div><div><small>Check out</small><b>'+esc(x.outDate)+'</b><small>'+esc(x.outRule||'')+'</small></div></div>'+tFacts(x.facts);
+ if(x.note)h+='<div class="tp-note">'+esc(x.note)+'</div>';if(x.tip)h+='<div class="tp-note">'+esc(x.tip)+'</div>';
+ return h+'<div class="tp-foot">'+tRefs(x.refs)+(x.map?'<a class="chip sm" href="'+esc(x.map)+'" target="_blank" rel="noopener">Peta</a>':'')+'</div></div>'}
+function tItem(i){if(i.type==='flight')return tFlight(i);if(i.type==='hotel')return tHotel(i);
+ if(i.type==='gap')return '<div class="tp-note warn">'+i.html+'</div>';if(i.type==='plain')return '<div class="tp-note">'+i.html+'</div>';
+ if(i.type==='fold')return '<details class="tp-fold"><summary>'+esc(i.title)+'</summary><p>'+i.html+'</p></details>';return ''}
+function pDue(p){var n=dUntil(p.due),on=p.opens?dUntil(p.opens.slice(0,10)):null;if(on!==null&&on>0)return {t:'buka '+fmtShort(p.opens),soon:false,n:on};return {t:n<0?'lewat':'sebelum '+fmtShort(p.due),soon:n<=3,n:n}}
+function tripBlock(t){var h='<div class="gp"><span class="gpb nod">'+ic('clock',16)+esc(t.name)+' · '+esc(t.codes||'')+'</span></div><p class="meta" style="margin:6px 4px">'+esc(t.sub||'')+'</p>';
+ if((t.prep||[]).length){h+='<div class="list">'+t.prep.map(function(p){var done=TK.indexOf(t.id+':'+p.id)>-1,du=pDue(p);return '<div class="task'+(done?' done':'')+'"><div class="tb" style="padding:12px 4px 12px 14px"><b>'+esc(p.label)+'</b><small class="'+(du.soon&&!done?'tp-soon':'')+'">'+du.t+'</small><small style="display:block;margin-top:3px">'+(p.detail||'')+'</small></div><button class="ck" data-ttick="'+esc(t.id+':'+p.id)+'" aria-label="Done"><i>'+ic('check',14)+'</i></button></div>'}).join('')+'</div>'}
+ (t.days||[]).forEach(function(d){var dt=new Date(d.date+'T12:00:00Z');h+='<div class="tp-day"><div class="tp-date"><small>'+WD[dt.getUTCDay()].slice(0,3)+'</small><b>'+dt.getUTCDate()+'</b><small>'+MON[dt.getUTCMonth()]+'</small></div><div style="min-width:0">'+(d.items||[]).map(tItem).join('')+'</div></div>'});
+ return h}
+function tripsPage(){
+ var top='<div class="top"><div class="stats"><button class="chip" data-tback="1">'+ic('left',14)+'More</button></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button></div></div><div class="hrow"><h1>Trips</h1><small>'+esc(TR.upd||'')+'</small></div>';
+ if(!CFG.url)return top+'<p class="note">Hubungkan Sheet dulu di Sinkron.</p>';
+ var ups=upTrips(),h=top;
+ if(!TR.trips.length)return h+'<div class="missed"><b>Belum ada trip</b><p class="meta" style="margin:6px 0 0">Bilang ke Claude: "update trip-ku". Claude baca Gmail dan mengisi tab trips di Sheet.</p></div>';
+ var nx=allFl().filter(function(x){return new Date(x.f.dep)>new Date()})[0];
+ if(nx){var ms=new Date(nx.f.dep)-Date.now(),dd=Math.floor(ms/864e5),hh=Math.floor(ms%864e5/36e5),mm=Math.floor(ms%36e5/6e4);
+  h+='<div class="tp-board"><small>Berangkat berikutnya · '+esc(nx.t.name)+'</small><div><b>'+esc(nx.f.from.code)+' → '+esc(nx.f.to.code)+'</b><span>'+dd+'h '+hh+'j '+mm+'m</span></div><small>'+esc(nx.f.fno)+' · '+fmtShort(nx.f.dep)+' · '+lhm(nx.f.dep)+' '+esc(nx.f.from.tz)+'</small></div>'}
+ var due=[];ups.forEach(function(t){(t.prep||[]).forEach(function(p){if(TK.indexOf(t.id+':'+p.id)>-1)return;var n=dUntil(p.due);if(n<=14)due.push({n:n,t:t.name,l:p.label,w:pDue(p).t})})});due.sort(function(a,b){return a.n-b.n});
+ if(due.length)h+=gp('tdue','late','alert','Jatuh tempo 2 minggu',due.length)+(collapsed.tdue?'':'<div class="list">'+due.map(function(x){return '<div class="task"><div class="tb" style="padding:12px 14px"><b>'+esc(x.l)+'</b><small>'+esc(x.t)+' · '+x.w+' · '+relD(x.n)+'</small></div></div>'}).join('')+'</div>');
+ ups.forEach(function(t){h+=tripBlock(t)});
+ if((TR.cards||[]).length)h+='<details class="tp-fold"><summary>Kartu: lounge dan perks</summary>'+TR.cards.map(function(c){return '<p><b>'+esc(c.name)+'</b><br>'+(c.lines||[]).map(esc).join('<br>')+'</p>'}).join('')+'</details>';
+ if((TR.past||[]).length)h+='<details class="tp-fold"><summary>Trip lalu</summary>'+TR.past.map(function(p){return '<p><b>'+esc(p.name)+'</b> · '+esc(p.dates)+'<br>'+(p.lines||[]).map(esc).join('<br>')+'</p>'}).join('')+'</details>';
+ return h}
+function tickTrip(id){var i=TK.indexOf(id);if(i>-1)TK.splice(i,1);else TK.push(id);try{localStorage.setItem('hq-tticks',JSON.stringify(TK))}catch(e){}
+ if(CFG.url){setSync('idle');postTab('tripticks',TK.map(function(x){return {id:x}})).then(function(j){setSync(j.ok?'ok':'err')}).catch(function(){setSync('err')})}haptic(false);render(true)}
+
 /* ---------- preview mode and theme ---------- */
 var DEV={phone:[390,844],ipad:[1024,768],mac:[1280,800]};
 function fit(){
@@ -730,7 +799,7 @@ function completeTask(el){
   setTimeout(function(){render(true);if(wasLate>0&&lateTasks().length===0){haptic(true);toast('Overdue kosong. Tidak ada yang terlewat.');var f=$('#spk');f&&burst(f,true)}},REDUCE?0:760);
  }else{row.classList.remove('done','pop');haptic(false);setTimeout(function(){render(true)},120)}}
 document.addEventListener('click',function(e){
- var el=e.target.closest('[data-tab],[data-done],[data-fold],[data-day],[data-add],[data-open],[data-act],[data-pv],[data-ptoggle],[data-msg],[data-log],[data-next],[data-pdet],[data-jump],[data-tt],[data-copy],[data-wa],[data-addp],[data-goto],[data-ct],[data-cmove],[data-cv],[data-idea],[data-mode],[data-theme-set],[data-gotab],[data-sync],[data-impor],[data-hab]');if(!el)return;
+ var el=e.target.closest('[data-tab],[data-done],[data-fold],[data-day],[data-add],[data-open],[data-act],[data-pv],[data-ptoggle],[data-msg],[data-log],[data-next],[data-pdet],[data-jump],[data-tt],[data-copy],[data-wa],[data-addp],[data-goto],[data-ct],[data-cmove],[data-cv],[data-idea],[data-mode],[data-theme-set],[data-gotab],[data-sync],[data-impor],[data-hab],[data-trips],[data-tback],[data-ttick],[data-tcopy]');if(!el)return;
  var d=el.dataset;
  if(d.impor){if(!CFG.url){toast('Hubungkan Sheet dulu di Sinkron');return}var ib=sheet('<h3>Impor kontak</h3><p class="meta" style="margin:0">Tempel hasil Salin dari halaman impor. Ini menggantikan daftar kontak di Sheet-mu.</p><textarea id="it" rows="5" style="width:100%;border-radius:16px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:10px;font:12px ui-monospace,monospace" aria-label="Data kontak"></textarea><button class="btn" id="ig" style="margin-top:0">Impor</button>');ib.querySelector('#ig').onclick=function(){try{var a=JSON.parse(ib.querySelector('#it').value);if(!Array.isArray(a)||!a.length||!a[0].name)throw 0;RAW=a.map(function(r){var o={};Object.keys(r).forEach(function(k){o[k]=r[k]==null?'':String(r[k])});return o});savePeople();ib.remove();tab='people';render();toast(RAW.length+' orang masuk ke People');haptic(true)}catch(e){toast('Teksnya belum cocok. Salin ulang dari halaman impor.')}};return}
  if(d.sync){var sb=sheet('<h3>Hubungkan Google Sheet</h3><p class="meta" style="margin:0">Tempel alamat Apps Script dan kode rahasia yang kamu buat. Keduanya hanya disimpan di perangkat ini.</p><input id="su" type="url" placeholder="Alamat Apps Script (https://script.google.com/...)" value="'+esc(CFG.url)+'" autocomplete="off"><input id="st" type="text" placeholder="Kode rahasia" value="'+esc(CFG.token)+'" autocomplete="off"><button class="btn" id="sg" style="margin-top:0">Hubungkan</button>'+(CFG.url?'<button class="btn alt" id="sx" style="margin-top:0">Putuskan</button>':''));
@@ -741,6 +810,10 @@ document.addEventListener('click',function(e){
  if(d.mode){setMode(d.mode);return}
  if(d.themeSet){setTheme(d.themeSet);return}
  if(d.tab){tab=d.tab;render();return}
+ if(d.trips){moreView='trips';pullTrips();render();return}
+ if(d.tback){moreView='';render();return}
+ if(d.ttick){tickTrip(d.ttick);return}
+ if(d.tcopy){try{navigator.clipboard.writeText(d.tcopy);toast('Disalin')}catch(e){toast(d.tcopy)}return}
  if(d.hab){toggleHab(el);return}
  if(d.done){completeTask(el);return}
  if(d.fold){collapsed[d.fold]=!collapsed[d.fold];render(true);return}

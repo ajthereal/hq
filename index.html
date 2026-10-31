@@ -326,7 +326,7 @@ try{var _t=JSON.parse(localStorage.getItem('hq-tasks2')||'null');if(_t&&(_t.leng
 function setSync(s){syncState=s;var d=document.getElementById('sdot');if(d){d.dataset.s=s;d.title={ok:'Tersimpan',err:'Belum tersinkron',idle:'Menyinkron',off:'Hanya di perangkat ini'}[s]}}
 var idSeq=0;function normTask(r){var dd=r.date?dn(r.date):null;return {id:Number(r.id)||(Date.now()+(idSeq++)),t:r.t,day:dd!=null?dd:(r.day===''||r.day==null)?null:Number(r.day),part:r.part||undefined,dur:r.dur||undefined,at:r.at||undefined,ic:r.ic||'spark',c:r.c||'sand',ev:r.ev||undefined,go:r.go||undefined,done:r.done==='true'||r.done===true}}
 function pushTasks(){if(!CFG.url)return;setSync('idle');fetch(CFG.url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({token:CFG.token,name:'tasks',rows:tasks})}).then(function(r){return r.json()}).then(function(j){setSync(j.ok?'ok':'err')}).catch(function(){setSync('err')})}
-function pullTasks(){if(!CFG.url)return;pullPeople();pullEvents();pullHabits();fetch(CFG.url+'?token='+encodeURIComponent(CFG.token)+'&name=tasks').then(function(r){return r.json()}).then(function(j){if(j.error){setSync('err');return}tasks=j.rows.filter(function(r){return r.t}).map(normTask);try{localStorage.setItem('hq-tasks2',JSON.stringify(tasks))}catch(e){}setSync('ok');if(j.rows.some(function(r){return !r.id||r.date}))pushTasks();if(!document.querySelector('.sheet-bg'))render(true)}).catch(function(){setSync('err')})}
+function pullTasks(){if(!CFG.url)return;pullPeople();pullEvents();pullHabits();pullContent();fetch(CFG.url+'?token='+encodeURIComponent(CFG.token)+'&name=tasks').then(function(r){return r.json()}).then(function(j){if(j.error){setSync('err');return}tasks=j.rows.filter(function(r){return r.t}).map(normTask);try{localStorage.setItem('hq-tasks2',JSON.stringify(tasks))}catch(e){}setSync('ok');if(j.rows.some(function(r){return !r.id||r.date}))pushTasks();if(!document.querySelector('.sheet-bg'))render(true)}).catch(function(){setSync('err')})}
 var EV=[];try{EV=JSON.parse(localStorage.getItem('hq-events')||'[]')}catch(e){}
 function pullEvents(){if(!CFG.url)return;fetch(CFG.url+'?token='+encodeURIComponent(CFG.token)+'&name=events&from='+isoOf(TD-7)+'&to='+isoOf(TD+15)).then(function(r){return r.json()}).then(function(j){if(j.error||!j.rows)return;EV=j.rows;try{localStorage.setItem('hq-events',JSON.stringify(EV))}catch(e){}if(!document.querySelector('.sheet-bg'))render(true)}).catch(function(){})}
 function hm(s){return s.slice(11,13)+'.'+s.slice(14,16)}
@@ -435,6 +435,10 @@ var CT=[
  {id:15,t:'Kenapa lapar jam 4 sore',type:'Reel',pillar:'Kebiasaan',st:'Idea'}
 ];
 var TGC={YouTube:'yt',Reel:'rl',Carousel:'cr',Thread:'th'};
+function normCt(r,i){return {id:Number(r.id)||(Date.now()+i),t:r.t,type:r.type||'Reel',pillar:r.pillar||'',st:r.st||'Idea',due:r.due||undefined,pub:r.pub?Number(r.pub):undefined,at:r.at||undefined}}
+if(CFG.url){CT=[];try{CT=JSON.parse(localStorage.getItem('hq-content')||'[]')}catch(e){}}
+function saveCt(){try{localStorage.setItem('hq-content',JSON.stringify(CT))}catch(e){}if(!CFG.url)return;setSync('idle');postTab('content',CT).then(function(j){setSync(j.ok?'ok':'err')}).catch(function(){setSync('err')})}
+function pullContent(){if(!CFG.url)return;getTab('content').then(function(j){if(j.error)return;CT=j.rows.filter(function(r){return r.t}).map(normCt);try{localStorage.setItem('hq-content',JSON.stringify(CT))}catch(e){}if(!document.querySelector('.sheet-bg')&&tab==='content')render(true)}).catch(function(){})}
 function ctById(id){return CT.filter(function(c){return c.id===id})[0]}
 
 /* ---------- Today ---------- */
@@ -660,7 +664,8 @@ function ctSchedule(){
  return '<div class="sch">'+days.map(function(d,i){var L=CT.filter(function(c){return c.pub===i});
   return '<div class="sd"><h3>'+d+' Nov</h3>'+L.map(function(c){return '<button class="cc" data-ct="'+c.id+'"><span class="tg '+TGC[c.type]+'">'+c.type+'</span><b style="margin-top:6px">'+esc(c.t)+'</b><small>'+c.at+'</small></button>'}).join('')+'</div>'}).join('')+'</div>'}
 function content(){
- var top='<div class="top"><div class="stats"><span style="color:var(--mute)">Satu video, semua turunannya</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button><button data-add="today" aria-label="Add">'+ic('plus',22)+'</button></div></div><div class="hrow"><h1>Content</h1></div><span class="sample">Contoh data</span>';
+ var top='<div class="top"><div class="stats"><span style="color:var(--mute)">Satu video, semua turunannya</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button><button data-add="today" aria-label="Add">'+ic('plus',22)+'</button></div></div><div class="hrow"><h1>Content</h1></div>'+(CFG.url?'':'<span class="sample">Contoh data</span>');
+ if(CFG.url&&!wide()){var ideas=CT.filter(function(c){return c.st==='Idea'});return top+'<div class="gp"><span class="gpb nod">'+ic('spark',16)+'Tangkap ide</span></div><div class="card" style="margin-top:0"><div class="search" style="position:static;padding:0"><label><input id="idea" type="text" placeholder="Ide baru, tulis singkat saja"><button data-idea="1" aria-label="Simpan ide" style="color:var(--ink)">'+ic('plus',20)+'</button></label></div>'+(ideas.length?ideas.map(function(c){return '<div class="tline"><b>'+esc(c.t)+'</b></div>'}).join(''):'<p class="meta" style="margin:10px 0 0">Masih kosong. Tulis ide pertama di atas.</p>')+'</div>'}
  if(wide()){
   var view='<div class="seg" style="margin-top:12px">'+['Board','Schedule'].map(function(v){return '<button class="chip" data-cv="'+v+'" aria-pressed="'+(ctView===v)+'">'+v+'</button>'}).join('')+'</div>';
   return top+view+'<div class="cwide"><div style="min-width:0">'+(ctView==='Board'?ctBoard():ctSchedule())+'</div><div class="cdet">'+ctDetail()+'</div></div>'}
@@ -761,7 +766,7 @@ document.addEventListener('click',function(e){
  if(d.ct){ctSel=+d.ct;render(true);return}
  if(d.cmove){var c=ctById(ctSel);c.st=d.cmove;haptic();render(true);toast('Dipindah ke '+d.cmove);return}
  if(d.cv){ctView=d.cv;render();return}
- if(d.idea){var v=$('#idea').value.trim();if(!v){toast('Tulis dulu idenya');return}toast('Ide disimpan');haptic();$('#idea').value='';return}
+ if(d.idea){var v=$('#idea').value.trim();if(!v){toast('Tulis dulu idenya');return}if(CFG.url){CT.push({id:Date.now(),t:v,type:'Reel',pillar:'',st:'Idea'});saveCt();render(true)}toast('Ide disimpan');haptic();if($('#idea'))$('#idea').value='';return}
  if(d.gotab){tab=d.gotab;render();return}
  if(d.act==='m1'){var l=document.querySelector('.gpb.late');l&&l.scrollIntoView({behavior:'smooth',block:'center'});return}
  if(d.act==='m2'){var n=document.querySelector('.nodate');n&&n.scrollIntoView({behavior:'smooth',block:'center'});return}

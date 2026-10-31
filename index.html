@@ -47,7 +47,7 @@ svg{display:block;flex:none}
 #chrome .seg2 button{height:30px;padding:0 11px;border-radius:99px;font-size:12px;font-weight:600;color:var(--mute)}
 #chrome .seg2 button[aria-pressed="true"]{background:var(--btn);color:var(--btn-ink)}
 #chrome small{font-size:11px;color:var(--mute);letter-spacing:.08em;text-transform:uppercase;font-weight:600}
-#stage{flex:1;min-height:0;display:flex;justify-content:center;align-items:flex-start;overflow:hidden}
+#stage{padding-top:max(6px,env(safe-area-inset-top,0px));flex:1;min-height:0;display:flex;justify-content:center;align-items:flex-start;overflow:hidden}
 #fwrap{position:relative;width:100%;height:100%}
 #frame{position:absolute;left:0;top:0;width:100%;height:100%;overflow:hidden;background:var(--bg);transform-origin:top left}
 #frame.dev{border:1px solid var(--line);border-radius:30px;box-shadow:0 20px 60px var(--shadow)}
@@ -239,7 +239,7 @@ pre{margin:10px 0 0;font:12px/1.55 ui-monospace,Menlo,monospace;white-space:pre-
 .tline{padding:9px 0;border-top:1px solid var(--line);font-size:13px}.tline:first-of-type{border-top:0}
 .tline b{font-weight:600}.tline small{display:block;color:var(--mute);font-size:12px}
 
-.tp h2{margin-top:2px}.tp-top{display:flex;justify-content:space-between;align-items:center;gap:8px}.tp-top small,.tp-stop small,.tp-leg small,.tp-date small,.tp-facts dt,.tp-stay small,.tp-ref small{color:var(--mute);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.tp-hero{background:var(--card2);margin-bottom:10px}.tp-hero small{color:var(--mute);font-size:11px;font-weight:700;letter-spacing:.08em}.tp-hero h2{font-size:26px;margin-top:2px}.tp-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}.tp h2{margin-top:2px}.tp-top{display:flex;justify-content:space-between;align-items:center;gap:8px}.tp-top small,.tp-stop small,.tp-leg small,.tp-date small,.tp-facts dt,.tp-stay small,.tp-ref small{color:var(--mute);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
 .tp-pill{font-size:11px;font-weight:700;border-radius:99px;padding:3px 9px;background:var(--card2);color:var(--mute)}.tp-pill.ok{background:var(--ok);color:var(--ok-ink)}.tp-pill.warn{background:var(--warn);color:#fff}
 .tp-route{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-top:10px}.tp-stop{display:flex;flex-direction:column;min-width:0}.tp-stop.end{align-items:flex-end;text-align:right}.tp-stop b{font-family:var(--display);font-weight:500;font-size:34px;line-height:1}.tp-stop span{font-weight:700;font-size:18px;margin-top:4px}.tp-leg{display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--mute)}
 .tp-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px 12px;margin:12px 0 0;padding-top:10px;border-top:1px dashed var(--line)}.tp-facts div{min-width:0}.tp-facts dd{margin:0;font-weight:600;font-size:13.5px;overflow-wrap:anywhere}
@@ -251,11 +251,6 @@ pre{margin:10px 0 0;font:12px/1.55 ui-monospace,Menlo,monospace;white-space:pre-
 .tp-fold{margin-top:12px;border-radius:18px;background:var(--card);border:1px solid var(--line);padding:12px 14px;font-size:13px;color:var(--mute)}.tp-fold summary{cursor:pointer;font-weight:600;color:var(--ink)}.tp-fold p{margin:10px 0 0;line-height:1.5}.tp-soon{color:var(--warn)!important;font-weight:700}
 </style>
 
-<div id="chrome" role="group" aria-label="Pengaturan mockup">
- <small>Preview</small>
- <div class="seg2" id="modes" hidden><button data-mode="auto">Auto</button><button data-mode="phone">iPhone</button><button data-mode="ipad">iPad</button><button data-mode="mac">Mac</button></div>
- <div class="seg2" id="themes"><button data-theme-set="auto">Auto</button><button data-theme-set="light">Light</button><button data-theme-set="dark">Dark</button></div>
-</div>
 <div id="stage"><div id="fwrap"><div id="frame"><div id="shell"><nav class="nav" id="nav"></nav><div id="scroller"><div class="app" id="app"></div></div></div><div class="rail" id="rail" hidden></div></div></div></div>
 <label id="hapt" style="position:fixed;left:-20px;top:-20px;width:1px;height:1px;opacity:0;pointer-events:none"><input type="checkbox" switch tabindex="-1" aria-hidden="true"></label>
 
@@ -276,6 +271,7 @@ var I={
  chev:'<path d="M6 9l6 6 6-6"/>',
  right:'<path d="M9 6l6 6-6 6"/>',
  left:'<path d="M15 6l-6 6 6 6"/>',
+ plane:'<path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>',
  search:'<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/>',
  flame:'<path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 .3 1.4 1 2 2 2-.5-3 0-5 1-8z"/>',
  spark:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',
@@ -688,12 +684,11 @@ function content(){
  h+='<div class="gp"><span class="gpb nod">'+ic('spark',16)+'Tangkap ide</span></div><div class="card" style="margin-top:0"><div class="search" style="position:static;padding:0"><label><input id="idea" type="text" placeholder="Ide baru, tulis singkat saja"><button data-idea="1" aria-label="Simpan ide" style="color:var(--ink)">'+ic('plus',20)+'</button></label></div><div class="tline"><b>Gula di minuman kemasan</b><small>Pillar Kebiasaan</small></div><div class="tline"><b>Kenapa lapar jam 4 sore</b><small>Pillar Kebiasaan</small></div></div>';
  return h+'<div class="card"><h2>Pipeline lengkap ada di iPad dan Mac</h2><p>Board, jadwal posting, dan detail turunan butuh layar lebar. Di iPhone kamu cukup menangkap ide dan menyelesaikan hal yang menunggu kamu.</p></div>'}
 function more(){
- if(moreView==='trips')return tripsPage();
- var t=[['Sinkron',CFG.url?'Terhubung ke Sheet-mu':'Hubungkan Google Sheet','link'],['Impor kontak',RAW.length?RAW.length+' orang dari CRM lama':'Tempel dari CRM lama','users'],['Trips',tripSub(),'tasks'],['Word','Hari ini: Mazmur 23','book'],['PT AHU','Tutup buku Oktober','chart'],['Launcher','VNG, Zoom, CapCut, Canva','grid'],['Calendar','Minggu ini','clock'],['Templates','8 template WhatsApp','chat']];
- return '<div class="top"><div class="stats"></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button></div></div><div class="hrow"><h1>More</h1></div><span class="sample">Contoh data</span><div class="tiles2">'+t.map(function(x,i){return '<button class="tile2" '+(i===0?'data-sync="1"':i===1?'data-impor="1"':i===2?'data-trips="1"':'data-act="item"')+'><span class="ic sky">'+ic(x[2],17)+'</span><span><b>'+x[0]+'</b><small>'+x[1]+'</small></span></button>'}).join('')+'</div>'}
+ var t=[['Sinkron',CFG.url?'Terhubung ke Sheet-mu':'Hubungkan Google Sheet','link'],['Impor kontak',RAW.length?RAW.length+' orang dari CRM lama':'Tempel dari CRM lama','users'],['Content','Ide dan jadwal posting','video'],['Word','Hari ini: Mazmur 23','book'],['PT AHU','Tutup buku Oktober','chart'],['Launcher','VNG, Zoom, CapCut, Canva','grid'],['Calendar','Minggu ini','clock'],['Templates','8 template WhatsApp','chat']];
+ return '<div class="top"><div class="stats"></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button></div></div><div class="hrow"><h1>More</h1></div>'+(CFG.url?'':'<span class="sample">Contoh data</span>')+'<div class="tiles2">'+t.map(function(x,i){return '<button class="tile2" '+(i===0?'data-sync="1"':i===1?'data-impor="1"':i===2?'data-tab="content"':'data-act="item"')+'><span class="ic sky">'+ic(x[2],17)+'</span><span><b>'+x[0]+'</b><small>'+x[1]+'</small></span></button>'}).join('')+'</div>'}
 
 /* ---------- shell ---------- */
-var NAV=[['today','tasks','Today'],['people','users','People'],['team','chart','Team'],['content','video','Content'],['more','grid','More']];
+var NAV=[['today','tasks','Today'],['people','users','People'],['team','chart','Team'],['trips','plane','Trips'],['content','video','Content'],['more','grid','More']];
 function renderNav(){
  var late=lateTasks().length,n=$('#nav');
  if(wide()){
@@ -703,7 +698,7 @@ function render(keep){
  FR.classList.toggle('wide',wide());
  renderNav();
  var y=SC.scrollTop;
- $('#app').innerHTML={today:today,people:people_,team:team,content:content,more:more}[tab]();
+ $('#app').innerHTML={today:today,people:people_,team:team,trips:tripsPage,content:content,more:more}[tab]();
  $('#rail').hidden=true;
  if(tab==='people')renderPeopleBody();
  SC.scrollTop=keep?y:0}
@@ -727,7 +722,7 @@ function pullTrips(){if(!CFG.url)return;Promise.all([getTab('trips'),getTab('tri
  var n={trips:[],cards:[],past:[],upd:''};a[0].rows.forEach(function(r){var j=jparse(r.json,null);if(!j)return;if(r.kind==='trip'){j.id=r.id;n.trips.push(j)}else if(r.kind==='cards')n.cards=j;else if(r.kind==='past')n.past=j;else if(r.kind==='meta')n.upd=j.updated||''});
  n.trips.sort(function(x,y){return x.start<y.start?-1:1});TR=n;TK=a[1].rows.map(function(r){return r.id});
  try{localStorage.setItem('hq-trips',JSON.stringify(TR));localStorage.setItem('hq-tticks',JSON.stringify(TK))}catch(e){}
- if(!document.querySelector('.sheet-bg')&&tab==='more')render(true)}).catch(function(){})}
+ if(!document.querySelector('.sheet-bg')&&tab==='trips')render(true)}).catch(function(){})}
 function tripSub(){if(!CFG.url||!TR.trips.length)return 'Belum ada trip';var t=upTrips()[0];return t?t.name+', '+fmtShort(t.start)+' sampai '+fmtShort(t.end):'Tidak ada trip mendatang'}
 function tzDate(d){return new Date(d.length===10?d+'T00:00:00+07:00':d)}
 function upTrips(){var now=Date.now();return TR.trips.filter(function(t){return tzDate(t.end).getTime()+864e5>now})}
@@ -754,12 +749,14 @@ function tItem(i){if(i.type==='flight')return tFlight(i);if(i.type==='hotel')ret
  if(i.type==='gap')return '<div class="tp-note warn">'+i.html+'</div>';if(i.type==='plain')return '<div class="tp-note">'+i.html+'</div>';
  if(i.type==='fold')return '<details class="tp-fold"><summary>'+esc(i.title)+'</summary><p>'+i.html+'</p></details>';return ''}
 function pDue(p){var n=dUntil(p.due),on=p.opens?dUntil(p.opens.slice(0,10)):null;if(on!==null&&on>0)return {t:'buka '+fmtShort(p.opens),soon:false,n:on};return {t:n<0?'lewat':'sebelum '+fmtShort(p.due),soon:n<=3,n:n}}
-function tripBlock(t){var h='<div class="gp"><span class="gpb nod">'+ic('clock',16)+esc(t.name)+' · '+esc(t.codes||'')+'</span></div><p class="meta" style="margin:6px 4px">'+esc(t.sub||'')+'</p>';
+function tripHead(t){var n=dUntil(t.start),nt=Math.round((tzDate(t.end)-tzDate(t.start))/864e5),fl=0,left=0;(t.days||[]).forEach(function(d){(d.items||[]).forEach(function(i){if(i.type==='flight')fl++})});(t.prep||[]).forEach(function(p){if(TK.indexOf(t.id+':'+p.id)<0)left++});
+ return '<div class="card tp-hero"><small>'+esc(t.codes||'')+'</small><h2>'+esc(t.name)+'</h2><p>'+fmtShort(t.start)+' sampai '+fmtShort(t.end)+' · '+nt+' malam</p><div class="tp-pills"><span class="tp-pill ok">'+(n>0?'Berangkat '+relD(n):'Sedang berlangsung')+'</span><span class="tp-pill">'+fl+' penerbangan</span><span class="tp-pill'+(left?' warn':' ok')+'">'+(left?left+' persiapan belum':'Siap berangkat')+'</span></div></div>'}
+function tripBlock(t){var h=tripHead(t);
  if((t.prep||[]).length){h+='<div class="list">'+t.prep.map(function(p){var done=TK.indexOf(t.id+':'+p.id)>-1,du=pDue(p);return '<div class="task'+(done?' done':'')+'"><div class="tb" style="padding:12px 4px 12px 14px"><b>'+esc(p.label)+'</b><small class="'+(du.soon&&!done?'tp-soon':'')+'">'+du.t+'</small><small style="display:block;margin-top:3px">'+(p.detail||'')+'</small></div><button class="ck" data-ttick="'+esc(t.id+':'+p.id)+'" aria-label="Done"><i>'+ic('check',14)+'</i></button></div>'}).join('')+'</div>'}
  (t.days||[]).forEach(function(d){var dt=new Date(d.date+'T12:00:00Z');h+='<div class="tp-day"><div class="tp-date"><small>'+WD[dt.getUTCDay()].slice(0,3)+'</small><b>'+dt.getUTCDate()+'</b><small>'+MON[dt.getUTCMonth()]+'</small></div><div style="min-width:0">'+(d.items||[]).map(tItem).join('')+'</div></div>'});
  return h}
 function tripsPage(){
- var top='<div class="top"><div class="stats"><button class="chip" data-tback="1">'+ic('left',14)+'More</button></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button></div></div><div class="hrow"><h1>Trips</h1><small>'+esc(TR.upd||'')+'</small></div>';
+ var top='<div class="top"><div class="stats"><span style="color:var(--mute)">'+(TR.upd?'Diperbarui '+esc(TR.upd):'')+'</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button></div></div><div class="hrow"><h1>Trips</h1></div>';
  if(!CFG.url)return top+'<p class="note">Hubungkan Sheet dulu di Sinkron.</p>';
  var ups=upTrips(),h=top;
  if(!TR.trips.length)return h+'<div class="missed"><b>Belum ada trip</b><p class="meta" style="margin:6px 0 0">Bilang ke Claude: "update trip-ku". Claude baca Gmail dan mengisi tab trips di Sheet.</p></div>';
@@ -812,7 +809,7 @@ document.addEventListener('click',function(e){
  if(d.mode){setMode(d.mode);return}
  if(d.themeSet){setTheme(d.themeSet);return}
  if(d.tab){tab=d.tab;render();return}
- if(d.trips){moreView='trips';pullTrips();render();return}
+ if(d.trips){tab='trips';pullTrips();render();return}
  if(d.tback){moreView='';render();return}
  if(d.ttick){tickTrip(d.ttick);return}
  if(d.tcopy){try{navigator.clipboard.writeText(d.tcopy);toast('Disalin')}catch(e){toast(d.tcopy)}return}
@@ -848,14 +845,14 @@ document.addEventListener('click',function(e){
  if(d.act==='m3'){toast('Besok ada '+tasks.filter(function(x){return x.day===TD+1}).length+' hal');return}
  if(d.act==='editor'){toast('Membuka WhatsApp ke editor');return}
  if(d.act==='claude'){toast('Membuka Claude dengan brief dan aturan gaya');return}
- if(d.act==='menu'||d.act==='item'){toast('Di app asli: layar ini ada');return}
+ if(d.act==='menu'){var sm=sheet('<h3>Pengaturan</h3><div class="lbl">Tampilan</div><div class="chips"><button class="chip" data-theme-set="auto">Auto</button><button class="chip" data-theme-set="light">Light</button><button class="chip" data-theme-set="dark">Dark</button></div><div class="lbl">Sinkron</div><p class="meta" style="margin:0">'+(CFG.url?'Terhubung ke Sheet-mu.':'Belum terhubung.')+'</p><button class="btn alt" data-close="1" data-sync="1" style="margin-top:10px">'+(CFG.url?'Atur sinkron':'Hubungkan Google Sheet')+'</button>');sm.querySelectorAll('[data-theme-set]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.themeSet===theme)});return}
+ if(d.act==='item'){toast('Belum ada, segera');return}
 });
 if(window.ResizeObserver){new ResizeObserver(function(){fit()}).observe($('#stage'))}
 window.addEventListener('resize',fit);
 var saved='auto';try{saved=localStorage.getItem('hq-theme')||'auto'}catch(e){}
 setTheme(saved);
 mode='auto';document.querySelectorAll('[data-mode]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.mode===mode)});
-if(/preview/.test(location.search))$('#modes').hidden=false;
 if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0)navigator.serviceWorker.register("sw.js").catch(function(){});
 buildPeople();fit();render();
 pullTasks();

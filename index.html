@@ -837,15 +837,10 @@ function tickTrip(id){var i=TK.indexOf(id);if(i>-1)TK.splice(i,1);else TK.push(i
 
 /* ---------- preview mode and theme ---------- */
 var DEV={phone:[390,844],ipad:[1024,768],mac:[1280,800]};
-/* Tes tinggi layar iPhone: coba beberapa cara sampai bagian bawah penuh, lalu jadikan default */
-var VHM='auto';try{VHM=localStorage.getItem('hq-vh')||'auto'}catch(e){}
-function applyVh(m){var b=document.body.style,land=innerWidth>innerHeight,sh=land?Math.min(screen.width,screen.height):Math.max(screen.width,screen.height);
- b.position='';b.inset='';b.height='';
- if(m==='vh')b.height='100vh';else if(m==='lvh')b.height='100lvh';else if(m==='screen')b.height=sh+'px';else if(m==='fill')b.height='-webkit-fill-available';else if(m==='fixed'){b.position='fixed';b.inset='0'}}
-function vhInfo(){var p=document.createElement('div');p.style.cssText='position:absolute;visibility:hidden;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)';document.body.appendChild(p);var cs=getComputedStyle(p),t=cs.paddingTop,bt=cs.paddingBottom;p.remove();var vv=window.visualViewport;
- return 'inner '+innerHeight+' · outer '+outerHeight+' · screen '+screen.height+' · visual '+(vv?Math.round(vv.height):'-')+' · html '+document.documentElement.clientHeight+' · frame bawah '+Math.round(FR.getBoundingClientRect().bottom)+' · aman atas '+t+' bawah '+bt+(navigator.standalone?' · home screen':' · browser')}
+/* iPhone dibuka dari home screen: tinggi 100% lebih pendek dari layar, jadi pakai 100vh supaya penuh sampai bawah */
+function fixVh(){var h=navigator.standalone?'100vh':'';if(document.body.style.height!==h)document.body.style.height=h}
 function fit(){
- applyVh(VHM);
+ fixVh();
  var st=$('#stage'),fw=$('#fwrap');
  if(mode==='auto'){fw.style.width='100%';fw.style.height='100%';FR.style.width='100%';FR.style.height='100%';FR.style.transform='none';FR.classList.remove('dev')}
  else{var d=DEV[mode],aw=st.clientWidth-16,ah=st.clientHeight-8,s=Math.min(1,aw/d[0],ah/d[1]);
@@ -916,7 +911,7 @@ document.addEventListener('click',function(e){
  if(d.act==='m3'){toast('Besok ada '+tasks.filter(function(x){return x.day===TD+1}).length+' hal');return}
  if(d.act==='editor'){toast('Membuka WhatsApp ke editor');return}
  if(d.act==='claude'){toast('Membuka Claude dengan brief dan aturan gaya');return}
- if(d.act==='menu'){var sm=sheet('<h3>Pengaturan</h3><div class="lbl">Tinggi layar (tes)</div><div class="chips" style="flex-wrap:wrap">'+[['auto','Auto'],['vh','100vh'],['lvh','100lvh'],['screen','Layar'],['fill','Fill'],['fixed','Fixed']].map(function(x){return '<button class="chip" data-vh="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div><p class="meta" id="vhinfo" style="margin:0">'+esc(vhInfo())+'</p><div class="lbl">Tampilan</div><div class="chips"><button class="chip" data-theme-set="auto">Auto</button><button class="chip" data-theme-set="light">Light</button><button class="chip" data-theme-set="dark">Dark</button></div><div class="lbl">Sinkron</div><p class="meta" style="margin:0">'+(CFG.url?'Terhubung ke Sheet-mu.':'Belum terhubung.')+'</p><button class="btn alt" data-close="1" data-sync="1" style="margin-top:10px">'+(CFG.url?'Atur sinkron':'Hubungkan Google Sheet')+'</button>');sm.querySelectorAll('[data-vh]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.vh===VHM);b.onclick=function(){VHM=b.dataset.vh;try{localStorage.setItem('hq-vh',VHM)}catch(e){}applyVh(VHM);sm.querySelectorAll('[data-vh]').forEach(function(x){x.setAttribute('aria-pressed',x.dataset.vh===VHM)});sm.querySelector('#vhinfo').textContent=vhInfo()}});sm.querySelectorAll('[data-theme-set]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.themeSet===theme)});return}
+ if(d.act==='menu'){var sm=sheet('<h3>Pengaturan</h3><div class="lbl">Tampilan</div><div class="chips"><button class="chip" data-theme-set="auto">Auto</button><button class="chip" data-theme-set="light">Light</button><button class="chip" data-theme-set="dark">Dark</button></div><div class="lbl">Sinkron</div><p class="meta" style="margin:0">'+(CFG.url?'Terhubung ke Sheet-mu.':'Belum terhubung.')+'</p><button class="btn alt" data-close="1" data-sync="1" style="margin-top:10px">'+(CFG.url?'Atur sinkron':'Hubungkan Google Sheet')+'</button>');sm.querySelectorAll('[data-theme-set]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.themeSet===theme)});return}
  if(d.act==='item'){toast('Belum ada, segera');return}
 });
 if(window.ResizeObserver){new ResizeObserver(function(){fit()}).observe($('#stage'))}

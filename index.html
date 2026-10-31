@@ -599,11 +599,11 @@ function people_(){
 /* ---------- Team ---------- */
 var TDATA=[];try{TDATA=JSON.parse(localStorage.getItem('hq-team')||'[]')}catch(e){}
 function pullTeam(){if(!CFG.url)return;getTab('teamdata').then(function(j){if(j.error||!j.rows)return;TDATA=j.rows.filter(function(r){return r.type});try{localStorage.setItem('hq-team',JSON.stringify(TDATA))}catch(e){}if(!document.querySelector('.sheet-bg'))render(true)}).catch(function(){})}
-var MON=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+var MONID=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 function nf(s){s=String(s==null?'':s);if(s.indexOf(',')>-1&&s.indexOf('.')<0)s=s.replace(',','.');var n=Number(s);return isNaN(n)?0:n}
-function pLab(p){return MON[+p.slice(5,7)-1]+' '+p.slice(0,4)}
+function pLab(p){return MONID[+p.slice(5,7)-1]+' '+p.slice(0,4)}
 function pAdd(p,k){var m=+p.slice(0,4)*12+(+p.slice(5,7)-1)+k;return Math.floor(m/12)+'-'+('0'+(m%12+1)).slice(-2)}
-function dLab(s){var m=String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);return m?(+m[3])+' '+MON[+m[2]-1]+' '+m[1]:''}
+function dLab(s){var m=String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);return m?(+m[3])+' '+MONID[+m[2]-1]+' '+m[1]:''}
 function pct(x){return (x>=0?'+':'-')+Math.abs(x*100).toLocaleString('id-ID',{minimumFractionDigits:1,maximumFractionDigits:1})+'%'}
 function usd(n){return 'USD '+num(n)}
 function bigM(v){return v===0?'0':(v/1e6).toLocaleString('id-ID',{maximumFractionDigits:1})+'M'}
@@ -637,7 +637,7 @@ function growthChart(M){
  var X=function(k){return L+k/n*(W-L-R)},Y=function(c){return T+(1-Math.min(c,ym)/ym)*(H-T-B)};
  var s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Lifetime earning di dua jalur growth dan garis COE1">';
  for(var i=0;i<=4;i++){var gv=ym*i/4;s+='<line class="g" x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(gv)+'" y2="'+Y(gv)+'"/><text x="'+(L-6)+'" y="'+(Y(gv)+3)+'" text-anchor="end">'+bigM(gv)+'</text>'}
- for(var k=0;k<=n;k++){var per=pAdd(cp,k),lab=null;if(k===0)lab=MON[+per.slice(5,7)-1];else if(per.slice(5,7)==='01'||k===n)lab=MON[+per.slice(5,7)-1]+' '+per.slice(2,4);if(lab)s+='<text x="'+X(k)+'" y="'+(H-10)+'" text-anchor="'+(k===n?'end':'middle')+'">'+lab+'</text>'}
+ for(var k=0;k<=n;k++){var per=pAdd(cp,k),lab=null;if(k===0)lab=MONID[+per.slice(5,7)-1];else if(per.slice(5,7)==='01'||k===n)lab=MONID[+per.slice(5,7)-1]+' '+per.slice(2,4);if(lab)s+='<text x="'+X(k)+'" y="'+(H-10)+'" text-anchor="'+(k===n?'end':'middle')+'">'+lab+'</text>'}
  var path=function(a){var d='M'+X(0).toFixed(1)+' '+Y(life).toFixed(1);for(var k=1;k<=n;k++)d+=' L'+X(k).toFixed(1)+' '+Y(a[k-1].cum).toFixed(1);return d};
  s+='<path class="p" d="M'+L+' '+Y(coe1)+' L'+(W-R)+' '+Y(coe1)+'"/><text x="'+(L+4)+'" y="'+(Y(coe1)-5)+'">COE1 '+bigM(coe1)+'</text>';
  s+='<path class="m" d="'+path(mn)+'"/><path class="a" d="'+path(st)+'"/>';
@@ -666,7 +666,7 @@ function teamGrowth(){
  var gy=+((M.coe[0]&&M.coe[0].gy)||2028),yrs=Object.keys(M.paths.min.yr).filter(function(y){return +y<=gy}).sort();
  var c='<div class="card"><h2>Komisi per tahun</h2><p>Compounding dari komisi '+pLab(M.cur)+' ('+usd(M.c0)+'). Goal tahunan adalah jumlah proyeksi bulanannya.</p>';
  yrs.forEach(function(y){var m=M.paths.min.yr[y],s=M.paths.str.yr[y];
-  c+='<div class="tline"><b>'+(m.n<12?MON[12-m.n]+'-Des '+y:y)+'</b><small>Min '+usd(m.com)+' · Stretch '+usd(s.com)+'</small><small>TOV min '+num(m.tov)+' · stretch '+num(s.tov)+'</small></div>'});
+  c+='<div class="tline"><b>'+(m.n<12?MONID[12-m.n]+'-Des '+y:y)+'</b><small>Min '+usd(m.com)+' · Stretch '+usd(s.com)+'</small><small>TOV min '+num(m.tov)+' · stretch '+num(s.tov)+'</small></div>'});
  out.push(c+'</div>');
  out.push('<div class="card"><h2>Lifetime earning dan COE</h2><p>Mulai dari '+usd(M.life)+(M.lifeAt?' per '+dLab(M.lifeAt):'')+', ditambah komisi proyeksi tiap bulan.</p>'+growthChart(M)+'<div class="lg"><span><i></i>Stretch +'+gs+'%</span><span><i class="m"></i>Minimum +'+gm+'%</span><span><i class="d"></i>COE1</span></div></div>');
  var e='<div class="card"><h2>Kapan tiap COE tercapai</h2>';

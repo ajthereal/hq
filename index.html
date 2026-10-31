@@ -166,7 +166,7 @@ svg.chart{width:100%;height:auto;margin-top:8px}
 .chart .g{stroke:var(--line);stroke-width:1}.chart .a{stroke:var(--chart);stroke-width:2.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .chart .p{stroke:var(--mute);stroke-width:1.5;stroke-dasharray:5 5;fill:none}
 .lg{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--mute);margin-top:6px}
-.lg i{display:inline-block;width:16px;border-top:3px solid var(--chart);vertical-align:middle;margin-right:6px}.lg i.d{border-top:2px dashed var(--mute)}
+.lg i{display:inline-block;width:16px;border-top:3px solid var(--chart);vertical-align:middle;margin-right:6px}.lg i.d{border-top:2px dashed var(--mute)}.chart .m{stroke:var(--warn);stroke-width:2.5;fill:none;stroke-linecap:round;stroke-linejoin:round}.lg i.m{border-top-color:var(--warn)}
 .lrow{padding:10px 0;border-top:1px solid var(--line)}.lrow.first{border-top:0}
 .lt{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .lt b{font-weight:600;font-size:14px;min-width:0;overflow-wrap:anywhere}
@@ -334,7 +334,7 @@ try{var _t=JSON.parse(localStorage.getItem('hq-tasks2')||'null');if(_t&&(_t.leng
 function setSync(s){syncState=s;var d=document.getElementById('sdot');if(d){d.dataset.s=s;d.title={ok:'Tersimpan',err:'Belum tersinkron',idle:'Menyinkron',off:'Hanya di perangkat ini'}[s]}}
 var idSeq=0;function normTask(r){var dd=r.date?dn(r.date):null;return {id:Number(r.id)||(Date.now()+(idSeq++)),t:r.t,day:dd!=null?dd:(r.day===''||r.day==null)?null:Number(r.day),part:r.part||undefined,dur:r.dur||undefined,at:r.at||undefined,ic:r.ic||'spark',c:r.c||'sand',ev:r.ev||undefined,go:r.go||undefined,done:r.done==='true'||r.done===true}}
 function pushTasks(){if(!CFG.url)return;setSync('idle');fetch(CFG.url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({token:CFG.token,name:'tasks',rows:tasks})}).then(function(r){return r.json()}).then(function(j){setSync(j.ok?'ok':'err')}).catch(function(){setSync('err')})}
-function pullTasks(){if(!CFG.url)return;pullPeople();pullEvents();pullHabits();pullContent();pullTrips();fetch(CFG.url+'?token='+encodeURIComponent(CFG.token)+'&name=tasks').then(function(r){return r.json()}).then(function(j){if(j.error){setSync('err');return}tasks=j.rows.filter(function(r){return r.t}).map(normTask);try{localStorage.setItem('hq-tasks2',JSON.stringify(tasks))}catch(e){}setSync('ok');if(j.rows.some(function(r){return !r.id||r.date}))pushTasks();if(!document.querySelector('.sheet-bg'))render(true)}).catch(function(){setSync('err')})}
+function pullTasks(){if(!CFG.url)return;pullPeople();pullEvents();pullHabits();pullContent();pullTrips();pullTeam();fetch(CFG.url+'?token='+encodeURIComponent(CFG.token)+'&name=tasks').then(function(r){return r.json()}).then(function(j){if(j.error){setSync('err');return}tasks=j.rows.filter(function(r){return r.t}).map(normTask);try{localStorage.setItem('hq-tasks2',JSON.stringify(tasks))}catch(e){}setSync('ok');if(j.rows.some(function(r){return !r.id||r.date}))pushTasks();if(!document.querySelector('.sheet-bg'))render(true)}).catch(function(){setSync('err')})}
 var EV=[];try{EV=JSON.parse(localStorage.getItem('hq-events')||'[]')}catch(e){}
 function pullEvents(){if(!CFG.url)return;fetch(CFG.url+'?token='+encodeURIComponent(CFG.token)+'&name=events&from='+isoOf(TD-7)+'&to='+isoOf(TD+15)).then(function(r){return r.json()}).then(function(j){if(j.error||!j.rows)return;EV=j.rows;try{localStorage.setItem('hq-events',JSON.stringify(EV))}catch(e){}if(!document.querySelector('.sheet-bg'))render(true)}).catch(function(){})}
 function hm(s){return s.slice(11,13)+'.'+s.slice(14,16)}
@@ -416,8 +416,7 @@ var LEAD=[
  {n:'Yovita',v:1075,rcp:[1,0,0,1,0,0,1,0],sys:[2,4],bse:[1,2]},
  {n:'Jevon Lala',v:910,rcp:[0,0,0,1,0,0,0,0],sys:[1,4],bse:[0,2]}
 ];
-var TOV=[[2,.3],[5,4.1],[8,9.3],[10,12.1],[13,16.1],[14,18.3],[16,20.3],[21,26.1],[26,33.6]];
-var SNAP=26,GOAL=88000,TOVNOW=33595;
+var SNAP=26;
 function pacePersonal(){return 3000*SNAP/31}
 function status(m){var pc=pacePersonal();if(m.v>=3000)return 'reached';if(m.pan)return 'pan';if(m.v>=pc)return 'track';if(m.v>=pc*.6)return 'behind';return 'urgent'}
 var STL={reached:'Reached',track:'On track',behind:'Behind',urgent:'Urgent',pan:'Panelist'};
@@ -598,21 +597,84 @@ function people_(){
  return h+left}
 
 /* ---------- Team ---------- */
-function chart(){
- var W=340,H=196,L=36,R=12,T=12,B=28,X=function(d){return L+(d-1)/30*(W-L-R)},Y=function(v){return T+(1-v/88)*(H-T-B)};
- var s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="TOV vs linear pace">';
- [0,22,44,66,88].forEach(function(v){s+='<line class="g" x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(v)+'" y2="'+Y(v)+'"/><text x="'+(L-6)+'" y="'+(Y(v)+3)+'" text-anchor="end">'+v+'K</text>'});
- [1,8,15,22,31].forEach(function(d){s+='<text x="'+X(d)+'" y="'+(H-8)+'" text-anchor="middle">'+d+'</text>'});
- s+='<path class="p" d="M'+X(1)+' '+Y(88/31)+' L'+X(31)+' '+Y(88)+'"/>';
- s+='<path class="a" d="'+TOV.map(function(p,i){return (i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1)}).join(' ')+'"/>';
- var e=TOV[TOV.length-1];
- s+='<circle cx="'+X(e[0])+'" cy="'+Y(e[1])+'" r="5" fill="var(--chart)"/><text x="'+(X(e[0])-8)+'" y="'+(Y(e[1])-10)+'" text-anchor="end" style="fill:var(--ink);font-weight:600;font-size:11px">33,6K</text>';
- s+='<circle cx="'+X(26)+'" cy="'+Y(73.8)+'" r="4" fill="var(--bg)" stroke="var(--mute)" stroke-width="1.5"/><text x="'+(X(26)-8)+'" y="'+(Y(73.8)-8)+'" text-anchor="end">pace 73,8K</text>';
+var TDATA=[];try{TDATA=JSON.parse(localStorage.getItem('hq-team')||'[]')}catch(e){}
+function pullTeam(){if(!CFG.url)return;getTab('teamdata').then(function(j){if(j.error||!j.rows)return;TDATA=j.rows.filter(function(r){return r.type});try{localStorage.setItem('hq-team',JSON.stringify(TDATA))}catch(e){}if(!document.querySelector('.sheet-bg'))render(true)}).catch(function(){})}
+var MON=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+function nf(s){s=String(s==null?'':s);if(s.indexOf(',')>-1&&s.indexOf('.')<0)s=s.replace(',','.');var n=Number(s);return isNaN(n)?0:n}
+function pLab(p){return MON[+p.slice(5,7)-1]+' '+p.slice(0,4)}
+function pAdd(p,k){var m=+p.slice(0,4)*12+(+p.slice(5,7)-1)+k;return Math.floor(m/12)+'-'+('0'+(m%12+1)).slice(-2)}
+function dLab(s){var m=String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);return m?(+m[3])+' '+MON[+m[2]-1]+' '+m[1]:''}
+function pct(x){return (x>=0?'+':'-')+Math.abs(x*100).toLocaleString('id-ID',{minimumFractionDigits:1,maximumFractionDigits:1})+'%'}
+function usd(n){return 'USD '+num(n)}
+function bigM(v){return v===0?'0':(v/1e6).toLocaleString('id-ID',{maximumFractionDigits:1})+'M'}
+function teamModel(){
+ var cfg={},tov={};
+ TDATA.forEach(function(r){
+  if(r.type==='cfg')cfg[r.scope]={v:nf(r.value),p:r.period||'',n:r.note||''};
+  else if(r.type==='tov'&&r.period){(tov[r.period]=tov[r.period]||{})[r.scope]=nf(r.value);if(r.scope==='org'&&r.note)tov[r.period]._n=r.note}});
+ var ps=Object.keys(tov).filter(function(p){return tov[p].org!=null}).sort();
+ if(ps.length<2)return null;
+ var cur=ps[ps.length-1],prev=ps[ps.length-2],C=tov[cur],P=tov[prev];
+ var gm=cfg.growth_min?cfg.growth_min.v:.1,gs=cfg.growth_stretch?cfg.growth_stretch.v:.2,cr=cfg.comm_rate?cfg.comm_rate.v:.05;
+ var legs=Object.keys(C).filter(function(k){return k.indexOf('leg:')===0}).sort(function(a,b){return C[b]-C[a]});
+ var rows=['org','personal'].concat(legs).map(function(k){var c=C[k]||0,p=P[k]||0;
+  return {k:k,n:k==='org'?'Org total':k==='personal'?'Pribadi (PT AHU)':k.slice(4),c:c,p:p,g:p>0?c/p-1:null,min:p*(1+gm),str:p*(1+gs),nmin:c*(1+gm),nstr:c*(1+gs)}});
+ var base=C.org,c0=base*cr,life=cfg.lifetime?cfg.lifetime.v:0,paths={};
+ [['min',gm],['str',gs]].forEach(function(a){var cum=life,arr=[],yr={};
+  for(var k=1;k<=120;k++){var f=Math.pow(1+a[1],k),com=c0*f,per=pAdd(cur,k),y=per.slice(0,4);cum+=com;arr.push({p:per,com:com,cum:cum});
+   var o=yr[y]=yr[y]||{com:0,tov:0,n:0};o.com+=com;o.tov+=base*f;o.n++}
+  paths[a[0]]={arr:arr,yr:yr}});
+ var coe=[1,2,3,4,5].map(function(i){var t=cfg['coe'+i];if(!t)return null;var o={i:i,t:t.v,gy:(t.n.match(/\d{4}/)||[''])[0]};
+  ['min','str'].forEach(function(s){var a=paths[s].arr,hit=null;for(var j=0;j<a.length;j++)if(a[j].cum>=t.v){hit=a[j].p;break}o[s]=hit});return o}).filter(Boolean);
+ return {cur:cur,prev:prev,note:tov[cur]._n||'',rows:rows,gm:gm,gs:gs,cr:cr,c0:c0,life:life,lifeAt:cfg.lifetime?cfg.lifetime.p:'',paths:paths,coe:coe,coe1:cfg.coe1?cfg.coe1.v:1e6}}
+function gStat(r){if(r.g===null)return r.c>0?['pan','Baru']:['pan','Kosong'];if(r.c>=r.str)return ['reached','Stretch'];if(r.c>=r.min)return ['track','Minimum'];return r.g<0?['urgent','Turun']:['behind','Di bawah']}
+function growthChart(M){
+ var cp=M.cur,gy=+((M.coe[0]&&M.coe[0].gy)||2028),n=(gy-(+cp.slice(0,4)))*12+(12-(+cp.slice(5,7)));
+ if(n<3)n=24;
+ var mn=M.paths.min.arr,st=M.paths.str.arr,life=M.life,coe1=M.coe1;
+ var endS=st[n-1].cum,v=Math.max(coe1*1.1,Math.min(endS,coe1*3)),ym=Math.ceil(v/5e5)*5e5;
+ var W=340,H=214,L=40,R=14,T=16,B=30;
+ var X=function(k){return L+k/n*(W-L-R)},Y=function(c){return T+(1-Math.min(c,ym)/ym)*(H-T-B)};
+ var s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Lifetime earning di dua jalur growth dan garis COE1">';
+ for(var i=0;i<=4;i++){var gv=ym*i/4;s+='<line class="g" x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(gv)+'" y2="'+Y(gv)+'"/><text x="'+(L-6)+'" y="'+(Y(gv)+3)+'" text-anchor="end">'+bigM(gv)+'</text>'}
+ for(var k=0;k<=n;k++){var per=pAdd(cp,k),lab=null;if(k===0)lab=MON[+per.slice(5,7)-1];else if(per.slice(5,7)==='01'||k===n)lab=MON[+per.slice(5,7)-1]+' '+per.slice(2,4);if(lab)s+='<text x="'+X(k)+'" y="'+(H-10)+'" text-anchor="'+(k===n?'end':'middle')+'">'+lab+'</text>'}
+ var path=function(a){var d='M'+X(0).toFixed(1)+' '+Y(life).toFixed(1);for(var k=1;k<=n;k++)d+=' L'+X(k).toFixed(1)+' '+Y(a[k-1].cum).toFixed(1);return d};
+ s+='<path class="p" d="M'+L+' '+Y(coe1)+' L'+(W-R)+' '+Y(coe1)+'"/><text x="'+(L+4)+'" y="'+(Y(coe1)-5)+'">COE1 '+bigM(coe1)+'</text>';
+ s+='<path class="m" d="'+path(mn)+'"/><path class="a" d="'+path(st)+'"/>';
+ var hit=0;for(var j=0;j<n;j++)if(st[j].cum>=coe1){hit=j+1;break}
+ if(hit)s+='<circle cx="'+X(hit)+'" cy="'+Y(coe1)+'" r="4.5" fill="var(--chart)"/><text x="'+(X(hit)-7)+'" y="'+(Y(coe1)+15)+'" text-anchor="end" style="fill:var(--ink);font-weight:600;font-size:11px">'+pLab(st[hit-1].p)+'</text>';
+ s+='<text x="'+(W-R)+'" y="'+(Y(mn[n-1].cum)-7)+'" text-anchor="end" style="fill:var(--ink);font-weight:600;font-size:11px">'+bigM(mn[n-1].cum)+'</text>';
+ s+='<text x="'+(W-R)+'" y="'+(Y(endS)-7)+'" text-anchor="end" style="fill:var(--ink);font-weight:600;font-size:11px">'+bigM(endS)+'</text>';
  return s+'</svg>'}
-function teamTiles(){var reached=LEAD.filter(function(m){return m.v>=3000}).length;
- return '<div class="tiles"><div class="tile"><small>TOV October</small><b>'+num(TOVNOW)+'</b><span>dari '+num(GOAL)+' · 38%</span></div><div class="tile warn"><small>Pace</small><b>46%</b><span>dari garis lurus (73.806 di hari 26)</span></div><div class="tile"><small>Needed per day</small><b>10.881</b><span>untuk 5 hari terakhir</span></div><div class="tile"><small>Sudah 3.000</small><b>'+reached+' dari '+LEAD.length+'</b><span>key leaders</span></div></div>'}
-function teamChartCard(){return '<div class="card"><h2>Organization TOV vs goal pace</h2><p>TOV adalah jumlah GSV pribadi di genealogy. Goal Oktober 88.000.</p>'+chart()+'<div class="lg"><span><i></i>TOV aktual</span><span><i class="d"></i>Garis lurus ke goal</span></div></div>'}
-function teamFlag(){return '<div class="flag">Belum ada laporan 27 sampai 30 Oct. Kirim PDF Team Genealogy hari ini supaya angkanya terbaru.</div>'}
+function teamGrowth(){
+ var M=teamModel();
+ if(!M)return ['<div class="card"><h2>Belum ada data Team</h2><p>'+(CFG.url?'Isi tab teamdata di Sheet-mu dengan TOV dua bulan terakhir. Minta Claude mengisinya dari PDF Team Genealogy.':'Hubungkan Sheet dulu lewat menu Sinkron.')+'</p></div>'];
+ var o=M.rows[0],gm=Math.round(M.gm*100),gs=Math.round(M.gs*100),nx=pAdd(M.cur,1),out=[],below=o.c<o.min;
+ out.push('<div class="tiles"><div class="tile'+(below?' warn':'')+'"><small>TOV '+pLab(M.cur)+'</small><b>'+num(o.c)+'</b><span>'+(o.g===null?'':pct(o.g)+' dari '+pLab(M.prev))+'</span></div>'+
+  '<div class="tile"><small>Komisi estimasi</small><b>'+usd(o.c*M.cr)+'</b><span>'+Math.round(M.cr*100)+'% dari TOV</span></div>'+
+  '<div class="tile"><small>Minimum +'+gm+'%</small><b>'+num(o.min)+'</b><span>'+(o.c>=o.min?'sudah lewat':'kurang '+num(o.min-o.c))+'</span></div>'+
+  '<div class="tile"><small>Stretch +'+gs+'%</small><b>'+num(o.str)+'</b><span>'+(o.c>=o.str?'sudah lewat':'kurang '+num(o.str-o.c))+'</span></div></div>');
+ var a='<div class="card"><h2>'+pLab(M.cur)+' vs '+pLab(M.prev)+'</h2><p>Target bulan ini adalah bulan lalu ditambah '+gm+'% (minimum) dan '+gs+'% (stretch). Garis di bar adalah minimum.</p>';
+ M.rows.forEach(function(r,i){var s=gStat(r);
+  a+='<div class="lrow'+(i?'':' first')+'"><div class="lt"><b>'+esc(r.n)+'</b><span class="cs '+s[0]+'">'+s[1]+'</span></div>'+
+   (r.p>0?'<div class="trk '+(s[0]==='track'||s[0]==='pan'?'':s[0])+'"><b style="width:'+Math.min(100,r.c/r.str*100)+'%"></b><i style="left:calc('+((1+M.gm)/(1+M.gs)*100)+'% - 1px)"></i></div>':'<div style="height:6px"></div>')+
+   '<div class="meta">'+num(r.c)+' dari '+num(r.p)+(r.g===null?'':' · '+pct(r.g))+'</div>'+(r.p>0?'<div class="meta">Min '+num(r.min)+' · Stretch '+num(r.str)+'</div>':'')+'</div>'});
+ out.push(a+'</div>');
+ var b='<div class="card"><h2>Target '+pLab(nx)+'</h2><p>Dihitung dari angka '+pLab(M.cur)+'.</p>';
+ M.rows.forEach(function(r){b+='<div class="tline"><b>'+esc(r.n)+'</b><small>Min '+num(r.nmin)+' · Stretch '+num(r.nstr)+'</small></div>'});
+ out.push(b+'</div>');
+ var gy=+((M.coe[0]&&M.coe[0].gy)||2028),yrs=Object.keys(M.paths.min.yr).filter(function(y){return +y<=gy}).sort();
+ var c='<div class="card"><h2>Komisi per tahun</h2><p>Compounding dari komisi '+pLab(M.cur)+' ('+usd(M.c0)+'). Goal tahunan adalah jumlah proyeksi bulanannya.</p>';
+ yrs.forEach(function(y){var m=M.paths.min.yr[y],s=M.paths.str.yr[y];
+  c+='<div class="tline"><b>'+(m.n<12?MON[12-m.n]+'-Des '+y:y)+'</b><small>Min '+usd(m.com)+' · Stretch '+usd(s.com)+'</small><small>TOV min '+num(m.tov)+' · stretch '+num(s.tov)+'</small></div>'});
+ out.push(c+'</div>');
+ out.push('<div class="card"><h2>Lifetime earning dan COE</h2><p>Mulai dari '+usd(M.life)+(M.lifeAt?' per '+dLab(M.lifeAt):'')+', ditambah komisi proyeksi tiap bulan.</p>'+growthChart(M)+'<div class="lg"><span><i></i>Stretch +'+gs+'%</span><span><i class="m"></i>Minimum +'+gm+'%</span><span><i class="d"></i>COE1</span></div></div>');
+ var e='<div class="card"><h2>Kapan tiap COE tercapai</h2>';
+ M.coe.forEach(function(x,i){var chip='';
+  if(x.gy){var ok=function(p){return p&&p.slice(0,4)<=x.gy},cl=ok(x.min)?['reached','Di jalur']:ok(x.str)?['behind','Hanya stretch']:['urgent','Lewat goal'];chip='<span class="cs '+cl[0]+'">'+cl[1]+' '+x.gy+'</span>'}
+  e+='<div class="lrow'+(i?'':' first')+'"><div class="lt"><b>COE'+x.i+' · '+bigM(x.t)+'</b>'+chip+'</div><div class="meta">Stretch '+(x.str?pLab(x.str):'lewat 10 tahun')+' · Minimum '+(x.min?pLab(x.min):'lewat 10 tahun')+'</div></div>'});
+ out.push(e+'<p class="meta" style="margin-top:8px">Komisi dihitung '+Math.round(M.cr*100)+'% dari TOV, TOV dianggap setara USD.</p></div>');
+ return out}
 function teamVolume(){
  var pc=pacePersonal();
  var a='<div class="card"><h2>3.000 minimum</h2><p>Garis putih adalah posisi seharusnya hari ini ('+num(pc)+').</p>';
@@ -640,14 +702,15 @@ function reportText(){
  return 'Monitoring AJ · 31 Okt 2026\n\nTOV 33.595 / 88.000 (38%)\nPace 46%, perlu 10.881 per hari\n\nLucky Melita 2.150 / 6.000\n  Leg 12.190 / 25.000\nJeffrey Nova 2.480 / 5.000\n  Leg 9.178 / 18.000\nDaniel Evilin 5.379 / 6.000\nNancy Sonda 4.665 / 6.000\nAJ 1.610 / 3.000\n\nSudah 3.000: 2 dari 9\nPerlu dihubungi: Damai, Jevon Lala, Yovita'}
 function teamRep(){return '<div class="card"><h2>Laporan harian ke upline</h2><p>Disusun dari angka di atas, dengan format yang sama seperti sekarang.</p><pre id="wat">'+esc(reportText())+'</pre><button class="btn" data-copy="1">Copy dan buka WhatsApp</button></div>'}
 function team(){
- var tabs=['Overview','Volume','Meetings','Convention','Report'];
- var h='<div class="top"><div class="stats"><span style="color:var(--mute)">Snapshot 26 Oct</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button><button data-add="today" aria-label="Add">'+ic('plus',22)+'</button></div></div>';
- h+='<div class="hrow"><h1>Team</h1><small>Oct 2026</small></div><p class="sub">PT. Alvacy Hana Utama · 14 Team Genealogy PDF</p><span class="sample">Nama dari dashboard-mu, angka kecuali TOV adalah contoh</span>';
+ var tabs=['Overview','Volume','Meetings','Convention','Report'],M=teamModel();
+ var h='<div class="top"><div class="stats"><span style="color:var(--mute)">'+(M?pLab(M.cur)+(M.note?' · '+esc(M.note):''):'Team')+'</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button><button data-add="today" aria-label="Add">'+ic('plus',22)+'</button></div></div>';
+ h+='<div class="hrow"><h1>Team</h1><small>'+(M?pLab(M.cur):'')+'</small></div><p class="sub">PT. Alvacy Hana Utama</p>';
  if(wide()){
-  var v=teamVolume(),m=teamMeet(),c=teamConv();
-  return h+teamTiles()+teamFlag()+'<div class="tgrid">'+[teamChartCard(),v[0],v[1],m[0],m[1],c[0],c[1],c[2],c[3],teamRep()].join('')+'</div>'}
+  var g=teamGrowth(),v=teamVolume(),m=teamMeet(),c=teamConv();
+  return h+'<span class="sample">Overview dari Sheet-mu, tab lain masih contoh</span>'+g[0]+'<div class="tgrid">'+g.slice(1).concat([v[0],v[1],m[0],m[1],c[0],c[1],c[2],c[3],teamRep()]).join('')+'</div>'}
+ if(teamTab!=='Overview')h+='<span class="sample">Angka di tab ini masih contoh</span>';
  h+='<div class="seg">'+tabs.map(function(t){return '<button class="chip" data-tt="'+t+'" aria-pressed="'+(teamTab===t)+'">'+t+'</button>'}).join('')+'</div>';
- if(teamTab==='Overview')return h+teamTiles()+teamChartCard()+teamFlag();
+ if(teamTab==='Overview')return h+teamGrowth().join('');
  if(teamTab==='Volume')return h+teamVolume().join('');
  if(teamTab==='Meetings')return h+teamMeet().join('');
  if(teamTab==='Convention')return h+teamConv().join('');

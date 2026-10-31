@@ -838,12 +838,7 @@ function tickTrip(id){var i=TK.indexOf(id);if(i>-1)TK.splice(i,1);else TK.push(i
 
 /* ---------- preview mode and theme ---------- */
 var DEV={phone:[390,844],ipad:[1024,768],mac:[1280,800]};
-/* iOS standalone: innerHeight is shorter than the screen by the status bar height, which leaves a gap at the bottom. Use the real screen height there. */
-function fixVh(){var b=document.body,h='';
- if(navigator.standalone){var land=innerWidth>innerHeight,sh=land?Math.min(screen.width,screen.height):Math.max(screen.width,screen.height);if(sh>innerHeight)h=sh+'px'}
- if(b.style.height!==h)b.style.height=h}
 function fit(){
- fixVh();
  var st=$('#stage'),fw=$('#fwrap');
  if(mode==='auto'){fw.style.width='100%';fw.style.height='100%';FR.style.width='100%';FR.style.height='100%';FR.style.transform='none';FR.classList.remove('dev')}
  else{var d=DEV[mode],aw=st.clientWidth-16,ah=st.clientHeight-8,s=Math.min(1,aw/d[0],ah/d[1]);

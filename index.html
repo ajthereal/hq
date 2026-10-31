@@ -326,7 +326,14 @@ try{var _t=JSON.parse(localStorage.getItem('hq-tasks2')||'null');if(_t&&(_t.leng
 function setSync(s){syncState=s;var d=document.getElementById('sdot');if(d){d.dataset.s=s;d.title={ok:'Tersimpan',err:'Belum tersinkron',idle:'Menyinkron',off:'Hanya di perangkat ini'}[s]}}
 function normTask(r){return {id:Number(r.id),t:r.t,day:(r.day===''||r.day==null)?null:Number(r.day),part:r.part||undefined,dur:r.dur||undefined,at:r.at||undefined,ic:r.ic||'spark',c:r.c||'sand',ev:r.ev||undefined,go:r.go||undefined,done:r.done==='true'||r.done===true}}
 function pushTasks(){if(!CFG.url)return;setSync('idle');fetch(CFG.url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({token:CFG.token,name:'tasks',rows:tasks})}).then(function(r){return r.json()}).then(function(j){setSync(j.ok?'ok':'err')}).catch(function(){setSync('err')})}
-function pullTasks(){if(!CFG.url)return;pullPeople();fetch(CFG.url+'?token='+encodeURIComponent(CFG.token)+'&name=tasks').then(function(r){return r.json()}).then(function(j){if(j.error){setSync('err');return}tasks=j.rows.map(normTask);try{localStorage.setItem('hq-tasks2',JSON.stringify(tasks))}catch(e){}setSync('ok');if(!document.querySelector('.sheet-bg'))render(true)}).catch(function(){setSync('err')})}
+function pullTasks(){if(!CFG.url)return;pullPeople();pullEvents();fetch(CFG.url+'?token='+encodeURIComponent(CFG.token)+'&name=tasks').then(function(r){return r.json()}).then(function(j){if(j.error){setSync('err');return}tasks=j.rows.map(normTask);try{localStorage.setItem('hq-tasks2',JSON.stringify(tasks))}catch(e){}setSync('ok');if(!document.querySelector('.sheet-bg'))render(true)}).catch(function(){setSync('err')})}
+var EV=[];try{EV=JSON.parse(localStorage.getItem('hq-events')||'[]')}catch(e){}
+function pullEvents(){if(!CFG.url)return;fetch(CFG.url+'?token='+encodeURIComponent(CFG.token)+'&name=events&from='+isoOf(TD-7)+'&to='+isoOf(TD+15)).then(function(r){return r.json()}).then(function(j){if(j.error||!j.rows)return;EV=j.rows;try{localStorage.setItem('hq-events',JSON.stringify(EV))}catch(e){}if(!document.querySelector('.sheet-bg'))render(true)}).catch(function(){})}
+function hm(s){return s.slice(11,13)+'.'+s.slice(14,16)}
+function evOn(d){return EV.filter(function(x){return x.a==='1'?(dn(x.s)<=d&&d<=dn(x.e)):dn(x.s)===d}).sort(function(a,b){return a.s<b.s?-1:1})}
+function evTime(x){return x.a==='1'?'Seharian':hm(x.s)+' → '+hm(x.e)}
+function evPart(x){var h=+x.s.slice(11,13);return h<12?'morning':h<17?'afternoon':'evening'}
+function evRow(x){return '<div class="task"><div class="ic ev"></div><div class="tb"><b>'+esc(x.t)+'</b><small>'+ic('clock',12)+' '+evTime(x)+(x.loc?' · '+esc(x.loc.slice(0,40)):'')+'</small></div></div>'}
 var RAW=[];try{RAW=JSON.parse(localStorage.getItem('hq-people')||'[]')}catch(e){}
 var pushP=null;
 function dn(s){var m=String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?Math.floor(Date.UTC(+m[1],+m[2]-1,+m[3])/864e5):null}
@@ -446,7 +453,8 @@ function timeline(){
  tasks.filter(function(t){return t.day===TD}).forEach(function(t){
   if(t.ev){var p=t.ev.split(' → ');h+=blk(tmin(p[0]),tmin(p[1]),'ev'+(t.done?' done':''),t.t,t.ev)}
   else if(t.at){var s0=tmin(t.at);h+=blk(s0,s0+durMin(t.dur),t.c,t.t,t.at+' · '+t.dur)}});
- h+=blk(13*60,15*60,'free','Kosong 2 jam','Cocok untuk rekam script');
+ evOn(TD).forEach(function(x){if(x.a==='1')return;var a=tmin(hm(x.s)),b=dn(x.e)>dn(x.s)?24*60:tmin(hm(x.e));h+=blk(a,Math.max(b,a+30),'ev',x.t,evTime(x))});
+ if(!CFG.url)h+=blk(13*60,15*60,'free','Kosong 2 jam','Cocok untuk rekam script');
  h+='</div></div>';return h}
 function todayList(){
  var late=lateTasks(),nod=tasks.filter(function(t){return t.day===null&&!t.done}),h='';
@@ -457,14 +465,15 @@ function todayList(){
   var fu=people.filter(function(p){return p.next!==null&&p.next<=0&&p.st!=='Not Now'}).sort(function(a,b){return a.next-b.next});
   if(fu.length)h+=gp('fu','late','alert','Follow up',fu.length)+(collapsed.fu?'':'<div class="list">'+fu.slice(0,30).map(function(p){return '<div class="task"><div class="ic '+['sky','pink','lav','mint','peach','sand'][p.id%6]+'">'+ic('chat',17)+'</div><button class="tb" data-pdet="'+p.id+'"><b>'+esc(p.n)+'</b><small>'+(p.next<0?'Overdue '+(-p.next)+'d':'Today')+(p.note?' · '+esc(p.note.slice(0,60)):'')+'</small></button><span class="ck" style="color:var(--mute)">'+ic('right',16)+'</span></div>'}).join('')+(fu.length>30?'<p class="meta" style="margin:6px 4px">+'+(fu.length-30)+' lagi di People</p>':'')+'</div>');
   var bs=blindspots();
-  if(CFG.url&&!tasks.length)h+='<div class="missed"><b>Masih kosong</b><p class="meta" style="margin:6px 0 0">Tekan + untuk catat yang pertama. Yang tanpa tanggal masuk ke No date, jadi tidak ada yang hilang.</p></div>';
+  if(CFG.url&&!tasks.length&&!evOn(sel).length)h+='<div class="missed"><b>Masih kosong</b><p class="meta" style="margin:6px 0 0">Tekan + untuk catat yang pertama. Yang tanpa tanggal masuk ke No date, jadi tidak ada yang hilang.</p></div>';
   if(bs.length)h+=gp('bs','eve','eye','Blind spots',bs.length)+(collapsed.bs?'':'<div class="list">'+bs.map(bsRow).join('')+'</div>');
   h+=gp('nod','nod','inbox','No date',nod.length,'nod')+(collapsed.nod?'':'<div class="nodate">'+(nod.length?nod.map(taskRow).join(''):'<div class="empty">Kosong. Semua punya tanggal.</div>')+'</div>');
  }
- var day=tasks.filter(function(t){return t.day===sel});
- if(sel<TD&&!day.length)h+='<p class="note">Tidak ada catatan untuk hari ini.</p>';
- PARTS.forEach(function(p){var items=day.filter(function(t){return t.part===p[0]});if(!items.length&&sel!==TD)return;
-  h+=gp(p[0],PCLS[p[0]],p[2],p[1],items.length,p[0])+(collapsed[p[0]]?'':'<div class="list">'+items.map(taskRow).join('')+'</div>')});
+ var day=tasks.filter(function(t){return t.day===sel}),evs=evOn(sel),ad=evs.filter(function(x){return x.a==='1'});
+ if(ad.length)h+='<div class="list" style="margin-top:14px">'+ad.map(evRow).join('')+'</div>';
+ if(sel<TD&&!day.length&&!evs.length)h+='<p class="note">Tidak ada catatan untuk hari ini.</p>';
+ PARTS.forEach(function(p){var items=day.filter(function(t){return t.part===p[0]}),pe=evs.filter(function(x){return x.a!=='1'&&evPart(x)===p[0]});if(!items.length&&!pe.length&&sel!==TD)return;
+  h+=gp(p[0],PCLS[p[0]],p[2],p[1],items.length+pe.length,p[0])+(collapsed[p[0]]?'':'<div class="list">'+pe.map(evRow).join('')+items.map(taskRow).join('')+'</div>')});
  if(sel===TD){var tm=tasks.filter(function(t){return t.day===TD+1});
   h+=gp('tom','nod','clock','Tomorrow',tm.length)+(collapsed.tom?'':'<div class="list">'+tm.map(taskRow).join('')+'</div>');
   h+='<div class="missed"><b>Ada yang terlewat?</b><div class="chips" style="margin-top:10px"><button class="chip" data-act="m1">'+late.length+' overdue</button><button class="chip" data-act="m2">'+nod.length+' tanpa tanggal</button><button class="chip" data-act="m3">'+tm.length+' untuk besok</button></div><p class="meta" style="margin:8px 0 0">Jam 20.30 aku kirim pengingat kalau masih ada overdue atau tanpa tanggal.</p></div>'}

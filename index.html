@@ -324,9 +324,9 @@ var syncState=CFG.url?'idle':'off',pushT=null;
 if(CFG.url)tasks=[];
 try{var _t=JSON.parse(localStorage.getItem('hq-tasks2')||'null');if(_t&&(_t.length||CFG.url))tasks=_t}catch(e){}
 function setSync(s){syncState=s;var d=document.getElementById('sdot');if(d){d.dataset.s=s;d.title={ok:'Tersimpan',err:'Belum tersinkron',idle:'Menyinkron',off:'Hanya di perangkat ini'}[s]}}
-function normTask(r){return {id:Number(r.id),t:r.t,day:(r.day===''||r.day==null)?null:Number(r.day),part:r.part||undefined,dur:r.dur||undefined,at:r.at||undefined,ic:r.ic||'spark',c:r.c||'sand',ev:r.ev||undefined,go:r.go||undefined,done:r.done==='true'||r.done===true}}
+var idSeq=0;function normTask(r){var dd=r.date?dn(r.date):null;return {id:Number(r.id)||(Date.now()+(idSeq++)),t:r.t,day:dd!=null?dd:(r.day===''||r.day==null)?null:Number(r.day),part:r.part||undefined,dur:r.dur||undefined,at:r.at||undefined,ic:r.ic||'spark',c:r.c||'sand',ev:r.ev||undefined,go:r.go||undefined,done:r.done==='true'||r.done===true}}
 function pushTasks(){if(!CFG.url)return;setSync('idle');fetch(CFG.url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({token:CFG.token,name:'tasks',rows:tasks})}).then(function(r){return r.json()}).then(function(j){setSync(j.ok?'ok':'err')}).catch(function(){setSync('err')})}
-function pullTasks(){if(!CFG.url)return;pullPeople();pullEvents();fetch(CFG.url+'?token='+encodeURIComponent(CFG.token)+'&name=tasks').then(function(r){return r.json()}).then(function(j){if(j.error){setSync('err');return}tasks=j.rows.map(normTask);try{localStorage.setItem('hq-tasks2',JSON.stringify(tasks))}catch(e){}setSync('ok');if(!document.querySelector('.sheet-bg'))render(true)}).catch(function(){setSync('err')})}
+function pullTasks(){if(!CFG.url)return;pullPeople();pullEvents();pullHabits();fetch(CFG.url+'?token='+encodeURIComponent(CFG.token)+'&name=tasks').then(function(r){return r.json()}).then(function(j){if(j.error){setSync('err');return}tasks=j.rows.filter(function(r){return r.t}).map(normTask);try{localStorage.setItem('hq-tasks2',JSON.stringify(tasks))}catch(e){}setSync('ok');if(j.rows.some(function(r){return !r.id||r.date}))pushTasks();if(!document.querySelector('.sheet-bg'))render(true)}).catch(function(){setSync('err')})}
 var EV=[];try{EV=JSON.parse(localStorage.getItem('hq-events')||'[]')}catch(e){}
 function pullEvents(){if(!CFG.url)return;fetch(CFG.url+'?token='+encodeURIComponent(CFG.token)+'&name=events&from='+isoOf(TD-7)+'&to='+isoOf(TD+15)).then(function(r){return r.json()}).then(function(j){if(j.error||!j.rows)return;EV=j.rows;try{localStorage.setItem('hq-events',JSON.stringify(EV))}catch(e){}if(!document.querySelector('.sheet-bg'))render(true)}).catch(function(){})}
 function hm(s){return s.slice(11,13)+'.'+s.slice(14,16)}
@@ -334,6 +334,24 @@ function evOn(d){return EV.filter(function(x){return x.a==='1'?(dn(x.s)<=d&&d<=d
 function evTime(x){return x.a==='1'?'Seharian':hm(x.s)+' → '+hm(x.e)}
 function evPart(x){var h=+x.s.slice(11,13);return h<12?'morning':h<17?'afternoon':'evening'}
 function evRow(x){return '<div class="task"><div class="ic ev"></div><div class="tb"><b>'+esc(x.t)+'</b><small>'+ic('clock',12)+' '+evTime(x)+(x.loc?' · '+esc(x.loc.slice(0,40)):'')+'</small></div></div>'}
+var HAB=[],HLOG=[];try{HAB=JSON.parse(localStorage.getItem('hq-habits')||'[]');HLOG=JSON.parse(localStorage.getItem('hq-hlog')||'[]')}catch(e){}
+function getTab(n){return fetch(CFG.url+'?token='+encodeURIComponent(CFG.token)+'&name='+n).then(function(r){return r.json()})}
+function postTab(n,rows){return fetch(CFG.url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({token:CFG.token,name:n,rows:rows})}).then(function(r){return r.json()})}
+function pullHabits(){if(!CFG.url)return;Promise.all([getTab('habits'),getTab('habitlog')]).then(function(a){if(a[0].error||a[1].error)return;HAB=a[0].rows.filter(function(h){return h.name}).map(function(h,i){h.id=h.id||('h'+i+'-'+h.name.toLowerCase().replace(/[^a-z0-9]+/g,''));return h});HLOG=a[1].rows;try{localStorage.setItem('hq-habits',JSON.stringify(HAB));localStorage.setItem('hq-hlog',JSON.stringify(HLOG))}catch(e){}if(!document.querySelector('.sheet-bg'))render(true)}).catch(function(){})}
+var pushH=null;function saveHlog(){try{localStorage.setItem('hq-hlog',JSON.stringify(HLOG))}catch(e){}clearTimeout(pushH);pushH=setTimeout(function(){if(!CFG.url)return;setSync('idle');postTab('habitlog',HLOG).then(function(j){setSync(j.ok?'ok':'err')}).catch(function(){setSync('err')})},600)}
+function isoWd(d){return (d+3)%7+1}
+function habDue(h,d){var x=String(h.days||'').toLowerCase().replace(/\s/g,'');return !x||x==='daily'||x==='setiap hari'||x.split(',').indexOf(String(isoWd(d)))>-1}
+function habDone(h,d){var k=isoOf(d);return HLOG.some(function(l){return l.date===k&&l.hid===h.id})}
+function habStreak(h){var d=TD,n=0;if(!habDone(h,d))d--;for(var i=0;i<400;i++,d--){if(!habDue(h,d))continue;if(habDone(h,d))n++;else break}return n}
+function habRow(h,d){var dn_=habDone(h,d),st=habStreak(h),tm=(h.time||'').replace(':','.');
+ return '<div class="task'+(dn_?' done':'')+'"><div class="ic '+(h.c||'mint')+'">'+ic(h.ic||'spark',17)+'</div><div class="tb"><b>'+esc(h.name)+'</b><small>'+(tm?tm+' · ':'')+(st?ic('flame',12)+' '+st+' hari':'Mulai hari ini')+'</small></div><button class="ck" data-hab="'+esc(h.id)+'" data-hday="'+d+'" aria-label="Done"><i>'+ic('check',14)+'</i></button></div>'}
+function habBlock(d){var due=HAB.filter(function(h){return habDue(h,d)});if(!due.length||d>TD)return '';var n=due.filter(function(h){return habDone(h,d)}).length;
+ return gp('hab','morning','flame','Habits',n+'/'+due.length)+(collapsed.hab?'':'<div class="list">'+due.map(function(h){return habRow(h,d)}).join('')+'</div>')}
+function toggleHab(el){var id=el.dataset.hab,d=+el.dataset.hday,k=isoOf(d),row=el.closest('.task'),was=HLOG.some(function(l){return l.date===k&&l.hid===id});
+ if(was)HLOG=HLOG.filter(function(l){return !(l.date===k&&l.hid===id)});else HLOG.push({date:k,hid:id});saveHlog();
+ var all=HAB.filter(function(h){return habDue(h,d)}),left=all.filter(function(h){return !habDone(h,d)}).length;
+ if(!was){row.classList.add('done','pop');burst(row.querySelector('.ck i'),false);haptic(false);setTimeout(function(){render(true);if(!left){haptic(true);toast('Semua habit hari ini selesai');var f=$('#spk');f&&burst(f,true)}},REDUCE?0:560)}
+ else{row.classList.remove('done','pop');haptic(false);setTimeout(function(){render(true)},120)}}
 var RAW=[];try{RAW=JSON.parse(localStorage.getItem('hq-people')||'[]')}catch(e){}
 var pushP=null;
 function dn(s){var m=String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?Math.floor(Date.UTC(+m[1],+m[2]-1,+m[3])/864e5):null}
@@ -464,11 +482,13 @@ function todayList(){
   if(late.length)h+=gp('late','late','alert','Overdue',late.length)+(collapsed.late?'':'<div class="list">'+late.map(taskRow).join('')+'</div>');
   var fu=people.filter(function(p){return p.next!==null&&p.next<=0&&p.st!=='Not Now'}).sort(function(a,b){return a.next-b.next});
   if(fu.length)h+=gp('fu','late','alert','Follow up',fu.length)+(collapsed.fu?'':'<div class="list">'+fu.slice(0,30).map(function(p){return '<div class="task"><div class="ic '+['sky','pink','lav','mint','peach','sand'][p.id%6]+'">'+ic('chat',17)+'</div><button class="tb" data-pdet="'+p.id+'"><b>'+esc(p.n)+'</b><small>'+(p.next<0?'Overdue '+(-p.next)+'d':'Today')+(p.note?' · '+esc(p.note.slice(0,60)):'')+'</small></button><span class="ck" style="color:var(--mute)">'+ic('right',16)+'</span></div>'}).join('')+(fu.length>30?'<p class="meta" style="margin:6px 4px">+'+(fu.length-30)+' lagi di People</p>':'')+'</div>');
+  h+=habBlock(sel);
   var bs=blindspots();
   if(CFG.url&&!tasks.length&&!evOn(sel).length)h+='<div class="missed"><b>Masih kosong</b><p class="meta" style="margin:6px 0 0">Tekan + untuk catat yang pertama. Yang tanpa tanggal masuk ke No date, jadi tidak ada yang hilang.</p></div>';
   if(bs.length)h+=gp('bs','eve','eye','Blind spots',bs.length)+(collapsed.bs?'':'<div class="list">'+bs.map(bsRow).join('')+'</div>');
   h+=gp('nod','nod','inbox','No date',nod.length,'nod')+(collapsed.nod?'':'<div class="nodate">'+(nod.length?nod.map(taskRow).join(''):'<div class="empty">Kosong. Semua punya tanggal.</div>')+'</div>');
  }
+ if(sel!==TD)h+=habBlock(sel);
  var day=tasks.filter(function(t){return t.day===sel}),evs=evOn(sel),ad=evs.filter(function(x){return x.a==='1'});
  if(ad.length)h+='<div class="list" style="margin-top:14px">'+ad.map(evRow).join('')+'</div>';
  if(sel<TD&&!day.length&&!evs.length)h+='<p class="note">Tidak ada catatan untuk hari ini.</p>';
@@ -668,12 +688,15 @@ function render(keep){
  if(tab==='people')renderPeopleBody();
  SC.scrollTop=keep?y:0}
 function addSheet(part){
- var when=part==='nod'?'nod':'today',pt=(part==='afternoon'||part==='evening'||part==='morning')?part:'morning',du='15m';
- var s=sheet('<h3>Tambah</h3><input id="nt" type="text" placeholder="Apa yang mau dikerjakan?" autocomplete="off"><div class="lbl">Kapan</div><div class="chips"><button class="chip" data-w="today">Today</button><button class="chip" data-w="tom">Tomorrow</button><button class="chip" data-w="nod">No date</button></div><div class="lbl">Bagian hari</div><div class="chips"><button class="chip" data-p="morning">Morning</button><button class="chip" data-p="afternoon">Afternoon</button><button class="chip" data-p="evening">Evening</button></div><div class="lbl">Durasi</div><div class="chips"><button class="chip" data-d="5m">5m</button><button class="chip" data-d="15m">15m</button><button class="chip" data-d="30m">30m</button><button class="chip" data-d="1h">1h</button></div><p class="meta" style="margin:0">Tanpa tanggal pun tetap muncul di Today, di bagian No date.</p><button class="btn" id="sv" style="margin-top:0">Simpan</button>');
- function sync(){s.querySelectorAll('[data-w]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.w===when)});s.querySelectorAll('[data-p]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.p===pt)});s.querySelectorAll('[data-d]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.d===du)})}
+ var mt=false,when=part==='nod'?'nod':'today',pt=(part==='afternoon'||part==='evening'||part==='morning')?part:'morning',du='15m';
+ var s=sheet('<h3>Tambah</h3><input id="nt" type="text" placeholder="Apa yang mau dikerjakan?" autocomplete="off"><div class="lbl">Kapan</div><div class="chips"><button class="chip" data-w="today">Today</button><button class="chip" data-w="tom">Tomorrow</button><button class="chip" data-w="nod">No date</button></div><div class="lbl">Bagian hari</div><div class="chips"><button class="chip" data-p="morning">Morning</button><button class="chip" data-p="afternoon">Afternoon</button><button class="chip" data-p="evening">Evening</button></div><div class="lbl">Meeting</div><div class="chips"><button class="chip" data-m="1">Meeting, 2 jam di kalender</button></div><input id="mtm" type="time" value="10:00" style="display:none"><div class="lbl">Durasi</div><div class="chips"><button class="chip" data-d="5m">5m</button><button class="chip" data-d="15m">15m</button><button class="chip" data-d="30m">30m</button><button class="chip" data-d="1h">1h</button></div><p class="meta" style="margin:0">Tanpa tanggal pun tetap muncul di Today, di bagian No date.</p><button class="btn" id="sv" style="margin-top:0">Simpan</button>');
+ function sync(){s.querySelectorAll('[data-w]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.w===when)});s.querySelectorAll('[data-p]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.p===pt)});s.querySelectorAll('[data-d]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.d===du)});s.querySelectorAll('[data-m]').forEach(function(b){b.setAttribute('aria-pressed',mt)});s.querySelector('#mtm').style.display=mt?'block':'none'}
  sync();
- s.addEventListener('click',function(e){var b=e.target.closest('[data-w],[data-p],[data-d]');if(!b)return;if(b.dataset.w)when=b.dataset.w;if(b.dataset.p)pt=b.dataset.p;if(b.dataset.d)du=b.dataset.d;sync()});
+ s.addEventListener('click',function(e){var b=e.target.closest('[data-w],[data-p],[data-d],[data-m]');if(!b)return;if(b.dataset.m)mt=!mt;if(b.dataset.w)when=b.dataset.w;if(b.dataset.p)pt=b.dataset.p;if(b.dataset.d)du=b.dataset.d;sync()});
  s.querySelector('#sv').onclick=function(){var v=s.querySelector('#nt').value.trim();if(!v){toast('Tulis dulu isinya');return}
+  if(mt){if(!CFG.url){toast('Hubungkan Sheet dulu di Sinkron');return}if(when==='nod'){toast('Pilih Today atau Tomorrow untuk meeting');return}
+   var dd=when==='tom'?TD+1:TD,tm=s.querySelector('#mtm').value||'10:00';s.remove();toast('Menambah ke kalender...');
+   fetch(CFG.url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({token:CFG.token,action:'event',title:v,date:isoOf(dd),time:tm,minutes:120})}).then(function(r){return r.json()}).then(function(j){if(j.ok){toast('Masuk kalender, 2 jam');haptic(true);pullEvents()}else toast('Gagal menambah. Update Apps Script dulu')}).catch(function(){toast('Gagal menambah')});return}
   tasks.push({id:Date.now(),t:v,day:when==='nod'?null:when==='tom'?TD+1:TD,part:pt,dur:du,ic:'spark',c:'sand',done:false});saveTasks();s.remove();tab='today';sel=TD;render();haptic();toast(when==='nod'?'Masuk ke No date':'Masuk ke Today')}}
 
 /* ---------- preview mode and theme ---------- */
@@ -702,7 +725,7 @@ function completeTask(el){
   setTimeout(function(){render(true);if(wasLate>0&&lateTasks().length===0){haptic(true);toast('Overdue kosong. Tidak ada yang terlewat.');var f=$('#spk');f&&burst(f,true)}},REDUCE?0:760);
  }else{row.classList.remove('done','pop');haptic(false);setTimeout(function(){render(true)},120)}}
 document.addEventListener('click',function(e){
- var el=e.target.closest('[data-tab],[data-done],[data-fold],[data-day],[data-add],[data-open],[data-act],[data-pv],[data-ptoggle],[data-msg],[data-log],[data-next],[data-pdet],[data-jump],[data-tt],[data-copy],[data-wa],[data-addp],[data-goto],[data-ct],[data-cmove],[data-cv],[data-idea],[data-mode],[data-theme-set],[data-gotab],[data-sync],[data-impor]');if(!el)return;
+ var el=e.target.closest('[data-tab],[data-done],[data-fold],[data-day],[data-add],[data-open],[data-act],[data-pv],[data-ptoggle],[data-msg],[data-log],[data-next],[data-pdet],[data-jump],[data-tt],[data-copy],[data-wa],[data-addp],[data-goto],[data-ct],[data-cmove],[data-cv],[data-idea],[data-mode],[data-theme-set],[data-gotab],[data-sync],[data-impor],[data-hab]');if(!el)return;
  var d=el.dataset;
  if(d.impor){if(!CFG.url){toast('Hubungkan Sheet dulu di Sinkron');return}var ib=sheet('<h3>Impor kontak</h3><p class="meta" style="margin:0">Tempel hasil Salin dari halaman impor. Ini menggantikan daftar kontak di Sheet-mu.</p><textarea id="it" rows="5" style="width:100%;border-radius:16px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:10px;font:12px ui-monospace,monospace" aria-label="Data kontak"></textarea><button class="btn" id="ig" style="margin-top:0">Impor</button>');ib.querySelector('#ig').onclick=function(){try{var a=JSON.parse(ib.querySelector('#it').value);if(!Array.isArray(a)||!a.length||!a[0].name)throw 0;RAW=a.map(function(r){var o={};Object.keys(r).forEach(function(k){o[k]=r[k]==null?'':String(r[k])});return o});savePeople();ib.remove();tab='people';render();toast(RAW.length+' orang masuk ke People');haptic(true)}catch(e){toast('Teksnya belum cocok. Salin ulang dari halaman impor.')}};return}
  if(d.sync){var sb=sheet('<h3>Hubungkan Google Sheet</h3><p class="meta" style="margin:0">Tempel alamat Apps Script dan kode rahasia yang kamu buat. Keduanya hanya disimpan di perangkat ini.</p><input id="su" type="url" placeholder="Alamat Apps Script (https://script.google.com/...)" value="'+esc(CFG.url)+'" autocomplete="off"><input id="st" type="text" placeholder="Kode rahasia" value="'+esc(CFG.token)+'" autocomplete="off"><button class="btn" id="sg" style="margin-top:0">Hubungkan</button>'+(CFG.url?'<button class="btn alt" id="sx" style="margin-top:0">Putuskan</button>':''));
@@ -713,6 +736,7 @@ document.addEventListener('click',function(e){
  if(d.mode){setMode(d.mode);return}
  if(d.themeSet){setTheme(d.themeSet);return}
  if(d.tab){tab=d.tab;render();return}
+ if(d.hab){toggleHab(el);return}
  if(d.done){completeTask(el);return}
  if(d.fold){collapsed[d.fold]=!collapsed[d.fold];render(true);return}
  if(d.day){sel=+d.day;render();return}

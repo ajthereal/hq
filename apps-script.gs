@@ -45,13 +45,57 @@ function write_(n, rows) {
 function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 function doGet(e) {
   if (e.parameter.token !== TOKEN) return json_({ error: 'token' });
+  if (e.parameter.name === '_info') return json_({ rows: [{ id: ss_().getId(), url: ss_().getUrl() }] });
   if (e.parameter.name === 'events') return json_({ rows: events_(e.parameter.from, e.parameter.to) });
   return json_({ rows: read_(e.parameter.name) });
 }
 function doPost(e) {
   const b = JSON.parse(e.postData.contents);
   if (b.token !== TOKEN) return json_({ error: 'token' });
+  if (b.action === 'event') {
+    // Add a meeting: default 2 hours on your main calendar (AJ Jonathan).
+    const st = new Date(b.date + 'T' + b.time + ':00+07:00');
+    CalendarApp.getDefaultCalendar().createEvent(b.title, st, new Date(st.getTime() + (b.minutes || 120) * 60000));
+    return json_({ ok: true });
+  }
   const lock = LockService.getScriptLock(); lock.waitLock(10000);
   try { write_(b.name, b.rows); } finally { lock.releaseLock(); }
   return json_({ ok: true });
+}
+
+// Habit reminders: each habit with a time becomes a 15-minute event on a calendar called
+// "HQ Habits" for the next 7 days, with a popup at start time. Only changes are written.
+function syncHabits() {
+  const tz = 'Asia/Jakarta', f = (d, p) => Utilities.formatDate(d, tz, p);
+  const cals = CalendarApp.getCalendarsByName('HQ Habits');
+  const cal = cals.length ? cals[0] : CalendarApp.createCalendar('HQ Habits');
+  const habits = read_('habits').filter(h => h.name && h.time);
+  const want = {};
+  for (let i = 0; i < 7; i++) {
+    const day = new Date(Date.now() + i * 864e5), ds = f(day, 'yyyy-MM-dd'), wd = Number(f(day, 'u'));
+    habits.forEach(h => {
+      const x = String(h.days || '').toLowerCase().replace(/\s/g, '');
+      if (x && x !== 'daily' && x !== 'setiap hari' && x.split(',').indexOf(String(wd)) < 0) return;
+      const tm = String(h.time).replace('.', ':').padStart(5, '0');
+      want[(h.id || h.name) + '|' + ds] = { title: h.name, start: new Date(ds + 'T' + tm + ':00+07:00'), sig: h.name + '|' + tm };
+    });
+  }
+  const from = new Date(Date.now() - 864e5), to = new Date(Date.now() + 9 * 864e5), have = {};
+  cal.getEvents(from, to).forEach(ev => {
+    const k = ev.getTag('k'), sig = ev.getTag('sig');
+    if (k && want[k] && want[k].sig === sig && !have[k]) have[k] = true; else ev.deleteEvent();
+  });
+  Object.keys(want).forEach(k => {
+    if (have[k]) return;
+    const w = want[k];
+    if (w.start.getTime() < Date.now() - 36e5) return;
+    const ev = cal.createEvent(w.title, w.start, new Date(w.start.getTime() + 15 * 60000));
+    ev.setTag('k', k); ev.setTag('sig', w.sig); ev.removeAllReminders(); ev.addPopupReminder(0);
+  });
+}
+// Run once from the editor: asks for permissions and schedules syncHabits every hour.
+function setup() {
+  ScriptApp.getProjectTriggers().forEach(t => ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger('syncHabits').timeBased().everyHours(1).create();
+  syncHabits();
 }

@@ -36,7 +36,8 @@
   --eve-bg:#4B3F7D; --eve-ink:#EEEAFF; --nod-bg:#222226; --nod-ink:#E8E8EC; --blue:#1558B0; --ok:#7ED3A6; --ok-ink:#06251A;
   --warn:#F2A15F; --crit:#F0735A; --chart:#7FB3FF; --btn:#F5F4F1; --btn-ink:#09090A; --glass:rgba(32,32,36,.82); --shadow:rgba(0,0,0,.5); color-scheme:dark;}
 *{box-sizing:border-box}
-html,body{height:100%}
+html{height:100%;background:var(--bg)}
+body{position:fixed;inset:0}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.4;display:flex;flex-direction:column;overflow:hidden;
   padding-inline:max(0px,env(safe-area-inset-left,0px)) max(0px,env(safe-area-inset-right,0px))}
 button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0;-webkit-tap-highlight-color:transparent}

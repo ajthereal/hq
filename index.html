@@ -424,7 +424,7 @@ function cad(st){return CAD[st]||14}
 function pid(p){return p.raw&&p.raw.id?p.raw.id:p.n}
 function byPid(id){return people.filter(function(p){return pid(p)===id})[0]}
 function normPhone(s){var d=String(s||'').replace(/[^0-9]/g,'');if(d.indexOf('620')===0)d='62'+d.slice(3);else if(d.indexOf('0')===0)d='62'+d.slice(1);else if(d.indexOf('8')===0)d='62'+d;return d}
-function sparkN(){return 142+tasks.filter(function(x){return x.done}).length+TLOG.filter(function(x){return x.date===isoOf(TD)}).length}
+function sparkN(){return TLOG.filter(function(x){return x.date===isoOf(TD)}).length}
 function toastU(m,fn){var d=document.createElement('div');d.className='toast';d.appendChild(document.createTextNode(m));var b=document.createElement('button');b.className='un';b.textContent='Undo';d.appendChild(b);FR.appendChild(d);var t=setTimeout(function(){d.remove()},5200);b.onclick=function(){clearTimeout(t);d.remove();fn();haptic()}}
 function contactDone(p,o){o=o||{};var r=p.raw;if(!r){toast('Hubungkan Sheet dulu, supaya kontaknya tersimpan');return null}
  var prev={lc:r.lastContact||'',nd:r.nextDate||''},nd=dn(r.nextDate);
@@ -435,7 +435,7 @@ function contactDone(p,o){o=o||{};var r=p.raw;if(!r){toast('Hubungkan Sheet dulu
  return {r:r,prev:prev,e:e,next:dn(r.nextDate)-TD}}
 function undoContact(u){u.r.lastContact=u.prev.lc;u.r.nextDate=u.prev.nd;TLOG=TLOG.filter(function(x){return x.id!==u.e.id});savePeople();saveX('touchlog')}
 function doFollow(el){var p=people[el.dataset.fudone],row=el.closest('.task');if(!p)return;
- var u=contactDone(p,{type:'Follow-up'});if(!u)return;
+ var u=contactDone(p,{type:el.dataset.ftype||'Follow-up'});if(!u)return;
  row.classList.add('done','pop');burst(row.querySelector('.ck i'),false);haptic(false);
  var sp=$('#spk b');if(sp){sp.textContent=sparkN();sp.parentNode.classList.remove('bump');void sp.offsetWidth;sp.parentNode.classList.add('bump')}
  setTimeout(function(){row.classList.add('leave')},REDUCE?0:380);
@@ -451,7 +451,7 @@ function openWA(p,o){o=o||{};
  return true}
 function listDone(lt,mt,pt){if(!pt.raw){toast('Hubungkan Sheet dulu, supaya tersimpan');return null}
  mt.done='1';mt.doneDate=isoOf(TD);mt.tid='';mt.plc='';mt.pnd='';var u=null;
- if(pt.last!==0){u=contactDone(pt,{type:'List: '+lt.name});if(u){mt.tid=u.e.id;mt.plc=u.prev.lc;mt.pnd=u.prev.nd}}
+ if(pt.last!==0){u=contactDone(pt,{type:(isEv(lt)?'Invite: ':'List: ')+lt.name});if(u){mt.tid=u.e.id;mt.plc=u.prev.lc;mt.pnd=u.prev.nd}}
  if(isEv(lt)&&(!mt.status||mt.status==='Belum'))mt.status='Invited';
  saveX('listmembers');return u||{none:1}}
 function logWA(p,w){
@@ -519,7 +519,10 @@ var AVC=['#A9D7EA','#F7D3E8','#D3D6F7','#BDE8D1','#FBD7B8','#EADFB5'];
 function avc(p){return AVC[p.id%AVC.length]}
 var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function dueTxt(n){if(n===null)return '';if(n<0)return 'Overdue '+(-n)+'d';if(n===0)return 'Today';if(n===1)return 'Tomorrow';if(n<7)return WD[wdOf(TD+n)].slice(0,3);var d=dateOf(TD+n);return d.getUTCDate()+' '+MON[d.getUTCMonth()]}
-function msgFor(p){var f=p.n.split(' ')[0];
+function msgFor(p,kind){var f=p.n.split(' ')[0];
+ if(kind==='bd')return 'Selamat ulang tahun '+f+'! Semoga sehat terus dan makin semangat. Aku doain yang terbaik buat kamu tahun ini.';
+ if(kind==='reo')return 'Hai '+f+', stok kamu kayaknya mulai tipis ya. Mau aku siapin order bulan ini sekalian? Aku juga mau lihat progres kamu.';
+ if(kind&&kind.indexOf('chk')===0)return 'Hai '+f+', hari ke-'+kind.slice(3)+' nih. Berat badan, body age sama lean mass hari ini berapa? Kirim fotonya ya, aku catat.';
  if(p.st==='TRME Active')return 'Hai '+f+', gimana hari ini? Porsi makan dan tidurnya aman? Kirim foto piringmu ya, aku lihat.';
  if(p.st==='Closing')return 'Hai '+f+', ini rincian yang kemarin kita bahas. Mau aku bantu mulai hari ini?';
  if(p.st==='Customer')return 'Hai '+f+', aku mau lihat progres kamu bulan ini. Ada waktu 10 menit buat ngobrol?';
@@ -577,12 +580,61 @@ function weekStrip(){
  for(var d=s0;d<s0+7;d++){var open=d<TD&&tasks.some(function(t){return t.day===d&&!t.done});
   h+='<button class="day'+(d===TD?' now':'')+'" data-day="'+d+'" aria-pressed="'+(sel===d)+'"><b>'+WD[wdOf(d)][0]+'</b><span>'+dateOf(d).getUTCDate()+'</span>'+(open?'<i></i>':'')+'</button>'}
  return h+'</div>'}
+/* ---- growth: numbers, next best action, reorder, birthdays, activity ---- */
+function bdParse(x){x=String(x||'').trim().toLowerCase();if(!x)return null;var m,d,mo,mn={jan:1,feb:2,mar:3,apr:4,mei:5,may:5,jun:6,jul:7,agu:8,aug:8,ags:8,sep:9,okt:10,oct:10,nov:11,des:12,dec:12};
+ if((m=/^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(x))){mo=+m[2];d=+m[3]}
+ else if((m=/^(\d{1,2})[\/\-.](\d{1,2})([\/\-.]\d{2,4})?$/.exec(x))){d=+m[1];mo=+m[2]}
+ else{m=/(\d{1,2})\s*([a-z]{3})/.exec(x);if(!m||!mn[m[2]])return null;d=+m[1];mo=mn[m[2]]}
+ if(!(mo>=1&&mo<=12&&d>=1&&d<=31))return null;return {m:mo,d:d}}
+function bdIn(p){var b=p.raw&&bdParse(p.raw.birthday);if(!b)return null;var y=+isoOf(TD).slice(0,4),f=function(yy){return dn(yy+'-'+('0'+b.m).slice(-2)+'-'+('0'+b.d).slice(-2))},c=f(y);if(c==null)return null;if(c<TD)c=f(y+1);return c==null?null:c-TD}
+function supDue(p){var b=null,id=pid(p);PUR.forEach(function(x){if(x.pid===id&&(!b||x.date>b.date))b=x});if(!b)return null;var d0=dn(b.date);if(d0==null)return null;return d0+(Number(b.days)||30*(Number(b.qty)||1))}
+function reoRel(p){if(p.st!=='Customer'&&p.st!=='TRME Active')return null;var due=supDue(p);if(due==null){if(p.ord==null)return null;due=TD-p.ord+30}return due-TD}
+function reo(p){var r=reoRel(p);return (r!==null&&r<=7&&r>=-365)?{rel:r}:null}
+function reorderList(){return people.filter(function(p){return !(p.next!==null&&p.next<=0)&&p.last!==0}).map(function(p){var r=reo(p);return r?{p:p,r:r}:null}).filter(Boolean).sort(function(a,b){return a.r.rel-b.r.rel})}
+function birthdayList(){return people.filter(function(p){return p.last!==0}).map(function(p){var d=bdIn(p);return d!==null&&d<=3?{p:p,d:d}:null}).filter(Boolean).sort(function(a,b){return a.d-b.d})}
+function chkDue(p){return null}
+function scoreP(p){if(p.st==='Not Now'||p.last===0)return null;var W={'Closing':50,'Prospect':35,'Warming Partner':30,'TRME Active':28,'Partner':20,'Customer':15,'Namelist':10,'Relationship':5},sc=W[p.st]||0,why=[],kind='',ft='Follow-up';
+ if(p.next!==null&&p.next<=0){sc+=20+Math.min(-p.next,14)*2;why.push(p.next<0?'overdue '+(-p.next)+' hari':'follow-up hari ini')}
+ var ck=chkDue(p);if(ck){sc+=35;why.push('check-in hari '+ck.day);kind='chk'+ck.day;ft='Check-in hari '+ck.day}
+ var bd=bdIn(p);if(bd!==null&&bd<=2){sc+=30;why.push(bd===0?'ulang tahun hari ini':'ulang tahun '+(bd===1?'besok':bd+' hari lagi'));if(!kind){kind='bd';ft='Ulang tahun'}}
+ var r=reo(p);if(r){sc+=25;why.push(r.rel<=0?'waktunya reorder':'reorder '+dueTxt(r.rel).toLowerCase());if(!kind){kind='reo';ft='Reorder'}}
+ if(p.raw&&/^(1|true|yes|ya|y|hot)$/i.test(String(p.raw.hot||'').trim())){sc+=25;why.push('hot')}
+ if(!why.length)return null;return {p:p,sc:sc,why:why,kind:kind,ft:ft}}
+function topThree(){return people.map(scoreP).filter(Boolean).sort(function(a,b){return b.sc-a.sc}).slice(0,3)}
+function avIc(p){return ['sky','pink','lav','mint','peach','sand'][p.id%6]}
+function actRow(p,sub,kind,ft){return '<div class="task"><div class="ic '+avIc(p)+'">'+ic('chat',17)+'</div><button class="tb" data-pdet="'+p.id+'"><b>'+esc(p.n)+'</b><small>'+esc(sub)+'</small></button><button class="rb" data-fwa="'+p.id+'" data-fk="'+esc(kind||'')+'" data-ft="'+esc(ft||'Follow-up')+'" aria-label="Buka WhatsApp">'+ic('chat',16)+'</button><button class="ck" data-fudone="'+p.id+'" data-ftype="'+esc(ft||'Follow-up')+'" aria-label="Sudah dihubungi"><i>'+ic('check',14)+'</i></button></div>'}
+function topCard(){if(!CFG.url)return '';var t=topThree();if(!t.length)return '';
+ return gp('top3','late','spark','3 orang paling penting hari ini',t.length)+(collapsed.top3?'':'<div class="list">'+t.map(function(x){return actRow(x.p,x.p.st+' · '+x.why.join(' · '),x.kind,x.ft)}).join('')+'</div>')}
+function reorderCard(){if(!CFG.url)return '';var L=reorderList();if(!L.length)return '';
+ return gp('reo','nod','chat','Reorder',L.length)+(collapsed.reo?'':'<div class="list">'+L.slice(0,10).map(function(o){return actRow(o.p,(o.r.rel<0?'Lewat '+(-o.r.rel)+' hari dari jadwal reorder':'Reorder '+dueTxt(o.r.rel).toLowerCase())+(o.p.ord!=null?' · order terakhir '+o.p.ord+' hari lalu':''),'reo','Reorder')}).join('')+(L.length>10?'<p class="meta" style="margin:6px 4px">+'+(L.length-10)+' lagi di People, Customers</p>':'')+'</div>')}
+function bdCard(){if(!CFG.url)return '';var L=birthdayList();if(!L.length)return '';
+ return gp('bday','nod','spark','Ulang tahun',L.length)+(collapsed.bday?'':'<div class="list">'+L.map(function(o){return actRow(o.p,o.d===0?'Hari ini':o.d===1?'Besok':o.d+' hari lagi','bd','Ulang tahun')}).join('')+'</div>')}
+function numStrip(){if(!CFG.url)return '';var P=null,M=null;try{P=pvData();M=teamModel()}catch(e){}
+ if(!P||!M)return '<div class="missed" data-goto="team:Volume"><b>Angka bulan ini belum ada</b><p class="meta" style="margin:6px 0 0">Kirim file genealogy terbaru ke Claude, nanti personal PV dan org volume muncul di sini.</p></div>';
+ var pp=pvPace(P),me=LEAD.filter(function(m){return m.n==='AJ'})[0],mine=me?me.v:0,org=M.rows[0].c,goal=(P.tree.orgGoal||0)*1000;
+ var y=+P.p.slice(0,4),mo=+P.p.slice(5,7),dim=new Date(y,mo,0).getDate(),left=pp.live?Math.max(1,dim-(+isoOf(TD).slice(8,10))+1):0;
+ var need=function(v,g){return pp.live&&g>v?' · perlu '+num((g-v)/left)+' per hari':(g&&v>=g?' · tercapai':'')};
+ var behind=LEAD.filter(function(m){return !m.pan&&m.n!=='AJ'&&['behind','urgent'].indexOf(pvSt(m,pp.pc))>-1}).length;
+ var age=dn(P.hi)!=null?TD-dn(P.hi):0;
+ var h='<div class="card" data-goto="team:Volume" role="button" style="margin-top:0;cursor:pointer"><h2>Angka bulan ini</h2>';
+ h+='<div class="lt" style="margin-top:8px"><b>Personal</b><span class="meta">'+num(mine)+' / 3.000'+need(mine,3000)+'</span></div><div class="trk"><b style="width:'+Math.min(100,mine/3000*100)+'%"></b></div>';
+ if(goal)h+='<div class="lt" style="margin-top:10px"><b>Org</b><span class="meta">'+num(org)+' / '+num(goal)+need(org,goal)+'</span></div><div class="trk"><b style="width:'+Math.min(100,org/goal*100)+'%"></b></div>';
+ h+='<div class="meta" style="margin-top:8px">'+(behind?behind+' leader di bawah pace · ':'')+'Data per '+dLab(P.hi)+(pp.live?'':' (bulan baru belum ada)')+(age>=2?'. Sudah '+age+' hari, kirim PDF genealogy terbaru':'')+'</div></div>';
+ return h}
+function tgt(k,def){var r=TDATA.filter(function(x){return x.type==='cfg'&&x.scope===k})[0],v=r?nf(r.value):0;return v>0?v:def}
+function isInv(x){return String(x.type||'').indexOf('Invite')===0}
+function dayAct(t){var L=TLOG.filter(function(x){return x.date===t}),inv=L.filter(isInv).length,names=people.filter(function(p){return p.raw&&p.raw.created===t}).length;return {names:names,inv:inv,fu:L.length-inv,all:L.length}}
+function streakN(){var set={};TLOG.forEach(function(x){set[x.date]=1});var d=TD,n=0;if(!set[isoOf(d)])d=TD-1;while(set[isoOf(d)]&&n<400){n++;d--}return n}
+function scoreSheet(){var a=dayAct(isoOf(TD)),T={names:tgt('target_names',5),fu:tgt('target_follow',10),inv:tgt('target_invite',3)};
+ var row=function(l,v,t){return '<div class="lrow first" style="border-top:0"><div class="lt"><b>'+l+'</b><span class="meta">'+v+' / '+t+'</span></div><div class="trk"><b style="width:'+Math.min(100,v/t*100)+'%"></b></div></div>'};
+ var wk='';for(var i=6;i>=0;i--){var dd=isoOf(TD-i),c=dayAct(dd).all;wk+='<span style="flex:1;text-align:center"><i style="display:block;margin:0 auto 4px;width:60%;border-radius:4px;background:var(--chart);height:'+(4+Math.min(c,20)*3)+'px"></i><small class="meta">'+WD[wdOf(TD-i)][0]+' '+c+'</small></span>'}
+ sheet('<h3>Aktivitas hari ini</h3><p class="meta" style="margin:0">Streak '+streakN()+' hari berturut-turut ada kontak tercatat</p>'+row('Nama baru',a.names,T.names)+row('Follow-up',a.fu,T.fu)+row('Invite',a.inv,T.inv)+'<div class="lbl">7 hari terakhir</div><div style="display:flex;align-items:flex-end;gap:6px;height:90px">'+wk+'</div><p class="meta" style="margin:10px 0 0">Target bisa diubah di Sheet, tab teamdata: baris type cfg dengan scope target_names, target_follow, target_invite.</p><button class="btn alt" data-close="1">Tutup</button>')}
 function noNext(p){return p.next===null&&['Prospect','Closing','Warming Partner','TRME Active','Partner'].indexOf(p.st)>-1}
 function blindspots(){
- var nNo=people.filter(noNext).length,reo=people.filter(function(p){return p.ord!=null&&p.ord>=25&&p.ord<=120&&(p.st==='Customer'||p.st==='TRME Active')}).length,out=[];
+ var nNo=people.filter(noNext).length,reoN=reorderList().length,out=[];
  if(!CFG.url){out.push({t:'Volume pribadimu 1.610 dari 3.000',d:'Di bawah minimum, masih jauh dari pace',go:'team:Volume',c:'sand',i:'chart'},{t:'Data Team berhenti di 26 Oct',d:'Belum ada PDF genealogy 27 sampai 30 Oct',go:'team:Overview',c:'peach',i:'monitor'})}
  if(nNo)out.push({t:nNo+' orang di pipeline tanpa follow-up',d:'Tidak muncul di Today karena tidak punya tanggal',go:'people:No next step',c:'lav',i:'users'});
- if(reo)out.push({t:reo+' customer masuk jendela reorder',d:'Order terakhir 25 sampai 120 hari lalu, saatnya tanya hasil',go:'people:Customers',c:'mint',i:'chat'});
+ if(reoN)out.push({t:reoN+' customer waktunya reorder',d:'Berdasarkan order terakhir dan stok yang kamu catat',go:'people:Customers',c:'mint',i:'chat'});
  if(!CFG.url)out.push({t:'Cek siapa yang jarang hadir RCP',d:'Lihat attendance tim dan volume di bawah pace',go:'team:Meetings',c:'sky',i:'eye'});
  return out}
 function bsRow(b){return '<div class="task"><div class="ic '+b.c+'">'+ic(b.i,17)+'</div><button class="tb" data-goto="'+b.go+'"><b>'+esc(b.t)+'</b><small>'+esc(b.d)+'</small></button><span class="ck" style="color:var(--mute)">'+ic('right',16)+'</span></div>'}
@@ -603,9 +655,11 @@ function dayHead(){var dt=dateOf(sel);
 function dayBody(D){
  var late=lateTasks(),nod=tasks.filter(function(t){return t.day===null&&!t.done}),h='';
  if(D===TD){
+  h+=numStrip()+topCard();
   if(late.length)h+=gp('late','late','alert','Overdue',late.length)+(collapsed.late?'':'<div class="list">'+late.map(taskRow).join('')+'</div>');
   var fu=people.filter(function(p){return p.next!==null&&p.next<=0&&p.st!=='Not Now'}).sort(function(a,b){return a.next-b.next});
   if(fu.length)h+=gp('fu','late','alert','Follow up',fu.length)+(collapsed.fu?'':'<div class="list">'+fu.slice(0,30).map(function(p){return '<div class="task"><div class="ic '+['sky','pink','lav','mint','peach','sand'][p.id%6]+'">'+ic('chat',17)+'</div><button class="tb" data-pdet="'+p.id+'"><b>'+esc(p.n)+'</b><small>'+(p.next<0?'Overdue '+(-p.next)+'d':'Today')+(p.note?' · '+esc(p.note.slice(0,60)):'')+'</small></button><button class="rb" data-fwa="'+p.id+'" aria-label="Buka WhatsApp">'+ic('chat',16)+'</button><button class="ck" data-fudone="'+p.id+'" aria-label="Sudah dihubungi"><i>'+ic('check',14)+'</i></button></div>'}).join('')+(fu.length>30?'<p class="meta" style="margin:6px 4px">+'+(fu.length-30)+' lagi di People</p>':'')+'</div>');
+  h+=reorderCard()+bdCard();
   h+=habBlock(D);
   var tp=[];upTrips().forEach(function(t){(t.prep||[]).forEach(function(p){if(TK.indexOf(t.id+':'+p.id)>-1)return;var du=pDue(p);if(du.n<=3&&du.n>=-30&&!(p.opens&&dUntil(p.opens.slice(0,10))>0))tp.push({id:t.id+':'+p.id,t:p.label,w:t.name+' · '+du.t})})});
   if(tp.length)h+=gp('trp','nod','clock','Trip',tp.length)+(collapsed.trp?'':'<div class="list">'+tp.map(function(x){return '<div class="task"><div class="ic sky">'+ic('clock',17)+'</div><div class="tb"><b>'+esc(x.t)+'</b><small>'+esc(x.w)+'</small></div><button class="ck" data-ttick="'+esc(x.id)+'" aria-label="Done"><i>'+ic('check',14)+'</i></button></div>'}).join('')+'</div>');
@@ -627,7 +681,7 @@ function dayBody(D){
  return h}
 function todayList(){return dayHead()+dayBody(sel)}
 function statsHTML(){var doneN=tasks.filter(function(t){return t.done}).length;
- return '<div class="stats"><span class="f">'+ic('flame',18)+'3</span><span id="sdot" class="sdot" data-s="'+syncState+'" title=""></span><span class="s" id="spk">'+ic('spark',18)+'<b style="font-weight:600">'+sparkN()+'</b></span></div>'}
+ return '<div class="stats"><span class="f" data-score="1">'+ic('flame',18)+streakN()+'</span><span id="sdot" class="sdot" data-s="'+syncState+'" title=""></span><span class="s" id="spk" data-score="1">'+ic('spark',18)+'<b style="font-weight:600">'+sparkN()+'</b></span></div>'}
 function topLeft(){return sel===TD?statsHTML():'<button class="pill" data-today="1">Today</button>'}
 function pgPanels(){return [sel-1,sel,sel+1].map(function(d,i){return '<div class="pg'+(i===1?' cur':'')+'">'+dayBody(d)+'</div>'}).join('')}
 function today(){
@@ -716,7 +770,7 @@ function filterPeople(){
  else if(pview==='No next step')L=people.filter(noNext).sort(function(a,b){return b.last-a.last});
  else if(pview==='TRME')L=people.filter(function(p){return p.st==='TRME Active'}).sort(byNext);
  else if(pview==='Pipeline')L=people.filter(function(p){return ['Relationship','Prospect','Closing'].indexOf(p.st)>-1}).sort(byNext);
- else if(pview==='Customers')L=people.filter(function(p){return p.st==='Customer'}).sort(function(a,b){return (a.ord==null?9999:a.ord)-(b.ord==null?9999:b.ord)});
+ else if(pview==='Customers')L=people.filter(function(p){return p.st==='Customer'||p.st==='TRME Active'}).sort(function(a,b){var x=reoRel(a),y=reoRel(b);x=x===null?99999:x;y=y===null?99999:y;return x-y});
  else if(pview==='Promo')L=[];
  else L=people.slice().sort(function(a,b){return a.n<b.n?-1:1});
  return {mode:pview,list:L}}
@@ -724,7 +778,7 @@ function counts(){var c={};c['Follow-up']=people.filter(function(p){return p.nex
  c['No next step']=people.filter(noNext).length;
  c.TRME=people.filter(function(p){return p.st==='TRME Active'}).length;
  c.Pipeline=people.filter(function(p){return ['Relationship','Prospect','Closing'].indexOf(p.st)>-1}).length;
- c.Customers=people.filter(function(p){return p.st==='Customer'}).length;c.All=people.length;c.Promo=PUR.length;return c}
+ c.Customers=people.filter(function(p){return p.st==='Customer'||p.st==='TRME Active'}).length;c.All=people.length;c.Promo=PUR.length;return c}
 var PITEMS=[],PSHOWN=0,PIO=null;
 function buildItems(){
  if(pview==='Promo'&&!pq.trim())return promoItems();
@@ -1173,7 +1227,7 @@ document.addEventListener('click',function(e){
  if(d.day){goDay(+d.day);return}
  if(d.today){goDay(TD);return}
  if(d.add){addSheet(d.add);return}
- if(d.addp){var ab=sheet('<h3>Orang baru</h3><input id="an" type="text" placeholder="Nama" autocomplete="off"><input id="ap" type="tel" placeholder="Nomor WhatsApp (boleh kosong)" autocomplete="off"><button class="btn" id="as" style="margin-top:0">Simpan sebagai Namelist</button>');ab.querySelector('#as').onclick=function(){var n=ab.querySelector('#an').value.trim();if(!n){toast('Isi namanya dulu');return}var row={id:n.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+Date.now().toString(36),name:n,stage:'Namelist',tags:'',market:'',phone:ab.querySelector('#ap').value.trim(),lastContact:'',lastOrder:'',nextDate:'',nextAction:'',hot:'',notes:'',verify:'',trmeStart:'',sponsor:'',birthday:''};if(CFG.url){RAW.push(row);savePeople()}else{people.push({id:people.length,n:n,st:'Namelist',next:null,last:9999,note:''})}ab.remove();render(true);toast('Masuk ke Namelist');haptic()};return}
+ if(d.addp){var ab=sheet('<h3>Orang baru</h3><input id="an" type="text" placeholder="Nama" autocomplete="off"><input id="ap" type="tel" placeholder="Nomor WhatsApp (boleh kosong)" autocomplete="off"><button class="btn" id="as" style="margin-top:0">Simpan sebagai Namelist</button>');ab.querySelector('#as').onclick=function(){var n=ab.querySelector('#an').value.trim();if(!n){toast('Isi namanya dulu');return}var row={id:n.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+Date.now().toString(36),name:n,stage:'Namelist',tags:'',market:'',phone:ab.querySelector('#ap').value.trim(),lastContact:'',lastOrder:'',nextDate:'',nextAction:'',hot:'',notes:'',verify:'',trmeStart:'',sponsor:'',birthday:'',created:isoOf(TD)};if(CFG.url){RAW.push(row);savePeople()}else{people.push({id:people.length,n:n,st:'Namelist',next:null,last:9999,note:''})}ab.remove();render(true);toast('Masuk ke Namelist');haptic()};return}
  if(d.goto){var g=d.goto.split(':');tab=g[0];if(g[0]==='people'){pview=g[1];pq=''}else teamTab=g[1];render();return}
  if(d.open){var tk=tasks.filter(function(x){return x.id==d.open})[0];sheet('<h3>'+esc(tk.t)+'</h3><p class="meta" style="margin:0">'+(tk.ev?esc(tk.ev)+' · 2 jam di kalender AJ Jonathan':((tk.at?esc(tk.at)+' · ':'')+esc(tk.dur||'')))+'</p>'+(tk.go==='team'?'<button class="btn" data-close="1" data-gotab="team" style="margin-top:0">Buka Team</button>':'')+'<div class="lbl">Pindah tanggal</div><div class="chips" style="flex-wrap:wrap"><button class="chip" data-tmove="'+tk.id+'|1">Besok</button><button class="chip" data-tmove="'+tk.id+'|2">Lusa</button><button class="chip" data-tmove="'+tk.id+'|7">Minggu depan</button></div>');return}
  if(d.tmove){var tm2=d.tmove.split('|'),tt=tasks.filter(function(x){return String(x.id)===tm2[0]})[0];if(!tt)return;tt.day=TD+Number(tm2[1]);saveTasks();document.querySelectorAll('.sheet-bg').forEach(function(x){x.remove()});render(true);toast('Dipindah ke '+dueTxt(tt.day-TD));haptic();return}
@@ -1185,7 +1239,8 @@ document.addEventListener('click',function(e){
  if(d.msg){var p=people[d.msg];var b=sheet('<h3>Kirim ke '+esc(p.n)+'</h3><div class="bubble">'+esc(msgFor(p))+'</div><button class="btn" id="go" style="margin-top:0">Buka WhatsApp</button><button class="btn alt" data-close="1" style="margin-top:0">Ubah teks dulu</button><p class="meta" style="margin:0">Kamu kembali ke HQ setelah mengirim, lalu HQ bertanya "Sudah kirim?" dan mencatatnya.</p>');b.querySelector('#go').onclick=function(){var t=msgFor(p);if(p.phone){if(openWA(p,{text:t,type:'Follow-up'})){b.remove();render(true)}}else{copy(t,'Belum ada nomornya. Pesan disalin, pilih kontaknya di WhatsApp.');var a2=document.createElement('a');a2.href='https://wa.me/?text='+encodeURIComponent(t);a2.target='_blank';a2.rel='noopener';document.body.appendChild(a2);a2.click();a2.remove();b.remove()}};return}
  if(d.log){var lp=people[d.log];if(!lp)return;var lu=contactDone(lp,{type:'Ngobrol'});if(!lu)return;haptic();document.querySelectorAll('.sheet-bg').forEach(function(x){x.remove()});render(true);toastU(lp.n+' dicatat. Next '+dueTxt(lu.next),function(){undoContact(lu);render(true)});return}
  if(d.fudone){doFollow(el);return}
- if(d.fwa){var fp=people[d.fwa];if(fp)openWA(fp,{type:'Follow-up'});return}
+ if(d.fwa){var fp=people[d.fwa];if(fp)openWA(fp,{type:el.dataset.ft||'Follow-up',text:msgFor(fp,el.dataset.fk)});return}
+ if(d.score){scoreSheet();return}
  if(d.lwa){var lk=d.lwa.split('|'),lw=lById(lk[0]),pw=byPid(lk[1]);if(lw&&pw)openWA(pw,{type:'List: '+lw.name,lid:lw.id});return}
  if(d.evdone){doEv(el);return}
  if(d.pprod){pprod=pprod===d.pprod?'':d.pprod;render(true);return}
@@ -1202,7 +1257,7 @@ document.addEventListener('click',function(e){
   show();inp.addEventListener('input',show);
   ab2.addEventListener('click',function(e){var c=e.target.closest('[data-amp],[data-amnew]');if(!c)return;var p;
    if(c.dataset.amp!==undefined){p=people[+c.dataset.amp]}else{var nm=inp.value.trim();if(!nm)return;if(!CFG.url){toast('Hubungkan Sheet dulu supaya orang barunya tersimpan');return}
-    RAW.push({id:nm.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+Date.now().toString(36),name:nm,stage:'Namelist',tags:'',market:'',phone:'',email:'',lastContact:'',lastOrder:'',nextDate:'',nextAction:'',hot:'',notes:'',verify:'',trmeStart:'',sponsor:'',birthday:''});savePeople();p=people[people.length-1]}
+    RAW.push({id:nm.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+Date.now().toString(36),name:nm,stage:'Namelist',tags:'',market:'',phone:'',email:'',lastContact:'',lastOrder:'',nextDate:'',nextAction:'',hot:'',notes:'',verify:'',trmeStart:'',sponsor:'',birthday:'',created:isoOf(TD)});savePeople();p=people[people.length-1]}
    if(!p)return;
    if(mOf(L0.id,pid(p))){toast(p.n+' sudah ada di list ini');return}
    LM.push({lid:L0.id,pid:pid(p),status:isEv(L0)?'Belum':'',product:'',added:isoOf(TD),done:'',doneDate:'',tid:'',plc:'',pnd:''});saveX('listmembers');inp.value='';show();render(true);toast(p.n+' masuk ke '+L0.name);haptic()});
@@ -1229,11 +1284,11 @@ document.addEventListener('click',function(e){
    else toast(pt.n+' dicentang di list ini')},REDUCE?0:560);return}
  if(d.buy){var bp=people[d.buy];if(!bp)return;if(!bp.raw){toast('Hubungkan Sheet dulu supaya pembelian tersimpan');return}
   document.querySelectorAll('.sheet-bg').forEach(function(x){x.remove()});
-  var bprod='TRME',bb=sheet('<h3>Pembelian '+esc(bp.n)+'</h3><div class="lbl">Produk</div><div class="chips" style="flex-wrap:wrap">'+['TRME','Duo','RESET','Lainnya'].map(function(k){return '<button class="chip" data-bp="'+k+'">'+k+'</button>'}).join('')+'</div><input id="bo" type="text" placeholder="Nama produknya" autocomplete="off" style="display:none"><div class="lbl">Tanggal</div><input id="bd" type="date" value="'+isoOf(TD)+'"><button class="btn" id="bs" style="margin-top:0">Simpan</button>');
+  var bprod='TRME',bb=sheet('<h3>Pembelian '+esc(bp.n)+'</h3><div class="lbl">Produk</div><div class="chips" style="flex-wrap:wrap">'+['TRME','Duo','RESET','Lainnya'].map(function(k){return '<button class="chip" data-bp="'+k+'">'+k+'</button>'}).join('')+'</div><input id="bo" type="text" placeholder="Nama produknya" autocomplete="off" style="display:none"><div class="lbl">Tanggal</div><input id="bd" type="date" value="'+isoOf(TD)+'"><input id="bq" type="number" inputmode="numeric" placeholder="Jumlah (kosong = 1)" autocomplete="off"><input id="bdy" type="number" inputmode="numeric" placeholder="Cukup untuk berapa hari (kosong = 30)" autocomplete="off"><button class="btn" id="bs" style="margin-top:0">Simpan</button>');
   var sb3=function(){bb.querySelectorAll('[data-bp]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.bp===bprod)});bb.querySelector('#bo').style.display=bprod==='Lainnya'?'block':'none'};sb3();
   bb.addEventListener('click',function(e){var c=e.target.closest('[data-bp]');if(c){bprod=c.dataset.bp;sb3()}});
   bb.querySelector('#bs').onclick=function(){var nm=bprod==='Lainnya'?bb.querySelector('#bo').value.trim():bprod,dv=bb.querySelector('#bd').value;if(!nm){toast('Isi nama produknya dulu');return}if(!dv){toast('Pilih tanggalnya dulu');return}
-   PUR.push({id:'p'+Date.now().toString(36),pid:pid(bp),date:dv,product:nm});if(!bp.raw.lastOrder||dv>bp.raw.lastOrder)bp.raw.lastOrder=dv;savePeople();saveX('purchases');bb.remove();render(true);toast('Pembelian dicatat');haptic()};return}
+   PUR.push({id:'p'+Date.now().toString(36),pid:pid(bp),date:dv,product:nm,qty:bb.querySelector('#bq').value.trim(),days:bb.querySelector('#bdy').value.trim()});if(!bp.raw.lastOrder||dv>bp.raw.lastOrder)bp.raw.lastOrder=dv;savePeople();saveX('purchases');bb.remove();render(true);toast('Pembelian dicatat');haptic()};return}
  if(d.edit){var ep=people[d.edit];if(!ep||!ep.raw)return;document.querySelectorAll('.sheet-bg').forEach(function(x){x.remove()});
   var eb=sheet('<h3>Kontak '+esc(ep.n)+'</h3><input id="ep" type="tel" placeholder="Nomor WhatsApp" value="'+esc(ep.raw.phone||'')+'" autocomplete="off"><input id="ee" type="email" placeholder="Email" value="'+esc(ep.raw.email||'')+'" autocomplete="off"><input id="eb" type="text" placeholder="Ulang tahun, contoh 24 November" value="'+esc(ep.raw.birthday||'')+'" autocomplete="off"><button class="btn" id="es" style="margin-top:0">Simpan</button>');
   eb.querySelector('#es').onclick=function(){var ph=eb.querySelector('#ep').value.trim(),em=eb.querySelector('#ee').value.trim();if(ph&&normPhone(ph).length<9){toast('Nomor belum lengkap. Isi lengkap, contoh 0812...');return}if(em&&!/^\S+@\S+\.\S+$/.test(em)){toast('Format emailnya belum benar');return}ep.raw.phone=ph;ep.raw.email=em;ep.raw.birthday=eb.querySelector('#eb').value.trim();savePeople();eb.remove();render(true);toast('Kontak disimpan');haptic()};return}

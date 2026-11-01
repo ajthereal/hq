@@ -8,5 +8,5 @@ Single-user personal app for AJ (no computer, works only from the Claude app, Sa
 - Today never hides a task: overdue stays pinned, undated shows in a No date strip.
 - Meetings added default to 2 hours on the AJ Jonathan calendar.
 - Design: Tiimo-style as in `index.html`, dark and light, works on iPhone, iPad and Mac.
-- Copy in AJ's voice (Indonesian-English, aku/kamu), no AI-sounding patterns.
+- App language is English everywhere (AJ's choice, 1 Nov 2026). Copy in AJ's voice, no AI-sounding patterns.
 - Small changes, plain commit messages.

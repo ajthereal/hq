@@ -1,5 +1,5 @@
 // HQ sync. Paste into script.google.com, change TOKEN, deploy as Web app.
-const TOKEN = 'GANTI-DENGAN-KODE-RAHASIA-KAMU';
+const TOKEN = 'CHANGE-THIS-TO-YOUR-SECRET-CODE';
 
 function ss_() {
   const p = PropertiesService.getScriptProperties();

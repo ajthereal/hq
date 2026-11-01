@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="id"><head><meta charset="utf-8">
+<html lang="en"><head><meta charset="utf-8">
 <title>HQ</title>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -301,14 +301,14 @@ var I={
 };
 function ic(n,s){s=s||20;return '<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+I[n]+'</svg>'}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
-function num(n){return Math.round(n).toLocaleString('id-ID')}
+function num(n){return Math.round(n).toLocaleString('en-US')}
 var $=function(s){return document.querySelector(s)};
 var FR=$('#frame'),SC=$('#scroller');
 function wide(){return FR.offsetWidth>=700}
 var REDUCE=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 function toast(m){var d=document.createElement('div');d.className='toast';d.textContent=m;FR.appendChild(d);setTimeout(function(){d.remove()},2300)}
 function sheet(html){var b=document.createElement('div');b.className='sheet-bg';b.innerHTML='<div class="sheet" role="dialog">'+html+'</div>';b.addEventListener('click',function(e){if(e.target===b||e.target.closest('[data-close]'))b.remove()});FR.appendChild(b);return b}
-function copy(text,msg){var done=function(){toast(msg||'Disalin')};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(done,function(){toast('Tahan teks lalu salin')})}else toast('Tahan teks lalu salin')}
+function copy(text,msg){var done=function(){toast(msg||'Copied')};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(done,function(){toast('Press and hold the text, then copy')})}else toast('Press and hold the text, then copy')}
 
 /* haptics: Vibration API on Android; on iPhone Safari a hidden switch control gives a light tick */
 function haptic(big){try{if(navigator.vibrate)navigator.vibrate(big?[14,40,22]:12)}catch(e){}
@@ -321,22 +321,22 @@ function burst(host,big){if(REDUCE||!host)return;var n=big?18:10,r0=document.cre
 var TD=Math.floor((Date.now()+7*36e5)/864e5);
 var tab='today',sel=TD,collapsed={},teamTab='Volume',pview='Follow-up',pq='',pprod='',selPid=0,ctSel=1,ctView='Board',mode='auto',theme='auto';
 var tasks=[
- {id:1,t:'Follow up Rina, hasil Prysm',day:30,part:'morning',dur:'10m',ic:'chat',c:'sky',done:false},
- {id:2,t:'Bukti setor PPh 21',day:29,part:'afternoon',dur:'15m',ic:'tasks',c:'sand',done:false},
- {id:3,t:'Pilih kamera untuk set rekam',day:null,dur:'30m',ic:'video',c:'lav',done:false},
- {id:4,t:'Telepon Pak Hendra soal PO',day:null,dur:'10m',ic:'chat',c:'peach',done:false},
- {id:5,t:'Ide Reels: sarapan 30 gram protein',day:null,dur:'15m',ic:'spark',c:'mint',done:false},
+ {id:1,t:'Follow up Rina, Prysm result',day:30,part:'morning',dur:'10m',ic:'chat',c:'sky',done:false},
+ {id:2,t:'PPh 21 payment proof',day:29,part:'afternoon',dur:'15m',ic:'tasks',c:'sand',done:false},
+ {id:3,t:'Pick a camera for the recording set',day:null,dur:'30m',ic:'video',c:'lav',done:false},
+ {id:4,t:'Call Pak Hendra about the PO',day:null,dur:'10m',ic:'chat',c:'peach',done:false},
+ {id:5,t:'Reels idea: 30 g protein breakfast',day:null,dur:'15m',ic:'spark',c:'mint',done:false},
  {id:10,t:'Read Bible',day:31,part:'morning',dur:'1h',at:'06.00',ic:'book',c:'sky',done:false},
  {id:11,t:'Morning Supplements',day:31,part:'morning',dur:'5m',ic:'pill',c:'pink',done:false},
  {id:12,t:'Update Monitoring',day:31,part:'morning',dur:'5m',ic:'monitor',c:'lav',done:false,go:'team'},
  {id:13,t:'Piano Lesson',day:31,part:'morning',ev:'08.00 → 09.00',done:false},
  {id:14,t:'ABC - Pak Jo / SS',day:31,part:'morning',ev:'11.00 → 13.00',done:false},
  {id:15,t:'Namelist & Invite',day:31,part:'afternoon',dur:'45m',at:'14.00',ic:'users',c:'peach',done:false},
- {id:16,t:'Script video: nasi padang 600 kalori',day:31,part:'afternoon',dur:'1h',at:'15.00',ic:'video',c:'lav',done:false},
- {id:17,t:'Cek hari ke-7 TRME Dewi',day:31,part:'evening',dur:'10m',at:'18.30',ic:'chat',c:'mint',done:false},
+ {id:16,t:'Video script: 600 calorie nasi padang',day:31,part:'afternoon',dur:'1h',at:'15.00',ic:'video',c:'lav',done:false},
+ {id:17,t:'Day 7 TRME check for Dewi',day:31,part:'evening',dur:'10m',at:'18.30',ic:'chat',c:'mint',done:false},
  {id:18,t:'RCP',day:31,part:'evening',ev:'19.30 → 21.30',done:false},
- {id:20,t:'Siapkan materi BSE',day:32,part:'morning',dur:'45m',ic:'users',c:'peach',done:false},
- {id:21,t:'Ulang tahun Dewi',day:32,part:'morning',dur:'5m',ic:'chat',c:'pink',done:false},
+ {id:20,t:'Prepare BSE material',day:32,part:'morning',dur:'45m',ic:'users',c:'peach',done:false},
+ {id:21,t:'Dewi birthday',day:32,part:'morning',dur:'5m',ic:'chat',c:'pink',done:false},
  {id:22,t:'Read Bible',day:32,part:'morning',dur:'1h',ic:'book',c:'sky',done:false}
 ];
 tasks.forEach(function(t){if(t.day!==null)t.day=TD+(t.day-31)});
@@ -350,8 +350,8 @@ var HASCACHE={};Object.keys(GUARDKEY).forEach(function(n){try{HASCACHE[n]=localS
 function syncBanner(){var m='';Object.keys(SERR).forEach(function(k){if(!m&&SERR[k])m=SERR[k]});var b=document.getElementById('syncbar');
  if(!m){if(b)b.remove();return}
  if(!b){b=document.createElement('button');b.id='syncbar';b.type='button';b.setAttribute('style','position:absolute;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:45;padding:10px 14px;border:0;border-radius:14px;background:var(--btn);color:var(--btn-ink);font:600 13px/1.35 inherit;text-align:center');b.onclick=function(){pullTasks()};(typeof FR!=='undefined'&&FR?FR:document.body).appendChild(b)}
- b.textContent=m+' Ketuk untuk coba lagi.'}
-function syncReason(j){if(!j||!j.error)return '';if(j.error==='token')return 'Kode rahasia belum cocok, data belum tersinkron.';if(j.error==='empty-refused')return 'Sheet menolak simpan kosong, data di Sheet tetap aman.';if(j.error==='bad-request')return 'Apps Script menolak data. Update Apps Script-nya.';if(j.error==='not-loaded')return 'Data belum termuat dari Sheet, simpan ditahan.';return 'Sheet error'+(j.message?(': '+String(j.message).slice(0,60)):'')+'.'}
+ b.textContent=m+' Tap to try again.'}
+function syncReason(j){if(!j||!j.error)return '';if(j.error==='token')return 'Secret code does not match, data is not synced.';if(j.error==='empty-refused')return 'The Sheet refused an empty save, your data in the Sheet is safe.';if(j.error==='bad-request')return 'Apps Script menolak data. Update Apps Script-nya.';if(j.error==='not-loaded')return 'Data has not loaded from the Sheet, so saving is on hold.';return 'Sheet error'+(j.message?(': '+String(j.message).slice(0,60)):'')+'.'}
 var FLUSH={tasks:function(){pushTasks()},people:function(){savePeople()},habitlog:function(){saveHlog()},content:function(){saveCt()},tripticks:function(){postTab('tripticks',TK.map(function(x){return {id:x}})).then(function(j){setSync(j.ok?'ok':'err')}).catch(function(){setSync('err')})}};
 var _fetch=window.fetch.bind(window);
 function tabOf(u,init){if(!CFG.url||String(u).indexOf(CFG.url)!==0)return null;
@@ -359,7 +359,7 @@ function tabOf(u,init){if(!CFG.url||String(u).indexOf(CFG.url)!==0)return null;
  var m=/[?&]name=([^&]+)/.exec(String(u));return m?{k:'r',n:decodeURIComponent(m[1])}:null}
 window.fetch=function(u,init){var t=tabOf(u,init);if(!t)return _fetch(u,init);var n=t.n,g=GUARDKEY[n]!==undefined;
  if(t.k==='w'&&g&&!SYNCOK[n]){
-  if(HASCACHE[n]){PEND[n]=true}else{SERR[n]='Data '+n+' belum termuat dari Sheet. Perubahan barusan tidak dikirim supaya Sheet tidak tertimpa.';syncBanner()}
+  if(HASCACHE[n]){PEND[n]=true}else{SERR[n]='Data '+n+' has not loaded from the Sheet yet. Your last change was not sent, so the Sheet is not overwritten.';syncBanner()}
   return Promise.resolve(new Response(JSON.stringify({error:'not-loaded'}),{status:200}))}
  return _fetch(u,init).then(function(r){
   return r.clone().json().then(function(j){
@@ -368,10 +368,10 @@ window.fetch=function(u,init){var t=tabOf(u,init);if(!t)return _fetch(u,init);va
    SERR[n]='';syncBanner();
    if(g){SYNCOK[n]=true;if(PEND[n]&&FLUSH[n]){PEND[n]=false;setTimeout(FLUSH[n],0);return Promise.reject(new Error('local edits pending'))}}
    return r},function(){return r})
- },function(err){if(t.k==='w'&&g)PEND[n]=true;SERR[n]='Offline atau Sheet tidak terjangkau. Perubahan tersimpan di perangkat dan dikirim saat tersambung.';syncBanner();throw err})};
+ },function(err){if(t.k==='w'&&g)PEND[n]=true;SERR[n]='Offline or the Sheet cannot be reached. Changes are saved on this device and sent when you are connected.';syncBanner();throw err})};
 if(CFG.url)tasks=[];
 try{var _t=JSON.parse(localStorage.getItem('hq-tasks2')||'null');if(_t&&(_t.length||CFG.url))tasks=_t}catch(e){}
-function setSync(s){syncState=s;var d=document.getElementById('sdot');if(d){d.dataset.s=s;d.title={ok:'Tersimpan',err:'Belum tersinkron',idle:'Menyinkron',off:'Hanya di perangkat ini'}[s]}}
+function setSync(s){syncState=s;var d=document.getElementById('sdot');if(d){d.dataset.s=s;d.title={ok:'Saved',err:'Not synced yet',idle:'Syncing',off:'Only on this device'}[s]}}
 function normPart(p,dated){p=String(p||'').toLowerCase().trim();if(p==='morning'||p==='afternoon'||p==='evening')return p;return dated?'morning':undefined}
 var idSeq=0;function normTask(r){var dd=r.date?dn(r.date):null;return {id:Number(r.id)||(Date.now()+(idSeq++)),t:r.t,day:dd!=null?dd:(r.day===''||r.day==null)?null:Number(r.day),part:normPart(r.part,dd!=null||(r.day!==''&&r.day!=null)),dur:r.dur||undefined,at:r.at||undefined,ic:r.ic||'spark',c:r.c||'sand',ev:r.ev||undefined,go:r.go||undefined,done:r.done==='true'||r.done===true}}
 function pushTasks(){if(!CFG.url)return;setSync('idle');fetch(CFG.url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({token:CFG.token,name:'tasks',rows:tasks})}).then(function(r){return r.json()}).then(function(j){setSync(j.ok?'ok':'err')}).catch(function(){setSync('err')})}
@@ -380,7 +380,7 @@ var EV=[];try{EV=JSON.parse(localStorage.getItem('hq-events')||'[]')}catch(e){}
 function pullEvents(){if(!CFG.url)return;fetch(CFG.url+'?token='+encodeURIComponent(CFG.token)+'&name=events&from='+isoOf(TD-14)+'&to='+isoOf(TD+60)).then(function(r){return r.json()}).then(function(j){if(j.error||!j.rows)return;EV=j.rows;try{localStorage.setItem('hq-events',JSON.stringify(EV))}catch(e){}if(!document.querySelector('.sheet-bg'))render(true)}).catch(function(){});getTab('teamhist').then(function(j){if(j.error||!j.rows)return;THIST=j.rows.filter(function(r){return r.date&&r.name});try{localStorage.setItem('hq-thist',JSON.stringify(THIST))}catch(e){}if(!document.querySelector('.sheet-bg'))render(true)}).catch(function(){})}
 function hm(s){return s.slice(11,13)+'.'+s.slice(14,16)}
 function evOn(d){return EV.filter(function(x){return x.a==='1'?(dn(x.s)<=d&&d<=dn(x.e)):dn(x.s)===d}).sort(function(a,b){return a.s<b.s?-1:1})}
-function evTime(x){return x.a==='1'?'Seharian':hm(x.s)+' → '+hm(x.e)}
+function evTime(x){return x.a==='1'?'All day':hm(x.s)+' → '+hm(x.e)}
 function evPart(x){var h=+x.s.slice(11,13);return h<12?'morning':h<17?'afternoon':'evening'}
 function evRow(x){return '<div class="task'+(evIsDone(x)?' done':'')+'"><div class="ic ev"></div><div class="tb"><b>'+esc(x.t)+'</b><small>'+ic('clock',12)+' '+evTime(x)+(x.loc?' · '+esc(x.loc.slice(0,40)):'')+'</small></div><button class="ck" data-evdone="'+esc(evKey(x))+'" aria-label="Done"><i>'+ic('check',14)+'</i></button></div>'}
 var HAB=[],HLOG=[];try{HAB=JSON.parse(localStorage.getItem('hq-habits')||'[]');HLOG=JSON.parse(localStorage.getItem('hq-hlog')||'[]')}catch(e){}
@@ -393,13 +393,13 @@ function habDue(h,d){var x=String(h.days||'').toLowerCase().replace(/\s/g,'');re
 function habDone(h,d){var k=isoOf(d);return HLOG.some(function(l){return l.date===k&&l.hid===h.id})}
 function habStreak(h){var d=TD,n=0;if(!habDone(h,d))d--;for(var i=0;i<400;i++,d--){if(!habDue(h,d))continue;if(habDone(h,d))n++;else break}return n}
 function habRow(h,d){var dn_=habDone(h,d),st=habStreak(h),tm=(h.time||'').replace(':','.');
- return '<div class="task'+(dn_?' done':'')+'"><div class="ic '+(h.c||'mint')+'">'+ic(h.ic||'spark',17)+'</div><div class="tb"><b>'+esc(h.name)+'</b><small>'+(tm?tm+' · ':'')+(st?ic('flame',12)+' '+st+' hari':'Mulai hari ini')+'</small></div><button class="ck" data-hab="'+esc(h.id)+'" data-hday="'+d+'" aria-label="Done"><i>'+ic('check',14)+'</i></button></div>'}
+ return '<div class="task'+(dn_?' done':'')+'"><div class="ic '+(h.c||'mint')+'">'+ic(h.ic||'spark',17)+'</div><div class="tb"><b>'+esc(h.name)+'</b><small>'+(tm?tm+' · ':'')+(st?ic('flame',12)+' '+st+' days':'Starts today')+'</small></div><button class="ck" data-hab="'+esc(h.id)+'" data-hday="'+d+'" aria-label="Done"><i>'+ic('check',14)+'</i></button></div>'}
 function habBlock(d){var due=HAB.filter(function(h){return habDue(h,d)});if(!due.length||d>TD)return '';var n=due.filter(function(h){return habDone(h,d)}).length;
  return gp('hab','morning','flame','Habits',n+'/'+due.length)+(collapsed.hab?'':'<div class="list">'+due.map(function(h){return habRow(h,d)}).join('')+'</div>')}
 function toggleHab(el){var id=el.dataset.hab,d=+el.dataset.hday,k=isoOf(d),row=el.closest('.task'),was=HLOG.some(function(l){return l.date===k&&l.hid===id});
  if(was)HLOG=HLOG.filter(function(l){return !(l.date===k&&l.hid===id)});else HLOG.push({date:k,hid:id});saveHlog();
  var all=HAB.filter(function(h){return habDue(h,d)}),left=all.filter(function(h){return !habDone(h,d)}).length;
- if(!was){row.classList.add('done','pop');burst(row.querySelector('.ck i'),false);haptic(false);setTimeout(function(){render(true);if(!left){haptic(true);toast('Semua habit hari ini selesai');var f=$('#spk');f&&burst(f,true)}},REDUCE?0:560)}
+ if(!was){row.classList.add('done','pop');burst(row.querySelector('.ck i'),false);haptic(false);setTimeout(function(){render(true);if(!left){haptic(true);toast('All habits done today');var f=$('#spk');f&&burst(f,true)}},REDUCE?0:560)}
  else{row.classList.remove('done','pop');haptic(false);setTimeout(function(){render(true)},120)}}
 var RAW=[];try{RAW=JSON.parse(localStorage.getItem('hq-people')||'[]')}catch(e){}
 var pushP=null;
@@ -416,8 +416,8 @@ try{TLOG=JSON.parse(localStorage.getItem('hq-tlog')||'[]');LISTS=JSON.parse(loca
 var XT={touchlog:['hq-tlog',function(){return TLOG},function(r){TLOG=r}],lists:['hq-lists',function(){return LISTS},function(r){LISTS=r}],listmembers:['hq-lm',function(){LM.forEach(function(m){['done','doneDate','tid','plc','pnd'].forEach(function(k){if(m[k]==null)m[k]=''})});return LM},function(r){LM=r}],purchases:['hq-pur',function(){return PUR},function(r){PUR=r}],evdone:['hq-evd',function(){return EVD},function(r){EVD=r}],results:['hq-res',function(){return RES},function(r){RES=r}]};
 function saveX(n){var x=XT[n];try{localStorage.setItem(x[0],JSON.stringify(x[1]()))}catch(e){}
  if(!CFG.url)return;
- if(!LOADED[n]){DIRTY[n]=true;toast('Belum masuk Sheet, data '+n+' belum termuat. Aku coba lagi nanti');return}
- setSync('idle');postTab(n,x[1]()).then(function(j){if(j.ok){DIRTY[n]=false;setSync('ok')}else{DIRTY[n]=true;setSync('err');toast('Gagal simpan '+n+' ke Sheet, masih aman di perangkat ini')}}).catch(function(){DIRTY[n]=true;setSync('err');toast('Gagal simpan '+n+'. Cek koneksi, data tetap aman di perangkat ini')})}
+ if(!LOADED[n]){DIRTY[n]=true;toast('Not in the Sheet yet, '+n+' has not loaded. I will try again later');return}
+ setSync('idle');postTab(n,x[1]()).then(function(j){if(j.ok){DIRTY[n]=false;setSync('ok')}else{DIRTY[n]=true;setSync('err');toast('Could not save '+n+' to the Sheet, still safe on this device')}}).catch(function(){DIRTY[n]=true;setSync('err');toast('Could not save '+n+'. Check your connection, your data is still safe on this device')})}
 function pullX(){if(!CFG.url)return;Object.keys(XT).forEach(function(n){getTab(n).then(function(j){if(j.error||!j.rows)return;LOADED[n]=true;if(DIRTY[n]){saveX(n);return}XT[n][2](j.rows);try{localStorage.setItem(XT[n][0],JSON.stringify(j.rows))}catch(e){}if(!document.querySelector('.sheet-bg')&&!pq)render(true)}).catch(function(){})})}
 var CAD={'Closing':7,'Prospect':14,'Warming Partner':14,'TRME Active':14,'Partner':21,'Customer':30,'Relationship':60,'Namelist':14,'Not Now':60};
 function cad(st){return CAD[st]||14}
@@ -426,7 +426,7 @@ function byPid(id){return people.filter(function(p){return pid(p)===id})[0]}
 function normPhone(s){var d=String(s||'').replace(/[^0-9]/g,'');if(d.indexOf('620')===0)d='62'+d.slice(3);else if(d.indexOf('0')===0)d='62'+d.slice(1);else if(d.indexOf('8')===0)d='62'+d;return d}
 function sparkN(){return TLOG.filter(function(x){return x.date===isoOf(TD)}).length}
 function toastU(m,fn){var d=document.createElement('div');d.className='toast';d.appendChild(document.createTextNode(m));var b=document.createElement('button');b.className='un';b.textContent='Undo';d.appendChild(b);FR.appendChild(d);var t=setTimeout(function(){d.remove()},5200);b.onclick=function(){clearTimeout(t);d.remove();fn();haptic()}}
-function contactDone(p,o){o=o||{};var r=p.raw;if(!r){toast('Hubungkan Sheet dulu, supaya kontaknya tersimpan');return null}
+function contactDone(p,o){o=o||{};var r=p.raw;if(!r){toast('Connect the Sheet first so the contact is saved');return null}
  var prev={lc:r.lastContact||'',nd:r.nextDate||''},nd=dn(r.nextDate);
  r.lastContact=isoOf(TD);
  if(nd==null||nd<=TD)r.nextDate=isoOf(TD+cad(p.st));
@@ -439,58 +439,58 @@ function doFollow(el){var p=people[el.dataset.fudone],row=el.closest('.task');if
  row.classList.add('done','pop');burst(row.querySelector('.ck i'),false);haptic(false);
  var sp=$('#spk b');if(sp){sp.textContent=sparkN();sp.parentNode.classList.remove('bump');void sp.offsetWidth;sp.parentNode.classList.add('bump')}
  setTimeout(function(){row.classList.add('leave')},REDUCE?0:380);
- setTimeout(function(){render(true);toastU(p.n+' dicatat. Next '+dueTxt(u.next),function(){undoContact(u);render(true)})},REDUCE?0:760)}
+ setTimeout(function(){render(true);toastU(p.n+' logged. Next '+dueTxt(u.next),function(){undoContact(u);render(true)})},REDUCE?0:760)}
 /* ---- WhatsApp loop: open the chat, and when you come back HQ asks once if it was sent, then logs it ---- */
 function toastBtn(m,label,fn,ms){var d=document.createElement('div');d.className='toast';d.appendChild(document.createTextNode(m));var b=document.createElement('button');b.className='un';b.textContent=label;d.appendChild(b);FR.appendChild(d);var t=setTimeout(function(){d.remove()},ms||6000);b.onclick=function(){clearTimeout(t);d.remove();fn()}}
 var PENDWA=null;try{PENDWA=JSON.parse(localStorage.getItem('hq-pendwa')||'null')}catch(e){}
 function openWA(p,o){o=o||{};
- if(!p.phone){toast('Nomor WA '+p.n+' belum ada. Isi lewat Edit kontak di detailnya');return false}
- if(p.phone.length<9){toast('Nomor '+p.n+' belum lengkap. Benerin lewat Edit kontak di detailnya');return false}
+ if(!p.phone){toast('WhatsApp number for '+p.n+' is missing. Add it with Edit contact in the details');return false}
+ if(p.phone.length<9){toast('Number for '+p.n+' looks incomplete. Fix it with Edit contact in the details');return false}
  var a=document.createElement('a');a.href='https://wa.me/'+p.phone+'?text='+encodeURIComponent(o.text||msgFor(p));a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
  PENDWA={pid:pid(p),type:o.type||'Follow-up',lid:o.lid||'',day:o.day||'',ts:Date.now()};try{localStorage.setItem('hq-pendwa',JSON.stringify(PENDWA))}catch(e){}
  return true}
-function listDone(lt,mt,pt){if(!pt.raw){toast('Hubungkan Sheet dulu, supaya tersimpan');return null}
+function listDone(lt,mt,pt){if(!pt.raw){toast('Connect the Sheet first so it is saved');return null}
  mt.done='1';mt.doneDate=isoOf(TD);mt.tid='';mt.plc='';mt.pnd='';var u=null;
  if(pt.last!==0){u=contactDone(pt,{type:(isEv(lt)?'Invite: ':'List: ')+lt.name});if(u){mt.tid=u.e.id;mt.plc=u.prev.lc;mt.pnd=u.prev.nd}}
- if(isEv(lt)&&(!mt.status||mt.status==='Belum'))mt.status='Invited';
+ if(isEv(lt)&&(!mt.status||mt.status==='Not yet'))mt.status='Invited';
  saveX('listmembers');return u||{none:1}}
 function logWA(p,w){
- if(w.lid){var lt=lById(w.lid),mt=mOf(w.lid,pid(p));if(lt&&mt&&!mDone(mt)){var lu=listDone(lt,mt,p);if(lu){haptic();render(true);toast(p.n+' dicatat di '+lt.name)}return}}
+ if(w.lid){var lt=lById(w.lid),mt=mOf(w.lid,pid(p));if(lt&&mt&&!mDone(mt)){var lu=listDone(lt,mt,p);if(lu){haptic();render(true);toast(p.n+' logged in '+lt.name)}return}}
  var u=contactDone(p,{type:w.type||'Follow-up'});if(!u)return;haptic();render(true);
- toastU(p.n+' dicatat. Next '+dueTxt(u.next),function(){undoContact(u);render(true)})}
+ toastU(p.n+' logged. Next '+dueTxt(u.next),function(){undoContact(u);render(true)})}
 function askLog(){if(!PENDWA)return;var w=PENDWA;PENDWA=null;try{localStorage.removeItem('hq-pendwa')}catch(e){}
  if(Date.now()-w.ts>6*36e5)return;var p=byPid(w.pid);if(!p)return;
- toastBtn('Sudah kirim ke '+p.n+'?','Catat',function(){logWA(p,w)},9000)}
+ toastBtn('Did you send it to '+p.n+'?','Log it',function(){logWA(p,w)},9000)}
 function evKey(x){return x.id+'|'+x.s}
 function evIsDone(x){var k=evKey(x);return EVD.some(function(d){return d.id===k})}
 function doEv(el){var k=el.dataset.evdone,row=el.closest('.task'),i=-1;EVD.forEach(function(d,j){if(d.id===k)i=j});
  if(i>-1){EVD.splice(i,1);row.classList.remove('done','pop')}else{EVD.push({id:k,date:isoOf(TD)});row.classList.add('done','pop');burst(row.querySelector('.ck i'),false)}
  haptic(false);saveX('evdone')}
-var KINDS=['OPP','Convention','Meeting','Lainnya'],STS=['Belum','Invited','Confirmed','Came'],PRODS=['','TRME','Duo','RESET','Lainnya'];
+var KINDS=['OPP','Convention','Meeting','Other'],STS=['Not yet','Invited','Confirmed','Came'],PRODS=['','TRME','Duo','RESET','Other'];
 function isEv(l){return l.kind==='Convention'||l.kind==='Meeting'}
 function lById(id){return LISTS.filter(function(l){return l.id===id})[0]}
 function mOf(lid,pd){return LM.filter(function(m){return m.lid===lid&&m.pid===pd})[0]}
 function mDone(m){return String(m.done)==='1'}
-function lastTxt(p){return p.last>=9999?'belum pernah dikontak':p.last===0?'dikontak hari ini':p.last===1?'dikontak kemarin':'dikontak '+p.last+' hari lalu'}
+function lastTxt(p){return p.last>=9999?'never contacted':p.last===0?'contacted today':p.last===1?'contacted yesterday':'contacted '+p.last+' days ago'}
 function lmRow(l,m){var p=byPid(m.pid);if(!p)return '';var done=mDone(m),k=esc(l.id)+'|'+esc(m.pid);
- var chip=isEv(l)?'<button class="chip" data-lmst="'+k+'" aria-label="Status">'+esc(m.status||'Belum')+'</button>':'<button class="chip" data-lmprod="'+k+'" aria-label="Produk">'+esc(m.product||'Produk')+'</button>';
- return '<div class="task'+(done?' done':'')+'"><span class="av" style="background:'+avc(p)+'">'+esc(p.n[0])+'</span><button class="tb" data-pdet="'+p.id+'"><b>'+esc(p.n)+'</b><small>'+esc(p.st)+(p.next!==null?' · next '+dueTxt(p.next):'')+'</small></button>'+chip+'<button class="rb" data-lwa="'+k+'" aria-label="Buka WhatsApp">'+ic('chat',16)+'</button><button class="ck" data-lmtick="'+k+'" aria-label="Sudah dihubungi"><i>'+ic('check',14)+'</i></button></div>'}
+ var chip=isEv(l)?'<button class="chip" data-lmst="'+k+'" aria-label="Status">'+esc(m.status||'Not yet')+'</button>':'<button class="chip" data-lmprod="'+k+'" aria-label="Product">'+esc(m.product||'Produk')+'</button>';
+ return '<div class="task'+(done?' done':'')+'"><span class="av" style="background:'+avc(p)+'">'+esc(p.n[0])+'</span><button class="tb" data-pdet="'+p.id+'"><b>'+esc(p.n)+'</b><small>'+esc(p.st)+(p.next!==null?' · next '+dueTxt(p.next):'')+'</small></button>'+chip+'<button class="rb" data-lwa="'+k+'" aria-label="Open WhatsApp">'+ic('chat',16)+'</button><button class="ck" data-lmtick="'+k+'" aria-label="Mark as contacted"><i>'+ic('check',14)+'</i></button></div>'}
 function listsPage(){
  var act=LISTS.filter(function(l){return l.status!=='archived'}),arc=LISTS.filter(function(l){return l.status==='archived'});
  if(collapsed.larc===undefined)collapsed.larc=true;
- var h='<div class="top"><div class="stats"><span style="color:var(--mute)">'+act.length+' list aktif</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button><button data-newlist="1" aria-label="List baru">'+ic('plus',22)+'</button></div></div><div class="hrow"><h1>Lists</h1></div>'+(CFG.url?'':'<span class="sample">Hubungkan Sheet dulu supaya list tersimpan</span>');
- if(!act.length)h+='<div class="missed"><b>Belum ada list</b><p class="meta" style="margin:6px 0 0">Tekan + untuk bikin list: OPP, Convention atau Meeting. Satu orang bisa ada di banyak list, datanya tetap satu.</p></div>';
+ var h='<div class="top"><div class="stats"><span style="color:var(--mute)">'+act.length+' active lists</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button><button data-newlist="1" aria-label="New list">'+ic('plus',22)+'</button></div></div><div class="hrow"><h1>Lists</h1></div>'+(CFG.url?'':'<span class="sample">Connect the Sheet first so lists are saved</span>');
+ if(!act.length)h+='<div class="missed"><b>No lists yet</b><p class="meta" style="margin:6px 0 0">Tap + to make a list: OPP, Convention or Meeting. One person can be on many lists and still has one record.</p></div>';
  act.forEach(function(l){var ms=LM.filter(function(m){return m.lid===l.id}),key='L'+l.id,open=!collapsed[key],cn=ms.filter(function(m){var p=byPid(m.pid);return p&&mDone(m)}).length;
-  h+='<div class="gp"><button class="gpb nod" data-fold="'+key+'" aria-expanded="'+open+'">'+ic('list',16)+esc(l.name)+' ('+ms.length+')<svg class="ch" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button><span style="display:flex;gap:6px"><button class="rb" data-bulk="'+esc(l.id)+'" aria-label="Tempel banyak nama">'+ic('list',16)+'</button><button class="rb" data-laddm="'+esc(l.id)+'" aria-label="Tambah nama">'+ic('plus',16)+'</button><button class="rb" data-lmenu="'+esc(l.id)+'" aria-label="Menu list">'+ic('dots',16)+'</button></span></div>';
-  if(open)h+='<p class="lsub" style="margin:-2px 4px 8px">'+esc(l.kind)+' · '+cn+' dari '+ms.length+' sudah dihubungi hari ini</p><div class="list">'+(ms.length?ms.map(function(m){return lmRow(l,m)}).join(''):'<div class="empty">Kosong. Tekan + untuk tambah nama.</div>')+'</div>'});
- if(arc.length)h+=gp('larc','nod','inbox','Arsip',arc.length)+(collapsed.larc?'':'<div class="list">'+arc.map(function(l){return '<div class="task"><div class="ic sky">'+ic('list',17)+'</div><button class="tb" data-lmenu="'+esc(l.id)+'"><b>'+esc(l.name)+'</b><small>'+esc(l.kind)+' · '+LM.filter(function(m){return m.lid===l.id}).length+' nama'+(l.archived?' · arsip '+esc(l.archived):'')+'</small></button></div>'}).join('')+'</div>');
+  h+='<div class="gp"><button class="gpb nod" data-fold="'+key+'" aria-expanded="'+open+'">'+ic('list',16)+esc(l.name)+' ('+ms.length+')<svg class="ch" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button><span style="display:flex;gap:6px"><button class="rb" data-bulk="'+esc(l.id)+'" aria-label="Paste many names">'+ic('list',16)+'</button><button class="rb" data-laddm="'+esc(l.id)+'" aria-label="Add a name">'+ic('plus',16)+'</button><button class="rb" data-lmenu="'+esc(l.id)+'" aria-label="List menu">'+ic('dots',16)+'</button></span></div>';
+  if(open)h+='<p class="lsub" style="margin:-2px 4px 8px">'+esc(l.kind)+' · '+cn+' of '+ms.length+' contacted today</p><div class="list">'+(ms.length?ms.map(function(m){return lmRow(l,m)}).join(''):'<div class="empty">Empty. Tap + to add a name.</div>')+'</div>'});
+ if(arc.length)h+=gp('larc','nod','inbox','Archive',arc.length)+(collapsed.larc?'':'<div class="list">'+arc.map(function(l){return '<div class="task"><div class="ic sky">'+ic('list',17)+'</div><button class="tb" data-lmenu="'+esc(l.id)+'"><b>'+esc(l.name)+'</b><small>'+esc(l.kind)+' · '+LM.filter(function(m){return m.lid===l.id}).length+' names'+(l.archived?' · archived '+esc(l.archived):'')+'</small></button></div>'}).join('')+'</div>');
  return h}
 function promoItems(){var out=[],seen={},prods=[];PUR.forEach(function(x){if(x.product&&!seen[x.product]){seen[x.product]=1;prods.push(x.product)}});
  out.push({k:'pp',prods:prods});
- if(!pprod){out.push({k:'n',txt:prods.length?'Pilih produk, nanti muncul siapa saja yang pernah beli.':'Belum ada pembelian tercatat. Catat dari detail orang, atau kirim datanya ke Claude untuk digabung.'});return out}
+ if(!pprod){out.push({k:'n',txt:prods.length?'Pick a product to see who has bought it.':'No purchases logged yet. Log one from a person\'s details, or send the data to Claude to merge.'});return out}
  var best={};PUR.filter(function(x){return x.product===pprod}).forEach(function(x){if(!best[x.pid]||x.date>best[x.pid].date)best[x.pid]=x});
  var L=Object.keys(best).map(function(k){var p=byPid(k);return p?{p:p,x:best[k]}:null}).filter(Boolean).sort(function(a,b){return a.x.date<b.x.date?1:-1});
- out.push({k:'n',txt:L.length+' orang pernah beli '+pprod});L.forEach(function(o){out.push({k:'pr',p:o.p,x:o.x})});return out}
+ out.push({k:'n',txt:L.length+' people bought '+pprod});L.forEach(function(o){out.push({k:'pr',p:o.p,x:o.x})});return out}
 function wdOf(day){return new Date(day*864e5).getUTCDay()}
 function dateOf(day){return new Date(day*864e5)}
 
@@ -498,10 +498,10 @@ function dateOf(day){return new Date(day*864e5)}
 function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 var FIRST=['Rina','Dewi','Hendra','Sari','Tomi','Andre','Maya','Budi','Lina','Yosef','Citra','Rudi','Vina','Felix','Grace','Agus','Nia','Kevin','Stella','Jonathan','Mira','Bayu','Elsa','Hana','Ivan','Joko','Karin','Lucas','Monica','Nando'];
 var LAST=['Wijaya','Anggraeni','Lim','Putri','Gunawan','Santoso','Halim','Tan','Susanto','Hartono','Kusuma','Pratama','Setiawan','Chandra','Lestari','Wibowo','Tjandra','Salim','Darma','Hidayat'];
-var NOTES={Namelist:['Teman lama, belum pernah ngobrol soal ini','Kenalan dari tennis','Rekomendasi dari keluarga'],Relationship:['Lagi dibangun, sudah 2 kali ngobrol','Tertarik soal berat badan','Suka konten Reels'],Prospect:['Sudah lihat hasil Prysm','Mau lanjut ngobrol minggu ini','Tanya soal harga'],Closing:['Tanya paket 3 bulan','Tinggal pilih tanggal mulai','Menunggu keputusan suami'],Customer:['Order pertama sudah sampai','Perlu cek hasil bulan ini','Siap cerita hasilnya'],'TRME Active':['Hari ke-7, berat turun','Hari ke-21, energi naik','Hari ke-45, lingkar pinggang turun'],'Warming Partner':['Mulai tanya cara kerja bisnis','Ikut Zoom pertama'],Partner:['Aktif di tim','Sedang bangun namelist'],'Not Now':['Bilang nanti dulu, cek lagi bulan depan']};
+var NOTES={Namelist:['Old friend, never talked about this','Met through tennis','Referred by family'],Relationship:['Warming up, talked twice already','Interested in weight loss','Likes the Reels content'],Prospect:['Saw the Prysm result','Wants to keep talking this week','Asked about price'],Closing:['Asked about the 3 month package','Just needs to pick a start date','Waiting on her husband\'s decision'],Customer:['First order arrived','Needs a results check this month','Ready to share the result'],'TRME Active':['Day 7, weight down','Day 21, energy up','Day 45, waist is smaller'],'Warming Partner':['Started asking how the business works','Joined the first Zoom'],Partner:['Active in the team','Building a namelist'],'Not Now':['Said later, check again next month']};
 var people=(function(){
  var r=rng(7),out=[],seen={};
- var fixed=[['Rina','Wijaya','Prospect',-1,6,'Sudah lihat hasil Prysm, mau lanjut ngobrol'],['Dewi','Anggraeni','TRME Active',0,1,'Hari ke-7, berat turun 1,8 kg'],['Hendra','Lim','Closing',0,3,'Tanya paket 3 bulan'],['Sari','Putri','Customer',3,12,'Hari ke-90, siap cerita hasilnya'],['Tomi','Gunawan','Namelist',null,70,'Teman tennis, belum pernah ngobrol soal ini']];
+ var fixed=[['Rina','Wijaya','Prospect',-1,6,'Saw the Prysm result, wants to keep talking'],['Dewi','Anggraeni','TRME Active',0,1,'Day 7, weight down 1.8 kg'],['Hendra','Lim','Closing',0,3,'Asked about the 3 month package'],['Sari','Putri','Customer',3,12,'Day 90, ready to share the result'],['Tomi','Gunawan','Namelist',null,70,'Tennis friend, never talked about this']];
  fixed.forEach(function(f,i){var n=f[0]+' '+f[1];seen[n]=1;out.push({id:i,n:n,st:f[2],next:f[3],last:f[4],note:f[5]})});
  var i=5;
  while(out.length<420){
@@ -520,14 +520,14 @@ function avc(p){return AVC[p.id%AVC.length]}
 var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function dueTxt(n){if(n===null)return '';if(n<0)return 'Overdue '+(-n)+'d';if(n===0)return 'Today';if(n===1)return 'Tomorrow';if(n<7)return WD[wdOf(TD+n)].slice(0,3);var d=dateOf(TD+n);return d.getUTCDate()+' '+MON[d.getUTCMonth()]}
 function msgFor(p,kind){var f=p.n.split(' ')[0];
- if(kind==='bd')return 'Selamat ulang tahun '+f+'! Semoga sehat terus dan makin semangat. Aku doain yang terbaik buat kamu tahun ini.';
- if(kind==='reo')return 'Hai '+f+', stok kamu kayaknya mulai tipis ya. Mau aku siapin order bulan ini sekalian? Aku juga mau lihat progres kamu.';
- if(kind&&kind.indexOf('chk')===0)return 'Hai '+f+', hari ke-'+kind.slice(3)+' nih. Berat badan, body age sama lean mass hari ini berapa? Kirim fotonya ya, aku catat.';
- if(p.st==='TRME Active')return 'Hai '+f+', gimana hari ini? Porsi makan dan tidurnya aman? Kirim foto piringmu ya, aku lihat.';
- if(p.st==='Closing')return 'Hai '+f+', ini rincian yang kemarin kita bahas. Mau aku bantu mulai hari ini?';
- if(p.st==='Customer')return 'Hai '+f+', aku mau lihat progres kamu bulan ini. Ada waktu 10 menit buat ngobrol?';
- if(p.st==='Prospect')return 'Hai '+f+', aku mau lanjut ngobrol soal hasil Prysm kamu. Ada waktu 10 menit hari ini?';
- return 'Hai '+f+', lama nggak ngobrol. Minggu ini ada waktu ngopi?'}
+ if(kind==='bd')return 'Happy birthday '+f+'! Wishing you good health and lots of energy. All the best for your year ahead.';
+ if(kind==='reo')return 'Hi '+f+', I think your stock is running low. Want me to set up this month\'s order? I would also like to see your progress.';
+ if(kind&&kind.indexOf('chk')===0)return 'Hi '+f+', it is day '+kind.slice(3)+'. What are your weight, body age and lean mass today? Send me a photo and I will log it.';
+ if(p.st==='TRME Active')return 'Hi '+f+', how is today going? Are your meals and sleep okay? Send me a photo of your plate and I will take a look.';
+ if(p.st==='Closing')return 'Hi '+f+', here are the details we talked about. Want me to help you start today?';
+ if(p.st==='Customer')return 'Hi '+f+', I would like to see your progress this month. Do you have 10 minutes to chat?';
+ if(p.st==='Prospect')return 'Hi '+f+', I would like to continue talking about your Prysm result. Do you have 10 minutes today?';
+ return 'Hi '+f+', it has been a while. Free for coffee this week?'}
 
 /* ---------- team data ---------- */
 /* Leader list (display name, legal-name key, panelist flag) lives in the Sheet: teamdata rows with type "lead". Nothing about the team is stored in this repo. */
@@ -540,21 +540,21 @@ var STL={reached:'Reached',track:'On track',behind:'Behind',urgent:'Urgent',pan:
 /* ---------- content data (iPad and Mac) ---------- */
 var CSTS=['Idea','Script','Recorded','With editor','Edited','Scheduled','Published'];
 var CT=[
- {id:1,t:'Nasi padang 600 kalori',type:'YouTube',pillar:'Kebiasaan',st:'Script',due:'Rab 5 Nov',kids:[2,3,4]},
- {id:2,t:'Reels: porsi nasi padang',type:'Reel',pillar:'Kebiasaan',st:'Idea',par:1},
- {id:3,t:'Carousel: 5 lauk paling aman',type:'Carousel',pillar:'Kebiasaan',st:'Idea',par:1},
- {id:4,t:'Threads: nasi padang tetap boleh',type:'Thread',pillar:'Kebiasaan',st:'Idea',par:1},
- {id:5,t:'Kenapa timbangan bohong',type:'YouTube',pillar:'Sains',st:'Recorded',due:'Sen 9 Nov',kids:[6,7]},
- {id:6,t:'Reels: berat vs lemak',type:'Reel',pillar:'Sains',st:'Script',par:5},
- {id:7,t:'Carousel: 3 angka selain berat',type:'Carousel',pillar:'Sains',st:'Idea',par:5},
- {id:8,t:'Protein 1,6 gram per kg',type:'YouTube',pillar:'Sains',st:'With editor',due:'Rab 4 Nov',kids:[9]},
- {id:9,t:'Reels: hitung protein sehari',type:'Reel',pillar:'Sains',st:'Edited',par:8},
- {id:10,t:'Reels: sarapan 30 gram protein',type:'Reel',pillar:'Sains',st:'Scheduled',pub:0,at:'07.00'},
- {id:11,t:'Threads: porsi nasi padang',type:'Thread',pillar:'Kebiasaan',st:'Scheduled',pub:0,at:'12.00'},
- {id:12,t:'Carousel: gula di minuman kemasan',type:'Carousel',pillar:'Kebiasaan',st:'Scheduled',pub:2,at:'18.00'},
- {id:13,t:'Hasil 90 hari Ibu Sari',type:'Reel',pillar:'Hasil',st:'Published'},
- {id:14,t:'Berat turun tapi lemak tetap?',type:'YouTube',pillar:'Sains',st:'Idea'},
- {id:15,t:'Kenapa lapar jam 4 sore',type:'Reel',pillar:'Kebiasaan',st:'Idea'}
+ {id:1,t:'600 calorie nasi padang',type:'YouTube',pillar:'Habits',st:'Script',due:'Rab 5 Nov',kids:[2,3,4]},
+ {id:2,t:'Reels: nasi padang portions',type:'Reel',pillar:'Habits',st:'Idea',par:1},
+ {id:3,t:'Carousel: 5 safest side dishes',type:'Carousel',pillar:'Habits',st:'Idea',par:1},
+ {id:4,t:'Threads: nasi padang is still allowed',type:'Thread',pillar:'Habits',st:'Idea',par:1},
+ {id:5,t:'Why the scale lies',type:'YouTube',pillar:'Science',st:'Recorded',due:'Sen 9 Nov',kids:[6,7]},
+ {id:6,t:'Reels: weight vs fat',type:'Reel',pillar:'Science',st:'Script',par:5},
+ {id:7,t:'Carousel: 3 numbers besides weight',type:'Carousel',pillar:'Science',st:'Idea',par:5},
+ {id:8,t:'Protein 1,6 gram per kg',type:'YouTube',pillar:'Science',st:'With editor',due:'Rab 4 Nov',kids:[9]},
+ {id:9,t:'Reels: count your daily protein',type:'Reel',pillar:'Science',st:'Edited',par:8},
+ {id:10,t:'Reels: 30 g protein breakfast',type:'Reel',pillar:'Science',st:'Scheduled',pub:0,at:'07.00'},
+ {id:11,t:'Threads: nasi padang portions',type:'Thread',pillar:'Habits',st:'Scheduled',pub:0,at:'12.00'},
+ {id:12,t:'Carousel: sugar in bottled drinks',type:'Carousel',pillar:'Habits',st:'Scheduled',pub:2,at:'18.00'},
+ {id:13,t:'Ibu Sari 90 day result',type:'Reel',pillar:'Hasil',st:'Published'},
+ {id:14,t:'Weight down but fat the same?',type:'YouTube',pillar:'Science',st:'Idea'},
+ {id:15,t:'Why you get hungry at 4 pm',type:'Reel',pillar:'Habits',st:'Idea'}
 ];
 var TGC={YouTube:'yt',Reel:'rl',Carousel:'cr',Thread:'th'};
 function normCt(r,i){return {id:Number(r.id)||(Date.now()+i),t:r.t,type:r.type||'Reel',pillar:r.pillar||'',st:r.st||'Idea',due:r.due||undefined,pub:r.pub?Number(r.pub):undefined,at:r.at||undefined}}
@@ -587,7 +587,8 @@ function bdParse(x){x=String(x||'').trim().toLowerCase();if(!x)return null;var m
  else{m=/(\d{1,2})\s*([a-z]{3})/.exec(x);if(!m||!mn[m[2]])return null;d=+m[1];mo=mn[m[2]]}
  if(!(mo>=1&&mo<=12&&d>=1&&d<=31))return null;return {m:mo,d:d}}
 function bdIn(p){var b=p.raw&&bdParse(p.raw.birthday);if(!b)return null;var y=+isoOf(TD).slice(0,4),f=function(yy){return dn(yy+'-'+('0'+b.m).slice(-2)+'-'+('0'+b.d).slice(-2))},c=f(y);if(c==null)return null;if(c<TD)c=f(y+1);return c==null?null:c-TD}
-function supDue(p){var b=null,id=pid(p);PUR.forEach(function(x){if(x.pid===id&&(!b||x.date>b.date))b=x});if(!b)return null;var d0=dn(b.date);if(d0==null)return null;return d0+(Number(b.days)||30*(Number(b.qty)||1))}
+function supCycle(nm){nm=String(nm||'').toLowerCase();return /trme/.test(nm)?90:/duo|reset/.test(nm)?180:30}
+function supDue(p){var b=null,id=pid(p);PUR.forEach(function(x){if(x.pid===id&&(!b||x.date>b.date))b=x});if(!b)return null;var d0=dn(b.date);if(d0==null)return null;return d0+(Number(b.days)||supCycle(b.product)*(Number(b.qty)||1))}
 function reoRel(p){if(p.st!=='Customer'&&p.st!=='TRME Active')return null;var due=supDue(p);if(due==null){if(p.ord==null)return null;due=TD-p.ord+30}return due-TD}
 function reo(p){var r=reoRel(p);return (r!==null&&r<=7&&r>=-365)?{rel:r}:null}
 function reorderList(){return people.filter(function(p){return !(p.next!==null&&p.next<=0)&&p.last!==0}).map(function(p){var r=reo(p);return r?{p:p,r:r}:null}).filter(Boolean).sort(function(a,b){return a.r.rel-b.r.rel})}
@@ -598,37 +599,37 @@ function chkDue(p){if(p.st!=='TRME Active'||!p.raw)return null;var t0=dn(p.raw.t
  for(var i=CHKD.length-1;i>=0;i--){var d=CHKD[i];if(age>=d&&age<=d+3&&!resOf(id,d))return {day:d,age:age}}return null}
 function chkList(){return people.filter(function(p){return p.last!==0}).map(function(p){var c=chkDue(p);return c?{p:p,c:c}:null}).filter(Boolean).sort(function(a,b){return b.c.age-a.c.age})}
 function chkCard(){if(!CFG.url)return '';var L=chkList();if(!L.length)return '';
- return gp('chk','nod','spark','Check-in hasil TRME',L.length)+(collapsed.chk?'':'<div class="list">'+L.map(function(o){var p=o.p;return '<div class="task"><div class="ic '+avIc(p)+'">'+ic('chat',17)+'</div><button class="tb" data-chkin="'+p.id+'|'+o.c.day+'"><b>'+esc(p.n)+'</b><small>Hari ke-'+o.c.day+' · catat hasil</small></button><button class="rb" data-fwa="'+p.id+'" data-fk="chk'+o.c.day+'" data-ft="Check-in hari '+o.c.day+'" aria-label="Buka WhatsApp">'+ic('chat',16)+'</button></div>'}).join('')+'</div>')}
+ return gp('chk','nod','spark','TRME results check-in',L.length)+(collapsed.chk?'':'<div class="list">'+L.map(function(o){var p=o.p;return '<div class="task"><div class="ic '+avIc(p)+'">'+ic('chat',17)+'</div><button class="tb" data-chkin="'+p.id+'|'+o.c.day+'"><b>'+esc(p.n)+'</b><small>Day '+o.c.day+' · log results</small></button><button class="rb" data-fwa="'+p.id+'" data-fk="chk'+o.c.day+'" data-ft="Check-in day '+o.c.day+'" aria-label="Open WhatsApp">'+ic('chat',16)+'</button></div>'}).join('')+'</div>')}
 function funnel(){var c=function(f){return people.filter(f).length},st=function(){var a=arguments;return c(function(p){return Array.prototype.indexOf.call(a,p.st)>-1})};
- var steps=[['Prospek',st('Namelist','Prospect','Warming Partner','Closing','Customer','TRME Active','Partner')],['Closing',st('Closing','Customer','TRME Active','Partner')],['Customer',st('Customer','TRME Active','Partner')],['Results (TRME)',st('TRME Active','Partner')],['Builder',st('Partner')]];
- return steps.map(function(x,i){var pc=i&&steps[i-1][1]?Math.round(x[1]/steps[i-1][1]*100)+'% dari '+steps[i-1][0]:'';return '<div class="lt" style="margin-top:8px"><b>'+x[0]+'</b><span class="meta">'+x[1]+(pc?' · '+pc:'')+'</span></div>'}).join('')}
+ var steps=[['Prospects',st('Namelist','Prospect','Warming Partner','Closing','Customer','TRME Active','Partner')],['Closing',st('Closing','Customer','TRME Active','Partner')],['Customer',st('Customer','TRME Active','Partner')],['Results (TRME)',st('TRME Active','Partner')],['Builder',st('Partner')]];
+ return steps.map(function(x,i){var pc=i&&steps[i-1][1]?Math.round(x[1]/steps[i-1][1]*100)+'% of '+steps[i-1][0]:'';return '<div class="lt" style="margin-top:8px"><b>'+x[0]+'</b><span class="meta">'+x[1]+(pc?' · '+pc:'')+'</span></div>'}).join('')}
 function scoreP(p){if(p.st==='Not Now'||p.last===0)return null;var W={'Closing':50,'Prospect':35,'Warming Partner':30,'TRME Active':28,'Partner':20,'Customer':15,'Namelist':10,'Relationship':5},sc=W[p.st]||0,why=[],kind='',ft='Follow-up';
- if(p.next!==null&&p.next<=0){sc+=20+Math.min(-p.next,14)*2;why.push(p.next<0?'overdue '+(-p.next)+' hari':'follow-up hari ini')}
- var ck=chkDue(p);if(ck){sc+=35;why.push('check-in hari '+ck.day);kind='chk'+ck.day;ft='Check-in hari '+ck.day}
- var bd=bdIn(p);if(bd!==null&&bd<=2){sc+=30;why.push(bd===0?'ulang tahun hari ini':'ulang tahun '+(bd===1?'besok':bd+' hari lagi'));if(!kind){kind='bd';ft='Ulang tahun'}}
- var r=reo(p);if(r){sc+=25;why.push(r.rel<=0?'waktunya reorder':'reorder '+dueTxt(r.rel).toLowerCase());if(!kind){kind='reo';ft='Reorder'}}
+ if(p.next!==null&&p.next<=0){sc+=20+Math.min(-p.next,14)*2;why.push(p.next<0?'overdue '+(-p.next)+' days':'follow-up today')}
+ var ck=chkDue(p);if(ck){sc+=35;why.push('check-in day '+ck.day);kind='chk'+ck.day;ft='Check-in day '+ck.day}
+ var bd=bdIn(p);if(bd!==null&&bd<=2){sc+=30;why.push(bd===0?'birthday today':'birthday '+(bd===1?'tomorrow':'in '+bd+' days'));if(!kind){kind='bd';ft='Birthday'}}
+ var r=reo(p);if(r){sc+=25;why.push(r.rel<=0?'time to reorder':'reorder '+dueTxt(r.rel).toLowerCase());if(!kind){kind='reo';ft='Reorder'}}
  if(p.raw&&/^(1|true|yes|ya|y|hot)$/i.test(String(p.raw.hot||'').trim())){sc+=25;why.push('hot')}
  if(!why.length)return null;return {p:p,sc:sc,why:why,kind:kind,ft:ft}}
 function topThree(){return people.map(scoreP).filter(Boolean).sort(function(a,b){return b.sc-a.sc}).slice(0,3)}
 function avIc(p){return ['sky','pink','lav','mint','peach','sand'][p.id%6]}
-function actRow(p,sub,kind,ft){return '<div class="task"><div class="ic '+avIc(p)+'">'+ic('chat',17)+'</div><button class="tb" data-pdet="'+p.id+'"><b>'+esc(p.n)+'</b><small>'+esc(sub)+'</small></button><button class="rb" data-fwa="'+p.id+'" data-fk="'+esc(kind||'')+'" data-ft="'+esc(ft||'Follow-up')+'" aria-label="Buka WhatsApp">'+ic('chat',16)+'</button><button class="ck" data-fudone="'+p.id+'" data-ftype="'+esc(ft||'Follow-up')+'" aria-label="Sudah dihubungi"><i>'+ic('check',14)+'</i></button></div>'}
+function actRow(p,sub,kind,ft){return '<div class="task"><div class="ic '+avIc(p)+'">'+ic('chat',17)+'</div><button class="tb" data-pdet="'+p.id+'"><b>'+esc(p.n)+'</b><small>'+esc(sub)+'</small></button><button class="rb" data-fwa="'+p.id+'" data-fk="'+esc(kind||'')+'" data-ft="'+esc(ft||'Follow-up')+'" aria-label="Open WhatsApp">'+ic('chat',16)+'</button><button class="ck" data-fudone="'+p.id+'" data-ftype="'+esc(ft||'Follow-up')+'" aria-label="Mark as contacted"><i>'+ic('check',14)+'</i></button></div>'}
 function topCard(){if(!CFG.url)return '';var t=topThree();if(!t.length)return '';
- return gp('top3','late','spark','3 orang paling penting hari ini',t.length)+(collapsed.top3?'':'<div class="list">'+t.map(function(x){return actRow(x.p,x.p.st+' · '+x.why.join(' · '),x.kind,x.ft)}).join('')+'</div>')}
+ return gp('top3','late','spark','Top 3 people today',t.length)+(collapsed.top3?'':'<div class="list">'+t.map(function(x){return actRow(x.p,x.p.st+' · '+x.why.join(' · '),x.kind,x.ft)}).join('')+'</div>')}
 function reorderCard(){if(!CFG.url)return '';var L=reorderList();if(!L.length)return '';
- return gp('reo','nod','chat','Reorder',L.length)+(collapsed.reo?'':'<div class="list">'+L.slice(0,10).map(function(o){return actRow(o.p,(o.r.rel<0?'Lewat '+(-o.r.rel)+' hari dari jadwal reorder':'Reorder '+dueTxt(o.r.rel).toLowerCase())+(o.p.ord!=null?' · order terakhir '+o.p.ord+' hari lalu':''),'reo','Reorder')}).join('')+(L.length>10?'<p class="meta" style="margin:6px 4px">+'+(L.length-10)+' lagi di People, Customers</p>':'')+'</div>')}
+ return gp('reo','nod','chat','Reorder',L.length)+(collapsed.reo?'':'<div class="list">'+L.slice(0,10).map(function(o){return actRow(o.p,(o.r.rel<0?(-o.r.rel)+' days past reorder date':'Reorder '+dueTxt(o.r.rel).toLowerCase())+(o.p.ord!=null?' · last order '+o.p.ord+' days ago':''),'reo','Reorder')}).join('')+(L.length>10?'<p class="meta" style="margin:6px 4px">+'+(L.length-10)+' more in People, Customers</p>':'')+'</div>')}
 function bdCard(){if(!CFG.url)return '';var L=birthdayList();if(!L.length)return '';
- return gp('bday','nod','spark','Ulang tahun',L.length)+(collapsed.bday?'':'<div class="list">'+L.map(function(o){return actRow(o.p,o.d===0?'Hari ini':o.d===1?'Besok':o.d+' hari lagi','bd','Ulang tahun')}).join('')+'</div>')}
+ return gp('bday','nod','spark','Birthday',L.length)+(collapsed.bday?'':'<div class="list">'+L.map(function(o){return actRow(o.p,o.d===0?'Today':o.d===1?'Tomorrow':o.d+' days','bd','Birthday')}).join('')+'</div>')}
 function numStrip(){if(!CFG.url)return '';var P=null,M=null;try{P=pvData();M=teamModel()}catch(e){}
- if(!P||!M)return '<div class="missed" data-goto="team:Volume"><b>Angka bulan ini belum ada</b><p class="meta" style="margin:6px 0 0">Kirim file genealogy terbaru ke Claude, nanti personal PV dan org volume muncul di sini.</p></div>';
+ if(!P||!M)return '<div class="missed" data-goto="team:Volume"><b>No numbers for this month yet</b><p class="meta" style="margin:6px 0 0">Send the latest genealogy file to Claude and your personal PV and org volume show up here.</p></div>';
  var pp=pvPace(P),me=LEAD.filter(function(m){return m.n==='AJ'})[0],mine=me?me.v:0,org=M.rows[0].c,goal=(P.tree.orgGoal||0)*1000;
  var y=+P.p.slice(0,4),mo=+P.p.slice(5,7),dim=new Date(y,mo,0).getDate(),left=pp.live?Math.max(1,dim-(+isoOf(TD).slice(8,10))+1):0;
- var need=function(v,g){return pp.live&&g>v?' · perlu '+num((g-v)/left)+' per hari':(g&&v>=g?' · tercapai':'')};
+ var need=function(v,g){return pp.live&&g>v?' · need '+num((g-v)/left)+' per day':(g&&v>=g?' · reached':'')};
  var behind=LEAD.filter(function(m){return !m.pan&&m.n!=='AJ'&&['behind','urgent'].indexOf(pvSt(m,pp.pc))>-1}).length;
  var age=dn(P.hi)!=null?TD-dn(P.hi):0;
- var h='<div class="card" data-goto="team:Volume" role="button" style="margin-top:0;cursor:pointer"><h2>Angka bulan ini</h2>';
+ var h='<div class="card" data-goto="team:Volume" role="button" style="margin-top:0;cursor:pointer"><h2>This month\'s numbers</h2>';
  h+='<div class="lt" style="margin-top:8px"><b>Personal</b><span class="meta">'+num(mine)+' / 3.000'+need(mine,3000)+'</span></div><div class="trk"><b style="width:'+Math.min(100,mine/3000*100)+'%"></b></div>';
  if(goal)h+='<div class="lt" style="margin-top:10px"><b>Org</b><span class="meta">'+num(org)+' / '+num(goal)+need(org,goal)+'</span></div><div class="trk"><b style="width:'+Math.min(100,org/goal*100)+'%"></b></div>';
- h+='<div class="meta" style="margin-top:8px">'+(behind?behind+' leader di bawah pace · ':'')+'Data per '+dLab(P.hi)+(pp.live?'':' (bulan baru belum ada)')+(age>=2?'. Sudah '+age+' hari, kirim PDF genealogy terbaru':'')+'</div></div>';
+ h+='<div class="meta" style="margin-top:8px">'+(behind?behind+' leaders behind pace · ':'')+'Data as of '+dLab(P.hi)+(pp.live?'':' (new month not in yet)')+(age>=2?'. '+age+' days old, send the latest genealogy PDF':'')+'</div></div>';
  return h}
 function tgt(k,def){var r=TDATA.filter(function(x){return x.type==='cfg'&&x.scope===k})[0],v=r?nf(r.value):0;return v>0?v:def}
 function isInv(x){return String(x.type||'').indexOf('Invite')===0}
@@ -637,56 +638,56 @@ function streakN(){var set={};TLOG.forEach(function(x){set[x.date]=1});var d=TD,
 function scoreSheet(){var a=dayAct(isoOf(TD)),T={names:tgt('target_names',5),fu:tgt('target_follow',10),inv:tgt('target_invite',3)};
  var row=function(l,v,t){return '<div class="lrow first" style="border-top:0"><div class="lt"><b>'+l+'</b><span class="meta">'+v+' / '+t+'</span></div><div class="trk"><b style="width:'+Math.min(100,v/t*100)+'%"></b></div></div>'};
  var wk='';for(var i=6;i>=0;i--){var dd=isoOf(TD-i),c=dayAct(dd).all;wk+='<span style="flex:1;text-align:center"><i style="display:block;margin:0 auto 4px;width:60%;border-radius:4px;background:var(--chart);height:'+(4+Math.min(c,20)*3)+'px"></i><small class="meta">'+WD[wdOf(TD-i)][0]+' '+c+'</small></span>'}
- sheet('<h3>Aktivitas hari ini</h3><p class="meta" style="margin:0">Streak '+streakN()+' hari berturut-turut ada kontak tercatat</p>'+row('Nama baru',a.names,T.names)+row('Follow-up',a.fu,T.fu)+row('Invite',a.inv,T.inv)+'<div class="lbl">Funnel sekarang</div>'+funnel()+'<div class="lbl">7 hari terakhir</div><div style="display:flex;align-items:flex-end;gap:6px;height:90px">'+wk+'</div><p class="meta" style="margin:10px 0 0">Target bisa diubah di Sheet, tab teamdata: baris type cfg dengan scope target_names, target_follow, target_invite.</p><button class="btn alt" data-close="1">Tutup</button>')}
+ sheet('<h3>Today\'s activity</h3><p class="meta" style="margin:0">Streak: '+streakN()+' days in a row with a logged contact</p>'+row('New names',a.names,T.names)+row('Follow-up',a.fu,T.fu)+row('Invite',a.inv,T.inv)+'<div class="lbl">Funnel now</div>'+funnel()+'<div class="lbl">Last 7 days</div><div style="display:flex;align-items:flex-end;gap:6px;height:90px">'+wk+'</div><p class="meta" style="margin:10px 0 0">You can change the targets in the Sheet, teamdata tab: rows with type cfg and scope target_names, target_follow, target_invite.</p><button class="btn alt" data-close="1">Close</button>')}
 function noNext(p){return p.next===null&&['Prospect','Closing','Warming Partner','TRME Active','Partner'].indexOf(p.st)>-1}
 function blindspots(){
  var nNo=people.filter(noNext).length,reoN=reorderList().length,out=[];
- if(!CFG.url){out.push({t:'Volume pribadimu 1.610 dari 3.000',d:'Di bawah minimum, masih jauh dari pace',go:'team:Volume',c:'sand',i:'chart'},{t:'Data Team berhenti di 26 Oct',d:'Belum ada PDF genealogy 27 sampai 30 Oct',go:'team:Overview',c:'peach',i:'monitor'})}
- if(nNo)out.push({t:nNo+' orang di pipeline tanpa follow-up',d:'Tidak muncul di Today karena tidak punya tanggal',go:'people:No next step',c:'lav',i:'users'});
- if(reoN)out.push({t:reoN+' customer waktunya reorder',d:'Berdasarkan order terakhir dan stok yang kamu catat',go:'people:Customers',c:'mint',i:'chat'});
- if(!CFG.url)out.push({t:'Cek siapa yang jarang hadir RCP',d:'Lihat attendance tim dan volume di bawah pace',go:'team:Meetings',c:'sky',i:'eye'});
+ if(!CFG.url){out.push({t:'Your personal volume is 1,610 of 3,000',d:'Under the minimum, far behind pace',go:'team:Volume',c:'sand',i:'chart'},{t:'Team data stops at 26 Oct',d:'No genealogy PDF for 27 to 30 Oct yet',go:'team:Overview',c:'peach',i:'monitor'})}
+ if(nNo)out.push({t:nNo+' people in the pipeline with no follow-up',d:'Not shown in Today because there is no date',go:'people:No next step',c:'lav',i:'users'});
+ if(reoN)out.push({t:reoN+' customers due for reorder',d:'Based on the last order and the supply you logged',go:'people:Customers',c:'mint',i:'chat'});
+ if(!CFG.url)out.push({t:'Check who rarely attends RCP',d:'See team attendance and volume under pace',go:'team:Meetings',c:'sky',i:'eye'});
  return out}
 function bsRow(b){return '<div class="task"><div class="ic '+b.c+'">'+ic(b.i,17)+'</div><button class="tb" data-goto="'+b.go+'"><b>'+esc(b.t)+'</b><small>'+esc(b.d)+'</small></button><span class="ck" style="color:var(--mute)">'+ic('right',16)+'</span></div>'}
 function durMin(s){if(!s)return 30;return /h/.test(s)?parseInt(s)*60:parseInt(s)}
 function tmin(s){var a=s.split('.');return +a[0]*60+(+a[1]||0)}
 function timeline(){
- var S=6,E=23,PX=46,h='<div class="tl"><h3>Timeline hari ini</h3><div class="tlg" style="height:'+((E-S)*PX)+'px">';
+ var S=6,E=23,PX=46,h='<div class="tl"><h3>Today\'s timeline</h3><div class="tlg" style="height:'+((E-S)*PX)+'px">';
  for(var x=S;x<=E;x++)h+='<div class="tlh" style="top:'+((x-S)*PX)+'px"><span>'+(x<10?'0':'')+x+'.00</span></div>';
  var blk=function(t0,t1,cls,title,sm){return '<div class="blk '+esc(cls)+'" style="top:'+((t0/60-S)*PX)+'px;height:'+Math.max(20,((t1-t0)/60)*PX-3)+'px"><b>'+esc(title)+'</b>'+(sm?'<small>'+esc(sm)+'</small>':'')+'</div>'};
  tasks.filter(function(t){return t.day===TD}).forEach(function(t){
   if(t.ev){var p=t.ev.split(' → ');h+=blk(tmin(p[0]),tmin(p[1]),'ev'+(t.done?' done':''),t.t,t.ev)}
   else if(t.at){var s0=tmin(t.at);h+=blk(s0,s0+durMin(t.dur),t.c,t.t,t.at+' · '+t.dur)}});
  evOn(TD).forEach(function(x){if(x.a==='1')return;var a=tmin(hm(x.s)),b=dn(x.e)>dn(x.s)?24*60:tmin(hm(x.e));h+=blk(a,Math.max(b,a+30),'ev',x.t,evTime(x))});
- if(!CFG.url)h+=blk(13*60,15*60,'free','Kosong 2 jam','Cocok untuk rekam script');
+ if(!CFG.url)h+=blk(13*60,15*60,'free','2 free hours','Good for recording a script');
  h+='</div></div>';return h}
 function dayHead(){var dt=dateOf(sel);
- return '<div class="hrow"><h1>'+WD[wdOf(sel)]+'</h1><small>'+MON[dt.getUTCMonth()]+' '+dt.getUTCFullYear()+'</small></div>'+weekStrip()+(CFG.url?'':'<span class="sample">Contoh data</span>')}
+ return '<div class="hrow"><h1>'+WD[wdOf(sel)]+'</h1><small>'+MON[dt.getUTCMonth()]+' '+dt.getUTCFullYear()+'</small></div>'+weekStrip()+(CFG.url?'':'<span class="sample">Sample data</span>')}
 function dayBody(D){
  var late=lateTasks(),nod=tasks.filter(function(t){return t.day===null&&!t.done}),h='';
  if(D===TD){
   h+=numStrip()+topCard()+chkCard();
   if(late.length)h+=gp('late','late','alert','Overdue',late.length)+(collapsed.late?'':'<div class="list">'+late.map(taskRow).join('')+'</div>');
   var fu=people.filter(function(p){return p.next!==null&&p.next<=0&&p.st!=='Not Now'}).sort(function(a,b){return a.next-b.next});
-  if(fu.length)h+=gp('fu','late','alert','Follow up',fu.length)+(collapsed.fu?'':'<div class="list">'+fu.slice(0,30).map(function(p){return '<div class="task"><div class="ic '+['sky','pink','lav','mint','peach','sand'][p.id%6]+'">'+ic('chat',17)+'</div><button class="tb" data-pdet="'+p.id+'"><b>'+esc(p.n)+'</b><small>'+(p.next<0?'Overdue '+(-p.next)+'d':'Today')+(p.note?' · '+esc(p.note.slice(0,60)):'')+'</small></button><button class="rb" data-fwa="'+p.id+'" aria-label="Buka WhatsApp">'+ic('chat',16)+'</button><button class="ck" data-fudone="'+p.id+'" aria-label="Sudah dihubungi"><i>'+ic('check',14)+'</i></button></div>'}).join('')+(fu.length>30?'<p class="meta" style="margin:6px 4px">+'+(fu.length-30)+' lagi di People</p>':'')+'</div>');
+  if(fu.length)h+=gp('fu','late','alert','Follow up',fu.length)+(collapsed.fu?'':'<div class="list">'+fu.slice(0,30).map(function(p){return '<div class="task"><div class="ic '+['sky','pink','lav','mint','peach','sand'][p.id%6]+'">'+ic('chat',17)+'</div><button class="tb" data-pdet="'+p.id+'"><b>'+esc(p.n)+'</b><small>'+(p.next<0?'Overdue '+(-p.next)+'d':'Today')+(p.note?' · '+esc(p.note.slice(0,60)):'')+'</small></button><button class="rb" data-fwa="'+p.id+'" aria-label="Open WhatsApp">'+ic('chat',16)+'</button><button class="ck" data-fudone="'+p.id+'" aria-label="Mark as contacted"><i>'+ic('check',14)+'</i></button></div>'}).join('')+(fu.length>30?'<p class="meta" style="margin:6px 4px">+'+(fu.length-30)+' more in People</p>':'')+'</div>');
   h+=reorderCard()+bdCard();
   h+=habBlock(D);
   var tp=[];upTrips().forEach(function(t){(t.prep||[]).forEach(function(p){if(TK.indexOf(t.id+':'+p.id)>-1)return;var du=pDue(p);if(du.n<=3&&du.n>=-30&&!(p.opens&&dUntil(p.opens.slice(0,10))>0))tp.push({id:t.id+':'+p.id,t:p.label,w:t.name+' · '+du.t})})});
   if(tp.length)h+=gp('trp','nod','clock','Trip',tp.length)+(collapsed.trp?'':'<div class="list">'+tp.map(function(x){return '<div class="task"><div class="ic sky">'+ic('clock',17)+'</div><div class="tb"><b>'+esc(x.t)+'</b><small>'+esc(x.w)+'</small></div><button class="ck" data-ttick="'+esc(x.id)+'" aria-label="Done"><i>'+ic('check',14)+'</i></button></div>'}).join('')+'</div>');
   var bs=blindspots();
-  if(CFG.url&&!tasks.length&&!evOn(D).length)h+='<div class="missed"><b>Masih kosong</b><p class="meta" style="margin:6px 0 0">Tekan + untuk catat yang pertama. Yang tanpa tanggal masuk ke No date, jadi tidak ada yang hilang.</p></div>';
+  if(CFG.url&&!tasks.length&&!evOn(D).length)h+='<div class="missed"><b>Still empty</b><p class="meta" style="margin:6px 0 0">Tap + to add the first one. Anything without a date goes to No date, so nothing gets lost.</p></div>';
   if(bs.length)h+=gp('bs','eve','eye','Blind spots',bs.length)+(collapsed.bs?'':'<div class="list">'+bs.map(bsRow).join('')+'</div>');
-  h+=gp('nod','nod','inbox','No date',nod.length,'nod')+(collapsed.nod?'':'<div class="nodate">'+(nod.length?nod.map(taskRow).join(''):'<div class="empty">Kosong. Semua punya tanggal.</div>')+'</div>');
+  h+=gp('nod','nod','inbox','No date',nod.length,'nod')+(collapsed.nod?'':'<div class="nodate">'+(nod.length?nod.map(taskRow).join(''):'<div class="empty">Empty. Everything has a date.</div>')+'</div>');
  }
  if(D!==TD)h+=habBlock(D);
  var day=tasks.filter(function(t){return t.day===D}),evs=evOn(D),ad=evs.filter(function(x){return x.a==='1'});
  if(ad.length)h+='<div class="list" style="margin-top:14px">'+ad.map(evRow).join('')+'</div>';
- if(D<TD&&!day.length&&!evs.length)h+='<p class="note">Tidak ada catatan untuk hari ini.</p>';
- if(D>TD&&!day.length&&!evs.length)h+='<p class="note">Belum ada jadwal di hari ini.</p>';
+ if(D<TD&&!day.length&&!evs.length)h+='<p class="note">No notes for today.</p>';
+ if(D>TD&&!day.length&&!evs.length)h+='<p class="note">Nothing scheduled today.</p>';
  PARTS.forEach(function(p){var items=day.filter(function(t){return t.part===p[0]}),pe=evs.filter(function(x){return x.a!=='1'&&evPart(x)===p[0]});if(!items.length&&!pe.length&&D!==TD)return;
   h+=gp(p[0],PCLS[p[0]],p[2],p[1],items.length+pe.length,p[0])+(collapsed[p[0]]?'':'<div class="list">'+pe.map(evRow).join('')+items.map(taskRow).join('')+'</div>')});
  if(D===TD){var tm=tasks.filter(function(t){return t.day===TD+1});
   h+=gp('tom','nod','clock','Tomorrow',tm.length)+(collapsed.tom?'':'<div class="list">'+tm.map(taskRow).join('')+'</div>');
-  h+='<div class="missed"><b>Ada yang terlewat?</b><div class="chips" style="margin-top:10px"><button class="chip" data-act="m1">'+late.length+' overdue</button><button class="chip" data-act="m2">'+nod.length+' tanpa tanggal</button><button class="chip" data-act="m3">'+tm.length+' untuk besok</button></div><p class="meta" style="margin:8px 0 0">Jam 20.30 aku kirim pengingat kalau masih ada overdue atau tanpa tanggal.</p></div>'}
+  h+='<div class="missed"><b>Anything missed?</b><div class="chips" style="margin-top:10px"><button class="chip" data-act="m1">'+late.length+' overdue</button><button class="chip" data-act="m2">'+nod.length+' without a date</button><button class="chip" data-act="m3">'+tm.length+' for tomorrow</button></div><p class="meta" style="margin:8px 0 0">At 20:30 I send a reminder if anything is still overdue or has no date.</p></div>'}
  return h}
 function todayList(){return dayHead()+dayBody(sel)}
 function statsHTML(){var doneN=tasks.filter(function(t){return t.done}).length;
@@ -792,18 +793,18 @@ var PITEMS=[],PSHOWN=0,PIO=null;
 function buildItems(){
  if(pview==='Promo'&&!pq.trim())return promoItems();
  var r=filterPeople(),L=r.list,out=[];
- if(r.mode==='search'){out.push({k:'n',txt:L.length+' hasil untuk "'+pq.trim()+'"'});L.forEach(function(p){out.push({k:'r',p:p})});return out}
+ if(r.mode==='search'){out.push({k:'n',txt:L.length+' results for "'+pq.trim()+'"'});L.forEach(function(p){out.push({k:'r',p:p})});return out}
  if(r.mode==='Follow-up'){
   [['Overdue','late','alert',function(p){return p.next<0}],['Today','morning','sun',function(p){return p.next===0}],['This week','eve','clock',function(p){return p.next>0}]].forEach(function(g){
    var s=L.filter(g[3]);if(!s.length)return;out.push({k:'g',cls:g[1],icon:g[2],label:g[0],n:s.length});s.forEach(function(p){out.push({k:'r',p:p})})});return out}
  if(r.mode==='All'){var cur='';L.forEach(function(p){var l=p.n[0].toUpperCase();if(l!==cur){cur=l;out.push({k:'l',l:l})}out.push({k:'r',p:p})});return out}
  L.forEach(function(p){out.push({k:'r',p:p})});return out}
 function rowHtml(p){
- var d=dueTxt(p.next),cls=p.next!==null&&p.next<0?' late':p.next===0?' today':'',last=p.last>=9999?'belum dicatat':p.last===0?'today':p.last+'d ago';
- return '<div class="prow'+(wide()&&selPid===p.id?' sel':'')+'" data-pid="'+p.id+'"><button class="phead" data-ptoggle="'+p.id+'"><span class="av" style="background:'+avc(p)+'">'+esc(String(p.n||'?').charAt(0))+'</span><span class="pn"><b>'+esc(p.n)+'</b><small>'+esc(p.st||'')+' · '+last+'</small></span>'+(d?'<span class="due'+cls+'">'+d+'</span>':'')+'</button><div class="pact" hidden><button class="main" data-msg="'+p.id+'">Message</button><button data-log="'+p.id+'">Sudah</button><button data-pdet="'+p.id+'">Open</button><button data-next="'+p.id+'">Next</button></div></div>'}
+ var d=dueTxt(p.next),cls=p.next!==null&&p.next<0?' late':p.next===0?' today':'',last=p.last>=9999?'not logged':p.last===0?'today':p.last+'d ago';
+ return '<div class="prow'+(wide()&&selPid===p.id?' sel':'')+'" data-pid="'+p.id+'"><button class="phead" data-ptoggle="'+p.id+'"><span class="av" style="background:'+avc(p)+'">'+esc(String(p.n||'?').charAt(0))+'</span><span class="pn"><b>'+esc(p.n)+'</b><small>'+esc(p.st||'')+' · '+last+'</small></span>'+(d?'<span class="due'+cls+'">'+d+'</span>':'')+'</button><div class="pact" hidden><button class="main" data-msg="'+p.id+'">Message</button><button data-log="'+p.id+'">Done</button><button data-pdet="'+p.id+'">Open</button><button data-next="'+p.id+'">Next</button></div></div>'}
 function itemHtml(it){
  if(it.k==='pp')return '<div class="chips" style="margin:6px 0 10px;flex-wrap:wrap">'+it.prods.map(function(x){return '<button class="chip" data-pprod="'+esc(x)+'" aria-pressed="'+(pprod===x)+'">'+esc(x)+'</button>'}).join('')+'</div>';
- if(it.k==='pr'){var dn2=it.p.raw&&it.p.last===0;return '<div class="task'+(dn2?' done':'')+'" style="margin-bottom:6px"><span class="av" style="background:'+avc(it.p)+'">'+esc(it.p.n[0])+'</span><button class="tb" data-pdet="'+it.p.id+'"><b>'+esc(it.p.n)+'</b><small>'+esc(it.x.product)+' · '+esc(it.x.date)+'</small></button><button class="ck" data-promo="'+it.p.id+'" aria-label="Sudah ditawari"><i>'+ic('check',14)+'</i></button></div>'}
+ if(it.k==='pr'){var dn2=it.p.raw&&it.p.last===0;return '<div class="task'+(dn2?' done':'')+'" style="margin-bottom:6px"><span class="av" style="background:'+avc(it.p)+'">'+esc(it.p.n[0])+'</span><button class="tb" data-pdet="'+it.p.id+'"><b>'+esc(it.p.n)+'</b><small>'+esc(it.x.product)+' · '+esc(it.x.date)+'</small></button><button class="ck" data-promo="'+it.p.id+'" aria-label="Already offered"><i>'+ic('check',14)+'</i></button></div>'}
  if(it.k==='r')return rowHtml(it.p);
  if(it.k==='l')return '<div class="letter" id="L'+it.l+'">'+it.l+'</div>';
  if(it.k==='n')return '<p class="note" style="margin:4px 0 10px">'+esc(it.txt)+'</p>';
@@ -816,43 +817,43 @@ function appendChunk(){
 function renderPeopleBody(){
  PITEMS=buildItems();PSHOWN=0;
  $('#plist').innerHTML='<div class="sent" id="psent"></div>';
- if(!PITEMS.length)$('#plist').insertAdjacentHTML('afterbegin','<p class="note">Tidak ada yang cocok. Coba kata lain.</p>');
+ if(!PITEMS.length)$('#plist').insertAdjacentHTML('afterbegin','<p class="note">No match. Try another word.</p>');
  appendChunk();
  if(PIO)PIO.disconnect();
  if('IntersectionObserver' in window){PIO=new IntersectionObserver(function(e){if(e[0].isIntersecting)appendChunk()},{root:SC,rootMargin:'600px'});PIO.observe($('#psent'))}
  var rail=$('#rail');var show=tab==='people'&&filterPeople().mode==='All'&&!pq.trim();rail.hidden=!show;
- if(show){var letters={};people.forEach(function(p){letters[p.n[0].toUpperCase()]=1});rail.innerHTML=Object.keys(letters).sort().map(function(l){return '<button data-jump="'+l+'" aria-label="Lompat ke '+l+'">'+l+'</button>'}).join('')}
+ if(show){var letters={};people.forEach(function(p){letters[p.n[0].toUpperCase()]=1});rail.innerHTML=Object.keys(letters).sort().map(function(l){return '<button data-jump="'+l+'" aria-label="Jump to '+l+'">'+l+'</button>'}).join('')}
  if(wide()&&$('#pdetail')){var p=people[selPid];$('#pdetail').innerHTML=p?pdetail(p):''}}
-var FACTS=['Punya 2 anak, yang kecil masih TK','Kerja kantoran, jam makan siang tidak teratur','Suka lari pagi akhir pekan','Pasangannya skeptis soal suplemen','Baru pindah ke BSD','Pernah coba diet keto, berhenti di minggu ke-3','Ulang tahun bulan Desember'];
-var TPT=['WhatsApp','Call','Ketemu','Zoom'],TPR=['Balas cepat','Belum balas','Tertarik','Minta waktu sebentar','Kirim foto piring'];
+var FACTS=['Has 2 kids, the youngest is in kindergarten','Office job, irregular lunch hours','Likes running on weekend mornings','Partner is skeptical about supplements','Just moved to BSD','Tried keto, stopped at week 3','Birthday in December'];
+var TPT=['WhatsApp','Call','Met up','Zoom'],TPR=['Replies fast','Has not replied','Interested','Asked for a little time','Send a plate photo'];
 function pdetail(p){
  if(p.raw)return pdetailReal(p);
- var r=rng(p.id+3),h='<div class="card" style="margin-top:0"><div style="display:flex;gap:12px;align-items:center"><span class="av" style="background:'+avc(p)+';width:52px;height:52px;font-size:22px">'+esc(String(p.n||'?').charAt(0))+'</span><div style="min-width:0"><h2 style="font-size:21px">'+esc(p.n)+'</h2><div class="meta">'+esc(p.st||'')+' · kontak terakhir '+(p.last===0?'hari ini':p.last+' hari lalu')+'</div></div></div>';
- h+='<div style="display:flex;gap:7px;margin-top:12px;flex-wrap:wrap"><button class="btn sm main" data-msg="'+p.id+'">Message</button><button class="btn sm alt" data-log="'+p.id+'">Log</button><button class="btn sm alt" data-next="'+p.id+'">Next: '+(p.next===null?'belum ada':dueTxt(p.next))+'</button></div></div>';
- if(p.st==='TRME Active'){var day=Math.floor(r()*80)+3;h+='<div class="card"><h2>TRME</h2><p>Hari ke-'+day+' dari 90</p><div class="trk"><b style="width:'+(day/90*100)+'%"></b></div><div class="meta">Check-in terakhir '+Math.floor(r()*4+1)+' hari lalu</div></div>'}
- if(p.st==='Prospect'||p.st==='Closing'||p.st==='TRME Active'||p.st==='Customer'){h+='<div class="card"><h2>Prysm</h2><p>Skor '+(50+Math.floor(r()*26))+' · diukur '+Math.floor(r()*30+3)+' hari lalu</p></div>'}
- h+='<div class="card"><h2>Yang perlu diingat</h2><div class="tline"><b>'+esc(p.note)+'</b></div><div class="tline">'+FACTS[Math.floor(r()*FACTS.length)]+'</div><div class="tline">'+FACTS[Math.floor(r()*FACTS.length)]+'</div></div>';
- h+='<div class="card"><h2>Riwayat kontak</h2>';
- var ago=p.last;for(var i=0;i<4;i++){h+='<div class="tline"><b>'+TPT[Math.floor(r()*4)]+'</b> · '+(ago===0?'hari ini':ago+' hari lalu')+'<small>'+TPR[Math.floor(r()*5)]+'</small></div>';ago+=Math.floor(r()*12)+2}
+ var r=rng(p.id+3),h='<div class="card" style="margin-top:0"><div style="display:flex;gap:12px;align-items:center"><span class="av" style="background:'+avc(p)+';width:52px;height:52px;font-size:22px">'+esc(String(p.n||'?').charAt(0))+'</span><div style="min-width:0"><h2 style="font-size:21px">'+esc(p.n)+'</h2><div class="meta">'+esc(p.st||'')+' · last contact '+(p.last===0?'today':p.last+' days ago')+'</div></div></div>';
+ h+='<div style="display:flex;gap:7px;margin-top:12px;flex-wrap:wrap"><button class="btn sm main" data-msg="'+p.id+'">Message</button><button class="btn sm alt" data-log="'+p.id+'">Log</button><button class="btn sm alt" data-next="'+p.id+'">Next: '+(p.next===null?'none yet':dueTxt(p.next))+'</button></div></div>';
+ if(p.st==='TRME Active'){var day=Math.floor(r()*80)+3;h+='<div class="card"><h2>TRME</h2><p>Day '+day+' of 90</p><div class="trk"><b style="width:'+(day/90*100)+'%"></b></div><div class="meta">Last check-in '+Math.floor(r()*4+1)+' days ago</div></div>'}
+ if(p.st==='Prospect'||p.st==='Closing'||p.st==='TRME Active'||p.st==='Customer'){h+='<div class="card"><h2>Prysm</h2><p>Score '+(50+Math.floor(r()*26))+' · measured '+Math.floor(r()*30+3)+' days ago</p></div>'}
+ h+='<div class="card"><h2>Worth remembering</h2><div class="tline"><b>'+esc(p.note)+'</b></div><div class="tline">'+FACTS[Math.floor(r()*FACTS.length)]+'</div><div class="tline">'+FACTS[Math.floor(r()*FACTS.length)]+'</div></div>';
+ h+='<div class="card"><h2>Contact history</h2>';
+ var ago=p.last;for(var i=0;i<4;i++){h+='<div class="tline"><b>'+TPT[Math.floor(r()*4)]+'</b> · '+(ago===0?'today':ago+' days ago')+'<small>'+TPR[Math.floor(r()*5)]+'</small></div>';ago+=Math.floor(r()*12)+2}
  return h+'</div>'}
 function pdetailReal(p){
  var r=p.raw,fm=function(x){var d=dn(x);return d==null?'':dueTxt(d-TD)+' ('+x+')'};
  var h='<div class="card" style="margin-top:0"><div style="display:flex;gap:12px;align-items:center"><span class="av" style="background:'+avc(p)+';width:52px;height:52px;font-size:22px">'+esc(p.n[0])+'</span><div style="min-width:0"><h2 style="font-size:21px">'+esc(p.n)+'</h2><div class="meta">'+esc(p.st)+(r.market?' · '+esc(r.market):'')+'</div></div></div>';
- h+='<div style="display:flex;gap:7px;margin-top:12px;flex-wrap:wrap"><button class="btn sm main" data-msg="'+p.id+'">Message</button><button class="btn sm alt" data-log="'+p.id+'">Sudah ngobrol</button><button class="btn sm alt" data-next="'+p.id+'">Next: '+(p.next===null?'belum ada':dueTxt(p.next))+'</button><button class="btn sm alt" data-edit="'+p.id+'">Edit kontak</button></div></div>';
- var rows=[['Next step',r.nextAction],['Follow-up',fm(r.nextDate)],['Kontak terakhir',fm(r.lastContact)],['Order terakhir',fm(r.lastOrder)],['Tag',r.tags],['Telepon',r.phone],['Email',r.email],['Sponsor',r.sponsor],['Ulang tahun',r.birthday],['Mulai TRME',r.trmeStart]].filter(function(x){return x[1]});
+ h+='<div style="display:flex;gap:7px;margin-top:12px;flex-wrap:wrap"><button class="btn sm main" data-msg="'+p.id+'">Message</button><button class="btn sm alt" data-log="'+p.id+'">Talked</button><button class="btn sm alt" data-next="'+p.id+'">Next: '+(p.next===null?'none yet':dueTxt(p.next))+'</button><button class="btn sm alt" data-edit="'+p.id+'">Edit contact</button></div></div>';
+ var rows=[['Next step',r.nextAction],['Follow-up',fm(r.nextDate)],['Last contact',fm(r.lastContact)],['Last order',fm(r.lastOrder)],['Tag',r.tags],['Phone',r.phone],['Email',r.email],['Sponsor',r.sponsor],['Birthday',r.birthday],['TRME start',r.trmeStart]].filter(function(x){return x[1]});
  if(rows.length)h+='<div class="card">'+rows.map(function(x,i){return '<div class="tline"><small>'+x[0]+'</small><b>'+esc(x[1])+'</b></div>'}).join('')+'</div>';
  var pu=PUR.filter(function(x){return x.pid===pid(p)}).sort(function(a,b){return a.date<b.date?1:-1});
- h+='<div class="card"><h2>Pembelian</h2>'+(pu.length?pu.map(function(x){return '<div class="tline"><small>'+esc(x.date)+'</small><b>'+esc(x.product)+'</b></div>'}).join(''):'<p class="meta" style="margin:6px 0">Belum ada yang tercatat.</p>')+'<button class="btn sm alt" data-buy="'+p.id+'">Catat pembelian</button></div>';
- var ls=LM.filter(function(m){return m.pid===pid(p)}).map(function(m){var l=lById(m.lid);return l?'<div class="tline"><small>'+esc(l.kind)+(l.status==='archived'?' · arsip':'')+'</small><b>'+esc(l.name)+(m.status?' · '+esc(m.status):'')+(m.product?' · '+esc(m.product):'')+'</b></div>':''}).join('');
- if(ls)h+='<div class="card"><h2>Ada di list</h2>'+ls+'</div>';
- if(r.notes)h+='<div class="card"><h2>Catatan</h2><div class="note" style="white-space:pre-wrap;margin-top:6px">'+esc(r.notes)+'</div></div>';
- if(r.verify)h+='<div class="flag" style="margin-top:10px">Data ini dari catatan lama dan belum kamu cek.</div>';
+ h+='<div class="card"><h2>Purchases</h2>'+(pu.length?pu.map(function(x){return '<div class="tline"><small>'+esc(x.date)+'</small><b>'+esc(x.product)+'</b></div>'}).join(''):'<p class="meta" style="margin:6px 0">Nothing logged yet.</p>')+'<button class="btn sm alt" data-buy="'+p.id+'">Log purchase</button></div>';
+ var ls=LM.filter(function(m){return m.pid===pid(p)}).map(function(m){var l=lById(m.lid);return l?'<div class="tline"><small>'+esc(l.kind)+(l.status==='archived'?' · archived':'')+'</small><b>'+esc(l.name)+(m.status?' · '+esc(m.status):'')+(m.product?' · '+esc(m.product):'')+'</b></div>':''}).join('');
+ if(ls)h+='<div class="card"><h2>On lists</h2>'+ls+'</div>';
+ if(r.notes)h+='<div class="card"><h2>Notes</h2><div class="note" style="white-space:pre-wrap;margin-top:6px">'+esc(r.notes)+'</div></div>';
+ if(r.verify)h+='<div class="flag" style="margin-top:10px">This comes from old notes and you have not checked it yet.</div>';
  return h}
 function people_(){
  var c=counts(),views=['Follow-up','No next step','TRME','Pipeline','Customers','Promo','All'];
- var h='<div class="top"><div class="stats"><span style="color:var(--mute)">'+c.All+' orang</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button><button data-addp="1" aria-label="Add person">'+ic('plus',22)+'</button></div></div>';
- h+='<div class="hrow"><h1>People</h1></div>'+(CFG.url?'':'<span class="sample">Contoh data, 420 orang</span>')+'';
- var left='<div class="search"><label>'+ic('search',18)+'<input id="pq" type="search" placeholder="Cari nama atau catatan" autocomplete="off" value="'+esc(pq)+'"></label></div><div class="chips" id="pchips">'+views.map(function(v){return '<button class="chip" data-pv="'+v+'" aria-pressed="'+(pview===v&&!pq)+'">'+v+' <em>'+c[v]+'</em></button>'}).join('')+'</div><div id="plist" style="margin-top:4px"></div>';
+ var h='<div class="top"><div class="stats"><span style="color:var(--mute)">'+c.All+' people</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button><button data-addp="1" aria-label="Add person">'+ic('plus',22)+'</button></div></div>';
+ h+='<div class="hrow"><h1>People</h1></div>'+(CFG.url?'':'<span class="sample">Sample data, 420 people</span>')+'';
+ var left='<div class="search"><label>'+ic('search',18)+'<input id="pq" type="search" placeholder="Search name or notes" autocomplete="off" value="'+esc(pq)+'"></label></div><div class="chips" id="pchips">'+views.map(function(v){return '<button class="chip" data-pv="'+v+'" aria-pressed="'+(pview===v&&!pq)+'">'+v+' <em>'+c[v]+'</em></button>'}).join('')+'</div><div id="plist" style="margin-top:4px"></div>';
  if(wide())return h+'<div class="pwide"><div>'+left+'</div><div class="pdetail" id="pdetail"></div></div>';
  return h+left}
 
@@ -860,14 +861,14 @@ function people_(){
 var TDATA=[];try{TDATA=JSON.parse(localStorage.getItem('hq-team')||'[]')}catch(e){}buildLead();
 var THIST=[],histSel='ORG TOV';try{THIST=JSON.parse(localStorage.getItem('hq-thist')||'[]')}catch(e){}
 function pullTeam(){if(!CFG.url)return;getTab('teamdata').then(function(j){if(j.error||!j.rows)return;TDATA=j.rows.filter(function(r){return r.type});buildLead();try{localStorage.setItem('hq-team',JSON.stringify(TDATA))}catch(e){}if(!document.querySelector('.sheet-bg'))render(true)}).catch(function(){})}
-var MONID=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+var MONID=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function nf(s){s=String(s==null?'':s);if(s.indexOf(',')>-1&&s.indexOf('.')<0)s=s.replace(',','.');var n=Number(s);return isNaN(n)?0:n}
 function pLab(p){return MONID[+p.slice(5,7)-1]+' '+p.slice(0,4)}
 function pAdd(p,k){var m=+p.slice(0,4)*12+(+p.slice(5,7)-1)+k;return Math.floor(m/12)+'-'+('0'+(m%12+1)).slice(-2)}
 function dLab(s){var m=String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);return m?(+m[3])+' '+MONID[+m[2]-1]+' '+m[1]:''}
-function pct(x){return (x>=0?'+':'-')+Math.abs(x*100).toLocaleString('id-ID',{minimumFractionDigits:1,maximumFractionDigits:1})+'%'}
+function pct(x){return (x>=0?'+':'-')+Math.abs(x*100).toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1})+'%'}
 function usd(n){return 'USD '+num(n)}
-function bigM(v){return v===0?'0':(v/1e6).toLocaleString('id-ID',{maximumFractionDigits:1})+'M'}
+function bigM(v){return v===0?'0':(v/1e6).toLocaleString('en-US',{maximumFractionDigits:1})+'M'}
 function teamModel(){
  var cfg={},tov={};
  TDATA.forEach(function(r){
@@ -879,7 +880,7 @@ function teamModel(){
  var gm=cfg.growth_min?cfg.growth_min.v:.1,gs=cfg.growth_stretch?cfg.growth_stretch.v:.2,cr=cfg.comm_rate?cfg.comm_rate.v:.05;
  var legs=Object.keys(C).filter(function(k){return k.indexOf('leg:')===0}).sort(function(a,b){return C[b]-C[a]});
  var rows=['org','personal'].concat(legs).map(function(k){var c=C[k]||0,p=P[k]||0;
-  return {k:k,n:k==='org'?'Org total':k==='personal'?'Pribadi (PT AHU)':k.slice(4),c:c,p:p,g:p>0?c/p-1:null,min:p*(1+gm),str:p*(1+gs),nmin:c*(1+gm),nstr:c*(1+gs)}});
+  return {k:k,n:k==='org'?'Org total':k==='personal'?'Personal (PT AHU)':k.slice(4),c:c,p:p,g:p>0?c/p-1:null,min:p*(1+gm),str:p*(1+gs),nmin:c*(1+gm),nstr:c*(1+gs)}});
  var base=C.org,c0=base*cr,life=cfg.lifetime?cfg.lifetime.v:0,paths={};
  [['min',gm],['str',gs]].forEach(function(a){var cum=life,arr=[],yr={};
   for(var k=1;k<=120;k++){var f=Math.pow(1+a[1],k),com=c0*f,per=pAdd(cur,k),y=per.slice(0,4);cum+=com;arr.push({p:per,com:com,cum:cum});
@@ -888,7 +889,7 @@ function teamModel(){
  var coe=[1,2,3,4,5].map(function(i){var t=cfg['coe'+i];if(!t)return null;var o={i:i,t:t.v,gy:(t.n.match(/\d{4}/)||[''])[0]};
   ['min','str'].forEach(function(s){var a=paths[s].arr,hit=null;for(var j=0;j<a.length;j++)if(a[j].cum>=t.v){hit=a[j].p;break}o[s]=hit});return o}).filter(Boolean);
  return {cur:cur,prev:prev,note:tov[cur]._n||'',rows:rows,gm:gm,gs:gs,cr:cr,c0:c0,life:life,lifeAt:cfg.lifetime?cfg.lifetime.p:'',paths:paths,coe:coe,coe1:cfg.coe1?cfg.coe1.v:1e6}}
-function gStat(r){if(r.g===null)return r.c>0?['pan','Baru']:['pan','Kosong'];if(r.c>=r.str)return ['reached','Stretch'];if(r.c>=r.min)return ['track','Minimum'];return r.g<0?['urgent','Turun']:['behind','Di bawah']}
+function gStat(r){if(r.g===null)return r.c>0?['pan','New']:['pan','Empty'];if(r.c>=r.str)return ['reached','Stretch'];if(r.c>=r.min)return ['track','Minimum'];return r.g<0?['urgent','Down']:['behind','Below']}
 function growthChart(M){
  var cp=M.cur,gy=+((M.coe[0]&&M.coe[0].gy)||2028),n=(gy-(+cp.slice(0,4)))*12+(12-(+cp.slice(5,7)));
  if(n<3)n=24;
@@ -896,7 +897,7 @@ function growthChart(M){
  var endS=st[n-1].cum,v=Math.max(coe1*1.1,Math.min(endS,coe1*3)),ym=Math.ceil(v/5e5)*5e5;
  var W=340,H=214,L=40,R=14,T=16,B=30;
  var X=function(k){return L+k/n*(W-L-R)},Y=function(c){return T+(1-Math.min(c,ym)/ym)*(H-T-B)};
- var s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Lifetime earning di dua jalur growth dan garis COE1">';
+ var s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Lifetime earning on two growth paths and the COE1 line">';
  for(var i=0;i<=4;i++){var gv=ym*i/4;s+='<line class="g" x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(gv)+'" y2="'+Y(gv)+'"/><text x="'+(L-6)+'" y="'+(Y(gv)+3)+'" text-anchor="end">'+bigM(gv)+'</text>'}
  for(var k=0;k<=n;k++){var per=pAdd(cp,k),lab=null;if(k===0)lab=MONID[+per.slice(5,7)-1];else if(per.slice(5,7)==='01'||k===n)lab=MONID[+per.slice(5,7)-1]+' '+per.slice(2,4);if(lab)s+='<text x="'+X(k)+'" y="'+(H-10)+'" text-anchor="'+(k===n?'end':'middle')+'">'+lab+'</text>'}
  var path=function(a){var d='M'+X(0).toFixed(1)+' '+Y(life).toFixed(1);for(var k=1;k<=n;k++)d+=' L'+X(k).toFixed(1)+' '+Y(a[k-1].cum).toFixed(1);return d};
@@ -909,32 +910,32 @@ function growthChart(M){
  return s+'</svg>'}
 function teamGrowth(){
  var M=teamModel();
- if(!M)return ['<div class="card"><h2>Belum ada data Team</h2><p>'+(CFG.url?'Isi tab teamdata di Sheet-mu dengan TOV dua bulan terakhir. Minta Claude mengisinya dari PDF Team Genealogy.':'Hubungkan Sheet dulu lewat menu Sinkron.')+'</p></div>'];
+ if(!M)return ['<div class="card"><h2>No Team data yet</h2><p>'+(CFG.url?'Fill the teamdata tab in your Sheet with TOV for the last two months. Ask Claude to fill it from the Team Genealogy PDF.':'Connect the Sheet first from the Sync menu.')+'</p></div>'];
  var o=M.rows[0],gm=Math.round(M.gm*100),gs=Math.round(M.gs*100),nx=pAdd(M.cur,1),out=[],below=o.c<o.min;
- out.push('<div class="tiles"><div class="tile'+(below?' warn':'')+'"><small>TOV '+pLab(M.cur)+'</small><b>'+num(o.c)+'</b><span>'+(o.g===null?'':pct(o.g)+' dari '+pLab(M.prev))+'</span></div>'+
-  '<div class="tile"><small>Komisi estimasi</small><b>'+usd(o.c*M.cr)+'</b><span>'+Math.round(M.cr*100)+'% dari TOV</span></div>'+
-  '<div class="tile"><small>Minimum +'+gm+'%</small><b>'+num(o.min)+'</b><span>'+(o.c>=o.min?'sudah lewat':'kurang '+num(o.min-o.c))+'</span></div>'+
-  '<div class="tile"><small>Stretch +'+gs+'%</small><b>'+num(o.str)+'</b><span>'+(o.c>=o.str?'sudah lewat':'kurang '+num(o.str-o.c))+'</span></div></div>');
- var a='<div class="card"><h2>'+pLab(M.cur)+' vs '+pLab(M.prev)+'</h2><p>Target bulan ini adalah bulan lalu ditambah '+gm+'% (minimum) dan '+gs+'% (stretch). Garis di bar adalah minimum.</p>';
+ out.push('<div class="tiles"><div class="tile'+(below?' warn':'')+'"><small>TOV '+pLab(M.cur)+'</small><b>'+num(o.c)+'</b><span>'+(o.g===null?'':pct(o.g)+' of '+pLab(M.prev))+'</span></div>'+
+  '<div class="tile"><small>Estimated commission</small><b>'+usd(o.c*M.cr)+'</b><span>'+Math.round(M.cr*100)+'% of TOV</span></div>'+
+  '<div class="tile"><small>Minimum +'+gm+'%</small><b>'+num(o.min)+'</b><span>'+(o.c>=o.min?'already passed':'short by '+num(o.min-o.c))+'</span></div>'+
+  '<div class="tile"><small>Stretch +'+gs+'%</small><b>'+num(o.str)+'</b><span>'+(o.c>=o.str?'already passed':'short by '+num(o.str-o.c))+'</span></div></div>');
+ var a='<div class="card"><h2>'+pLab(M.cur)+' vs '+pLab(M.prev)+'</h2><p>This month\'s target is last month plus '+gm+'% (minimum) and '+gs+'% (stretch). The line on each bar is the minimum.</p>';
  M.rows.forEach(function(r,i){var s=gStat(r);
   a+='<div class="lrow'+(i?'':' first')+'"><div class="lt"><b>'+esc(r.n)+'</b><span class="cs '+s[0]+'">'+s[1]+'</span></div>'+
    (r.p>0?'<div class="trk '+(s[0]==='track'||s[0]==='pan'?'':s[0])+'"><b style="width:'+Math.min(100,r.c/r.str*100)+'%"></b><i style="left:calc('+((1+M.gm)/(1+M.gs)*100)+'% - 1px)"></i></div>':'<div style="height:6px"></div>')+
-   '<div class="meta">'+num(r.c)+' dari '+num(r.p)+(r.g===null?'':' · '+pct(r.g))+'</div>'+(r.p>0?'<div class="meta">Min '+num(r.min)+' · Stretch '+num(r.str)+'</div>':'')+'</div>'});
+   '<div class="meta">'+num(r.c)+' of '+num(r.p)+(r.g===null?'':' · '+pct(r.g))+'</div>'+(r.p>0?'<div class="meta">Min '+num(r.min)+' · Stretch '+num(r.str)+'</div>':'')+'</div>'});
  out.push(a+'</div>');
- var b='<div class="card"><h2>Target '+pLab(nx)+'</h2><p>Dihitung dari angka '+pLab(M.cur)+'.</p>';
+ var b='<div class="card"><h2>Target '+pLab(nx)+'</h2><p>Calculated from the '+pLab(M.cur)+'.</p>';
  M.rows.forEach(function(r){b+='<div class="tline"><b>'+esc(r.n)+'</b><small>Min '+num(r.nmin)+' · Stretch '+num(r.nstr)+'</small></div>'});
  out.push(b+'</div>');
  var gy=+((M.coe[0]&&M.coe[0].gy)||2028),yrs=Object.keys(M.paths.min.yr).filter(function(y){return +y<=gy}).sort();
- var c='<div class="card"><h2>Komisi per tahun</h2><p>Compounding dari komisi '+pLab(M.cur)+' ('+usd(M.c0)+'). Goal tahunan adalah jumlah proyeksi bulanannya.</p>';
+ var c='<div class="card"><h2>Commission per year</h2><p>Compounding from commission '+pLab(M.cur)+' ('+usd(M.c0)+'). The yearly goal is the sum of the monthly projections.</p>';
  yrs.forEach(function(y){var m=M.paths.min.yr[y],s=M.paths.str.yr[y];
   c+='<div class="tline"><b>'+(m.n<12?MONID[12-m.n]+'-Des '+y:y)+'</b><small>Min '+usd(m.com)+' · Stretch '+usd(s.com)+'</small><small>TOV min '+num(m.tov)+' · stretch '+num(s.tov)+'</small></div>'});
  out.push(c+'</div>');
- out.push('<div class="card"><h2>Lifetime earning dan COE</h2><p>Mulai dari '+usd(M.life)+(M.lifeAt?' per '+dLab(M.lifeAt):'')+', ditambah komisi proyeksi tiap bulan.</p>'+growthChart(M)+'<div class="lg"><span><i></i>Stretch +'+gs+'%</span><span><i class="m"></i>Minimum +'+gm+'%</span><span><i class="d"></i>COE1</span></div></div>');
- var e='<div class="card"><h2>Kapan tiap COE tercapai</h2>';
+ out.push('<div class="card"><h2>Lifetime earning and COE</h2><p>Starting from '+usd(M.life)+(M.lifeAt?' per '+dLab(M.lifeAt):'')+', plus projected commission each month.</p>'+growthChart(M)+'<div class="lg"><span><i></i>Stretch +'+gs+'%</span><span><i class="m"></i>Minimum +'+gm+'%</span><span><i class="d"></i>COE1</span></div></div>');
+ var e='<div class="card"><h2>When each COE is reached</h2>';
  M.coe.forEach(function(x,i){var chip='';
-  if(x.gy){var ok=function(p){return p&&p.slice(0,4)<=x.gy},cl=ok(x.min)?['reached','Di jalur']:ok(x.str)?['behind','Hanya stretch']:['urgent','Lewat goal'];chip='<span class="cs '+cl[0]+'">'+cl[1]+' '+x.gy+'</span>'}
-  e+='<div class="lrow'+(i?'':' first')+'"><div class="lt"><b>COE'+x.i+' · '+bigM(x.t)+'</b>'+chip+'</div><div class="meta">Stretch '+(x.str?pLab(x.str):'lewat 10 tahun')+' · Minimum '+(x.min?pLab(x.min):'lewat 10 tahun')+'</div></div>'});
- out.push(e+'<p class="meta" style="margin-top:8px">Komisi dihitung '+Math.round(M.cr*100)+'% dari TOV, TOV dianggap setara USD.</p></div>');
+  if(x.gy){var ok=function(p){return p&&p.slice(0,4)<=x.gy},cl=ok(x.min)?['reached','On path']:ok(x.str)?['behind','Stretch only']:['urgent','Past goal'];chip='<span class="cs '+cl[0]+'">'+cl[1]+' '+x.gy+'</span>'}
+  e+='<div class="lrow'+(i?'':' first')+'"><div class="lt"><b>COE'+x.i+' · '+bigM(x.t)+'</b>'+chip+'</div><div class="meta">Stretch '+(x.str?pLab(x.str):'beyond 10 years')+' · Minimum '+(x.min?pLab(x.min):'beyond 10 years')+'</div></div>'});
+ out.push(e+'<p class="meta" style="margin-top:8px">Commission is calculated at '+Math.round(M.cr*100)+'% of TOV, TOV is treated as equal to USD.</p></div>');
  return out}
 function pvData(){
  var o={m:{},tree:null,p:'',lo:'',hi:''};
@@ -946,7 +947,7 @@ function pvData(){
  if(!o.hi||!o.tree)return null;
  LEAD.forEach(function(m){var x=o.m[LKEY[m.n]];if(x)m.v=x.g});
  return o}
-function pvSrc(P){return 'Data genealogy per '+dLab(P.lo)+(P.hi>P.lo?', AJ per '+dLab(P.hi):'')}
+function pvSrc(P){return 'Genealogy data as of '+dLab(P.lo)+(P.hi>P.lo?', AJ per '+dLab(P.hi):'')}
 function pvPace(P){var y=+P.p.slice(0,4),mo=+P.p.slice(5,7),dim=new Date(y,mo,0).getDate(),t=isoOf(TD);
  if(t.slice(0,7)===P.p)return {pc:3000*(+t.slice(8,10))/dim,live:true};return {pc:3000,live:false}}
 function pvSt(m,pc){if(m.v>=3000)return 'reached';if(m.pan)return 'pan';if(m.v>=pc)return 'track';if(m.v>=pc*.6)return 'behind';return 'urgent'}
@@ -955,12 +956,12 @@ function teamVolume(){
  var P=pvData();
  if(!P)return teamVolumeSample();
  var pp=pvPace(P),pc=pp.pc;
- var a='<div class="card"><h2>3.000 minimum</h2><p>'+(pp.live?'Garis putih adalah posisi seharusnya hari ini ('+num(pc)+').':'Bulan '+pLab(P.p)+' sudah selesai, garis putih ada di 3.000.')+'</p>';
+ var a='<div class="card"><h2>3.000 minimum</h2><p>'+(pp.live?'The white line is where you should be today ('+num(pc)+').':'Month '+pLab(P.p)+' is over, the white line is at 3,000.')+'</p>';
  var rk={urgent:0,behind:1,track:2,pan:3,reached:4};
  LEAD.slice().sort(function(x,y){var a1=rk[pvSt(x,pc)],b1=rk[pvSt(y,pc)];return a1!==b1?a1-b1:(a1===4?y.v-x.v:x.v-y.v)}).forEach(function(m,i){var st=pvSt(m,pc),w=Math.min(100,m.v/3000*100);
-  a+='<div class="lrow'+(i?'':' first')+'"><div class="lt"><b>'+esc(m.n)+'</b><span class="cs '+st+'">'+STL[st]+'</span></div><div class="trk '+(st==='pan'?'':st)+'"><b style="width:'+w+'%"></b><i style="left:calc('+(pc/3000*100)+'% - 1px)"></i></div><div class="meta">'+num(m.v)+' dari 3.000'+(m.v<3000?' · kurang '+num(3000-m.v):'')+'</div></div>'});
+  a+='<div class="lrow'+(i?'':' first')+'"><div class="lt"><b>'+esc(m.n)+'</b><span class="cs '+st+'">'+STL[st]+'</span></div><div class="trk '+(st==='pan'?'':st)+'"><b style="width:'+w+'%"></b><i style="left:calc('+(pc/3000*100)+'% - 1px)"></i></div><div class="meta">'+num(m.v)+' of 3.000'+(m.v<3000?' · short by '+num(3000-m.v):'')+'</div></div>'});
  a+='</div>';
- var b='<div class="card"><h2>Personal goals · '+pLab(P.p)+'</h2><p>Daftar monitoring-mu. Baris leg memakai LTSV pemimpinnya.</p>',first=true;
+ var b='<div class="card"><h2>Personal goals · '+pLab(P.p)+'</h2><p>Your monitoring list. Leg rows use the leader\'s LTSV.</p>',first=true;
  var bar=function(g,goal){return '<div class="trk'+(g>=goal?' reached':'')+'"><b style="width:'+Math.min(100,g/goal*100)+'%"></b></div>'};
  P.tree.sections.forEach(function(sc){
   if(sc.legKey&&P.m[sc.legKey]){var L=P.m[sc.legKey],lg=(sc.legGoal||0)*1000;
@@ -983,7 +984,7 @@ function histCard(){
  var goal=0;try{var T=pvData();goal=T?(T.tree.orgGoal||0)*1000:0}catch(e){}
  var top=Math.max.apply(null,pts.map(function(p){return p.v}).concat([isOrg?goal:3000])),ym=Math.ceil(top*1.08/(isOrg?10000:1000))*(isOrg?10000:1000);
  var W=340,H=200,L=44,R=12,T0=14,B=26,X=function(d){return L+(d-1)/(dim-1)*(W-L-R)},Y=function(v){return T0+(1-Math.min(v,ym)/ym)*(H-T0-B)};
- var sv='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Pergerakan harian">';
+ var sv='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Daily movement">';
  for(var i=0;i<=4;i++){var gv=ym*i/4;sv+='<line class="g" x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(gv)+'" y2="'+Y(gv)+'"/><text x="'+(L-6)+'" y="'+(Y(gv)+3)+'" text-anchor="end">'+(gv>=1000?num(gv/1000)+'K':num(gv))+'</text>'}
  [1,8,15,22,dim].forEach(function(d){sv+='<text x="'+X(d)+'" y="'+(H-8)+'" text-anchor="middle">'+d+'</text>'});
  var tgt=isOrg?goal:3000;
@@ -992,12 +993,12 @@ function histCard(){
  pts.forEach(function(p){sv+='<circle cx="'+X(p.d)+'" cy="'+Y(p.v)+'" r="3" fill="var(--chart)"/>'});
  var lp=pts[pts.length-1];sv+='<text x="'+(X(lp.d)-6)+'" y="'+(Y(lp.v)-8)+'" text-anchor="end" style="fill:var(--ink);font-weight:600;font-size:11px">'+num(lp.v)+'</text></svg>';
  var chips=[['ORG TOV','Org']].concat(LEAD.map(function(m){return [LKEY[m.n],m.n]}).filter(function(x){return x[0]}));
- var h='<div class="card"><h2>Pergerakan harian</h2><p>'+(isOrg?'TOV org':esc((chips.filter(function(c){return c[0]===sel})[0]||['',sel])[1])+' (volume pribadi)')+' dari tiap file genealogy. Garis putus-putus adalah jalur lurus ke '+(tgt?num(tgt):'target')+'. Titik = hari ada file.</p><div class="chips" style="flex-wrap:wrap;margin-top:8px">'+chips.map(function(c){return '<button class="chip" style="height:30px;padding:0 11px;font-size:12px" data-hs="'+esc(c[0])+'" aria-pressed="'+(sel===c[0])+'">'+esc(c[1])+'</button>'}).join('')+'</div>'+sv;
+ var h='<div class="card"><h2>Daily movement</h2><p>'+(isOrg?'TOV org':esc((chips.filter(function(c){return c[0]===sel})[0]||['',sel])[1])+' (volume pribadi)')+' from each genealogy file. The dashed line is the straight path to '+(tgt?num(tgt):'target')+'). A dot is a day with a file.</p><div class="chips" style="flex-wrap:wrap;margin-top:8px">'+chips.map(function(c){return '<button class="chip" style="height:30px;padding:0 11px;font-size:12px" data-hs="'+esc(c[0])+'" aria-pressed="'+(sel===c[0])+'">'+esc(c[1])+'</button>'}).join('')+'</div>'+sv;
  var miss=[];for(var d=1;d<=dim;d++){var dd=mon+'-'+('0'+d).slice(-2);if(days.indexOf(dd)<0&&d<=+days[days.length-1].slice(8,10))miss.push(d)}
- if(miss.length)h+='<p class="meta" style="margin-top:6px">Belum ada file: tgl '+miss.join(', ')+'</p>';
+ if(miss.length)h+='<p class="meta" style="margin-top:6px">No file yet: day '+miss.join(', ')+'</p>';
  return h+'</div>'}
 function teamVolumeSample(){
- return ['<div class="card"><h2>Volume tim</h2><p>Belum ada data tim dari Sheet. Kirim file genealogy ke Claude, nanti angkanya muncul di sini.</p></div>','']}
+ return ['<div class="card"><h2>Team volume</h2><p>No team data from the Sheet yet. Send a genealogy file to Claude and the numbers show up here.</p></div>','']}
 function mtgData(){
  var o={rcp:[],msm:[],bse1:[],bse2:[]},n=0;
  TDATA.forEach(function(r){if(r.type!=='mtg')return;var set={};try{JSON.parse(r.note).forEach(function(x){set[String(x).toUpperCase()]=1})}catch(e){return}
@@ -1006,40 +1007,40 @@ function mtgData(){
  ['rcp','msm','bse1','bse2'].forEach(function(k){o[k].sort(function(x,y){return x.d<y.d?-1:1})});
  return o}
 function mtgCount(M,m,k){var l=M[k]||[];if(m.pan)return [l.length,l.length];var key=LKEY[m.n],c=0;l.forEach(function(x){if(x.set[key])c++});return [c,l.length]}
-function mtgRange(l){return l.length?dLab(l[0].d)+(l.length>1?' sampai '+dLab(l[l.length-1].d):''):''}
+function mtgRange(l){return l.length?dLab(l[0].d)+(l.length>1?' to '+dLab(l[l.length-1].d):''):''}
 function teamMeet(){var P=pvData(),M=mtgData();
- if(!M)return ['<div class="card"><h2>Meeting attendance</h2><p>Data meeting belum ada di Sheet-mu (tab teamdata, baris type mtg). Minta aku tarik dari ST Monitoring.</p></div>',''];
+ if(!M)return ['<div class="card"><h2>Meeting attendance</h2><p>No meeting data in your Sheet yet (teamdata tab, rows of type mtg). Ask me to pull it from ST Monitoring.</p></div>',''];
  var bse=M.bse1.concat(M.bse2).sort(function(x,y){return x.d<y.d?-1:1}),B={bse:bse};
- var a='<div class="card"><h2>Meeting attendance</h2><p>RCP Selasa sampai Jumat 08.00, System Meeting Senin, BSE. Panelist dan AJ dihitung hadir. Sesi tercatat: RCP '+M.rcp.length+' ('+mtgRange(M.rcp)+'), System '+M.msm.length+', BSE '+bse.length+'.</p>';
+ var a='<div class="card"><h2>Meeting attendance</h2><p>RCP Tuesday to Friday 08:00, System Meeting Monday, BSE. Panelists and AJ count as present. Sessions logged: RCP '+M.rcp.length+' ('+mtgRange(M.rcp)+'), System '+M.msm.length+', BSE '+bse.length+'.</p>';
  var rows=LEAD.map(function(m){var r=mtgCount(M,m,'rcp'),s=mtgCount(M,m,'msm'),b2=mtgCount(B,m,'bse');return {m:m,r:r,s:s,b:b2}});
  rows.forEach(function(x,i){var m=x.m;
   a+='<div class="lrow'+(i?'':' first')+'"><div class="lt"><b>'+esc(m.n)+'</b>'+(m.pan?'<span class="cs pan">Panelist</span>':'')+'</div><div class="mt"><span'+(x.r[1]&&x.r[0]/x.r[1]<.5&&!m.pan?' class="bad"':'')+'>RCP '+x.r[0]+'/'+x.r[1]+'</span><span'+(x.s[1]&&!x.s[0]&&!m.pan?' class="bad"':'')+'>System '+x.s[0]+'/'+x.s[1]+'</span><span'+(x.b[1]&&!x.b[0]&&!m.pan?' class="bad"':'')+'>BSE '+x.b[0]+'/'+x.b[1]+'</span></div></div>'});
  a+='</div>';
  var pc=P?pvPace(P).pc:pacePersonal();
  var cf=rows.filter(function(x){return !x.m.pan&&x.r[1]&&x.r[0]/x.r[1]<.5&&x.m.v<pc});
- var b='<div class="card"><h2>Call first</h2><p>Jarang hadir RCP dan volume masih di bawah pace.</p>'+(cf.length?cf.map(function(x,i){var m=x.m;return '<div class="lrow'+(i?'':' first')+'"><div class="lt"><b>'+esc(m.n)+'</b><button class="chip" data-wa="'+esc(m.n)+'">'+ic('send',14)+'Chat</button></div><div class="meta">'+num(m.v)+' volume · hadir RCP '+x.r[0]+' dari '+x.r[1]+'</div></div>'}).join(''):'<div class="meta">Tidak ada, semua cukup hadir atau sudah di atas pace.</div>')+'</div>';
+ var b='<div class="card"><h2>Call first</h2><p>Rarely attends RCP and volume is still under pace.</p>'+(cf.length?cf.map(function(x,i){var m=x.m;return '<div class="lrow'+(i?'':' first')+'"><div class="lt"><b>'+esc(m.n)+'</b><button class="chip" data-wa="'+esc(m.n)+'">'+ic('send',14)+'Chat</button></div><div class="meta">'+num(m.v)+' volume · attended RCP '+x.r[0]+' of '+x.r[1]+'</div></div>'}).join(''):'<div class="meta">None, everyone attends enough or is above pace.</div>')+'</div>';
  return [a,b]}
 function convData(){
  var meta=null,ppl=[];
  TDATA.forEach(function(r){if(r.type==='convmeta'){try{meta=JSON.parse(r.note)}catch(e){}}else if(r.type==='conv'){var t=String(r.note||'').split('|');ppl.push({n:r.scope,paid:String(r.value)==='1',tr:t[0],g:t[1]||''})}});
  return ppl.length?{meta:meta||{},ppl:ppl}:null}
 function teamConv(){var C=convData();
- if(!C)return ['<div class="card"><h2>Convention</h2><p>Data convention belum ada di Sheet-mu (tab teamdata, baris type conv). Minta aku tarik dari ST Monitoring.</p></div>','','',''];
+ if(!C)return ['<div class="card"><h2>Convention</h2><p>No convention data in your Sheet yet (teamdata tab, rows of type conv). Ask me to pull it from ST Monitoring.</p></div>','','',''];
  var mt=C.meta,st=C.ppl.filter(function(p){return p.tr==='st26'}),mv=C.ppl.filter(function(p){return p.tr==='mvp'}),paid=st.filter(function(p){return p.paid}).length;
- var t=isoOf(TD),dd=Math.round((new Date(mt.start+'T00:00:00')-new Date(t+'T00:00:00'))/864e5),left=dd>0?dd+' hari':(t<=mt.end?'Sedang jalan':'Selesai');
+ var t=isoOf(TD),dd=Math.round((new Date(mt.start+'T00:00:00')-new Date(t+'T00:00:00'))/864e5),left=dd>0?dd+' days':(t<=mt.end?'In progress':'Done');
  var names=function(l){return '<div class="names">'+l.map(function(p){return '<span'+(p.paid?' class="paid"':'')+'>'+esc(p.n)+'</span>'}).join('')+'</div>'};
- var out=['<div class="card"><h2>'+esc(mt.name||'Convention')+'</h2><p>'+dLab(mt.start)+' sampai '+dLab(mt.end)+', '+esc(mt.city||'')+(mt.tier?' · '+esc(mt.tier):'')+'</p><div class="tiles" style="margin-top:10px;grid-template-columns:1fr 1fr"><div class="tile"><small>Tinggal</small><b>'+left+'</b></div><div class="tile"><small>Lunas</small><b>'+paid+' dari '+st.length+'</b></div></div></div>'];
+ var out=['<div class="card"><h2>'+esc(mt.name||'Convention')+'</h2><p>'+dLab(mt.start)+' to '+dLab(mt.end)+', '+esc(mt.city||'')+(mt.tier?' · '+esc(mt.tier):'')+'</p><div class="tiles" style="margin-top:10px;grid-template-columns:1fr 1fr"><div class="tile"><small>Days left</small><b>'+left+'</b></div><div class="tile"><small>Paid</small><b>'+paid+' of '+st.length+'</b></div></div></div>'];
  var gs=[];st.forEach(function(p){if(gs.indexOf(p.g)<0)gs.push(p.g)});
- gs.forEach(function(g){var l=st.filter(function(p){return p.g===g});out.push('<div class="card"><h2>Grup '+esc(g)+'</h2><p>Lunas '+l.filter(function(p){return p.paid}).length+' dari '+l.length+'</p>'+names(l)+'</div>')});
- if(mv.length)out.push('<div class="card"><h2>MVP SRD</h2><p>Khusus Ruby ke atas. Lunas '+mv.filter(function(p){return p.paid}).length+' dari '+mv.length+'</p>'+names(mv)+'</div>');
+ gs.forEach(function(g){var l=st.filter(function(p){return p.g===g});out.push('<div class="card"><h2>Group '+esc(g)+'</h2><p>Paid '+l.filter(function(p){return p.paid}).length+' of '+l.length+'</p>'+names(l)+'</div>')});
+ if(mv.length)out.push('<div class="card"><h2>MVP SRD</h2><p>Ruby and above only. Paid '+mv.filter(function(p){return p.paid}).length+' of '+mv.length+'</p>'+names(mv)+'</div>');
  return out}
 function reportText(){
  var P=pvData(),M=teamModel();
- if(!P||!M)return 'Belum ada data volume tim dari Sheet. Kirim file genealogy dulu, laporan tidak dibuat dari angka contoh.';
+ if(!P||!M)return 'No team volume from the Sheet yet. Send a genealogy file first, the report is not made from sample numbers.';
  var o=M.rows[0],goal=(P.tree.orgGoal||0)*1000,pp=pvPace(P),pc=pp.pc,L=[];
  L.push('Monitoring AJ · '+dLab(P.hi));L.push('');
  L.push('TOV '+num(o.c)+(goal?' / '+num(goal)+' ('+Math.round(o.c/goal*100)+'%)':''));
- if(goal&&pp.live){var dim=new Date(+P.p.slice(0,4),+P.p.slice(5,7),0).getDate(),dd=+isoOf(TD).slice(8,10),pace=goal*dd/dim;L.push('Pace '+Math.round(o.c/pace*100)+'%, perlu '+num((goal-o.c)/Math.max(1,dim-dd))+' per hari')}
+ if(goal&&pp.live){var dim=new Date(+P.p.slice(0,4),+P.p.slice(5,7),0).getDate(),dd=+isoOf(TD).slice(8,10),pace=goal*dd/dim;L.push('Pace '+Math.round(o.c/pace*100)+'%, need '+num((goal-o.c)/Math.max(1,dim-dd))+' per day')}
  L.push('');
  P.tree.sections.forEach(function(sc){
   if(sc.legKey&&P.m[sc.legKey]&&sc.legGoal)L.push('Leg '+sc.title+' '+num(P.m[sc.legKey].l)+' / '+num(sc.legGoal*1000));
@@ -1048,18 +1049,18 @@ function reportText(){
    L.push(t);if(n.children)walk(n.children,d+1)})};
   walk(sc.nodes,0)});
  var ok=LEAD.filter(function(m){return m.v>=3000}).length,need=LEAD.filter(function(m){return m.v<3000&&!m.pan}).map(function(m){return m.n});
- L.push('');L.push('Sudah 3.000: '+ok+' dari '+LEAD.length);
- if(need.length)L.push('Perlu dihubungi: '+need.join(', '));
+ L.push('');L.push('Reached 3,000: '+ok+' of '+LEAD.length);
+ if(need.length)L.push('Needs a call: '+need.join(', '));
  return L.join('\n')}
-function teamRep(){return '<div class="card"><h2>Laporan harian ke upline</h2><p>Disusun dari angka di atas, dengan format yang sama seperti sekarang.</p><pre id="wat">'+esc(reportText())+'</pre><button class="btn" data-copy="1">Copy dan buka WhatsApp</button></div>'}
+function teamRep(){return '<div class="card"><h2>Daily report to upline</h2><p>Built from the numbers above, in the same format as now.</p><pre id="wat">'+esc(reportText())+'</pre><button class="btn" data-copy="1">Copy and open WhatsApp</button></div>'}
 function team(){
  var tabs=['Overview','Volume','Meetings','Convention','Report'],M=teamModel();
  var h='<div class="top"><div class="stats"><span style="color:var(--mute)">'+(M?pLab(M.cur)+(M.note?' · '+esc(M.note):''):'Team')+'</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button><button data-add="today" aria-label="Add">'+ic('plus',22)+'</button></div></div>';
  h+='<div class="hrow"><h1>Team</h1><small>'+(M?pLab(M.cur):'')+'</small></div><p class="sub">PT. Alvacy Hana Utama</p>';
  if(wide()){
   var g=teamGrowth(),v=teamVolume(),m=teamMeet(),c=teamConv();
-  var PV=pvData();return h+'<span class="sample">'+(PV?'Semua tab dari Sheet-mu. '+pvSrc(PV)+'. Meetings dan Convention dari ST Monitoring (Sheet-mu)':'Overview dari Sheet-mu, Volume masih contoh')+'</span>'+g[0]+'<div class="tgrid">'+g.slice(1).concat([v[0],v[1],m[0],m[1]].concat(c,[teamRep()])).join('')+'</div>'}
- if(teamTab!=='Overview'){var PV=pvData();h+='<span class="sample">'+(PV&&(teamTab==='Volume'||teamTab==='Report')?pvSrc(PV):((teamTab==='Meetings'&&mtgData())||(teamTab==='Convention'&&convData())?'Dari ST Monitoring, tersimpan di Sheet-mu':'Angka di tab ini masih contoh'))+'</span>'}
+  var PV=pvData();return h+'<span class="sample">'+(PV?'All tabs come from your Sheet. '+pvSrc(PV)+'. Meetings and Convention from ST Monitoring (your Sheet)':'Overview from your Sheet, Volume is still sample data')+'</span>'+g[0]+'<div class="tgrid">'+g.slice(1).concat([v[0],v[1],m[0],m[1]].concat(c,[teamRep()])).join('')+'</div>'}
+ if(teamTab!=='Overview'){var PV=pvData();h+='<span class="sample">'+(PV&&(teamTab==='Volume'||teamTab==='Report')?pvSrc(PV):((teamTab==='Meetings'&&mtgData())||(teamTab==='Convention'&&convData())?'From ST Monitoring, saved in your Sheet':'Numbers on this tab are still sample data'))+'</span>'}
  h+='<div class="seg">'+tabs.map(function(t){return '<button class="chip" data-tt="'+t+'" aria-pressed="'+(teamTab===t)+'">'+t+'</button>'}).join('')+'</div>';
  if(teamTab==='Overview')return h+teamGrowth().join('');
  if(teamTab==='Volume')return h+teamVolume().join('');
@@ -1069,16 +1070,16 @@ function team(){
 
 /* ---------- Content: board on iPad and Mac, capture on iPhone ---------- */
 function ccard(c){
- var kids=c.kids?'<small>'+c.kids.length+' turunan</small>':'';
+ var kids=c.kids?'<small>'+c.kids.length+' spin-offs</small>':'';
  return '<button class="cc'+(ctSel===c.id?' sel':'')+'" data-ct="'+c.id+'"><span class="tg '+TGC[c.type]+'">'+esc(c.type)+'</span><span class="tg">'+esc(c.pillar)+'</span><b style="margin-top:7px">'+esc(c.t)+'</b>'+(c.due?'<small>Deadline '+esc(c.due)+'</small>':'')+kids+'</button>'}
 function ctDetail(){
  var c=ctById(ctSel);if(!c)return '';
  var h='<div class="card" style="margin-top:0"><span class="tg '+TGC[c.type]+'">'+esc(c.type)+'</span><span class="tg">'+esc(c.pillar)+'</span><h2 style="margin-top:8px;font-size:19px">'+esc(c.t)+'</h2>';
- if(c.par)h+='<p>Turunan dari "'+esc(ctById(c.par).t)+'"</p>';
+ if(c.par)h+='<p>Spin-off of "'+esc(ctById(c.par).t)+'"</p>';
  h+='<div class="lbl" style="margin-top:14px">Status</div><div class="chips" style="flex-wrap:wrap;margin-top:6px">'+CSTS.map(function(s){return '<button class="chip" style="height:32px;padding:0 11px;font-size:12px" data-cmove="'+s+'" aria-pressed="'+(c.st===s)+'">'+s+'</button>'}).join('')+'</div></div>';
- if(c.kids)h+='<div class="card"><h2>Turunan</h2>'+c.kids.map(function(k,i){var x=ctById(k);return '<div class="lrow'+(i?'':' first')+'"><div class="lt"><b>'+esc(x.t)+'</b><span class="cs pan">'+x.st+'</span></div></div>'}).join('')+'</div>';
- if(c.type==='YouTube')h+='<div class="card"><h2>Hand-off editor</h2><p>Folder Drive siap'+(c.due?', deadline '+c.due:'')+'</p></div>';
- h+='<div class="card"><h2>Tulis dan rekam</h2></div>';
+ if(c.kids)h+='<div class="card"><h2>Spin-offs</h2>'+c.kids.map(function(k,i){var x=ctById(k);return '<div class="lrow'+(i?'':' first')+'"><div class="lt"><b>'+esc(x.t)+'</b><span class="cs pan">'+x.st+'</span></div></div>'}).join('')+'</div>';
+ if(c.type==='YouTube')h+='<div class="card"><h2>Editor hand-off</h2><p>Drive folder ready'+(c.due?', due '+c.due:'')+'</p></div>';
+ h+='<div class="card"><h2>Write and record</h2></div>';
  return h}
 function ctBoard(){
  var h='<div class="board">'+CSTS.map(function(s){var L=CT.filter(function(c){return c.st===s});return '<div class="col"><h3><span>'+s+'</span><span>'+L.length+'</span></h3>'+L.map(ccard).join('')+'</div>'}).join('')+'</div>';
@@ -1088,25 +1089,25 @@ function ctSchedule(){
  return '<div class="sch">'+days.map(function(d,i){var L=CT.filter(function(c){return c.pub===i});
   return '<div class="sd"><h3>'+d+' Nov</h3>'+L.map(function(c){return '<button class="cc" data-ct="'+c.id+'"><span class="tg '+TGC[c.type]+'">'+esc(c.type)+'</span><b style="margin-top:6px">'+esc(c.t)+'</b><small>'+c.at+'</small></button>'}).join('')+'</div>'}).join('')+'</div>'}
 function content(){
- var top='<div class="top"><div class="stats"><span style="color:var(--mute)">Satu video, semua turunannya</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button><button data-add="today" aria-label="Add">'+ic('plus',22)+'</button></div></div><div class="hrow"><h1>Content</h1></div>'+(CFG.url?'':'<span class="sample">Contoh data</span>');
- if(CFG.url&&!wide()){var ideas=CT.filter(function(c){return c.st==='Idea'});return top+'<div class="gp"><span class="gpb nod">'+ic('spark',16)+'Tangkap ide</span></div><div class="card" style="margin-top:0"><div class="search" style="position:static;padding:0"><label><input id="idea" type="text" placeholder="Ide baru, tulis singkat saja"><button data-idea="1" aria-label="Simpan ide" style="color:var(--ink)">'+ic('plus',20)+'</button></label></div>'+(ideas.length?ideas.map(function(c){return '<div class="tline"><b>'+esc(c.t)+'</b></div>'}).join(''):'<p class="meta" style="margin:10px 0 0">Masih kosong. Tulis ide pertama di atas.</p>')+'</div>'}
+ var top='<div class="top"><div class="stats"><span style="color:var(--mute)">One video, all its spin-offs</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button><button data-add="today" aria-label="Add">'+ic('plus',22)+'</button></div></div><div class="hrow"><h1>Content</h1></div>'+(CFG.url?'':'<span class="sample">Sample data</span>');
+ if(CFG.url&&!wide()){var ideas=CT.filter(function(c){return c.st==='Idea'});return top+'<div class="gp"><span class="gpb nod">'+ic('spark',16)+'Capture ideas</span></div><div class="card" style="margin-top:0"><div class="search" style="position:static;padding:0"><label><input id="idea" type="text" placeholder="New idea, keep it short"><button data-idea="1" aria-label="Save idea" style="color:var(--ink)">'+ic('plus',20)+'</button></label></div>'+(ideas.length?ideas.map(function(c){return '<div class="tline"><b>'+esc(c.t)+'</b></div>'}).join(''):'<p class="meta" style="margin:10px 0 0">Still empty. Write your first idea above.</p>')+'</div>'}
  if(wide()){
   var view='<div class="seg" style="margin-top:12px">'+['Board','Schedule'].map(function(v){return '<button class="chip" data-cv="'+v+'" aria-pressed="'+(ctView===v)+'">'+v+'</button>'}).join('')+'</div>';
   return top+view+'<div class="cwide"><div style="min-width:0">'+(ctView==='Board'?ctBoard():ctSchedule())+'</div><div class="cdet">'+ctDetail()+'</div></div>'}
- var need=[['Rekam script nasi padang','Hari ini, 15.00','video','lav'],['Kirim brief ke editor','Deadline Rabu','chat','peach'],['Setujui Reels sarapan','Terjadwal Senin 07.00','film','mint']];
- var h=top+'<div class="gp"><span class="gpb eve">'+ic('clock',16)+'Perlu kamu ('+need.length+')</span></div><div class="list">'+need.map(function(n){return '<div class="task"><div class="ic '+n[3]+'">'+ic(n[2]==='film'?'video':n[2],17)+'</div><button class="tb" data-act="item"><b>'+n[0]+'</b><small>'+n[1]+'</small></button></div>'}).join('')+'</div>';
- h+='<div class="gp"><span class="gpb nod">'+ic('spark',16)+'Tangkap ide</span></div><div class="card" style="margin-top:0"><div class="search" style="position:static;padding:0"><label><input id="idea" type="text" placeholder="Ide baru, tulis singkat saja"><button data-idea="1" aria-label="Simpan ide" style="color:var(--ink)">'+ic('plus',20)+'</button></label></div><div class="tline"><b>Gula di minuman kemasan</b><small>Pillar Kebiasaan</small></div><div class="tline"><b>Kenapa lapar jam 4 sore</b><small>Pillar Kebiasaan</small></div></div>';
- return h+'<div class="card"><h2>Pipeline lengkap ada di iPad dan Mac</h2><p>Board, jadwal posting, dan detail turunan butuh layar lebar. Di iPhone kamu cukup menangkap ide dan menyelesaikan hal yang menunggu kamu.</p></div>'}
+ var need=[['Record the nasi padang script','Today, 15.00','video','lav'],['Send brief to editor','Due Wednesday','chat','peach'],['Approve the breakfast Reels','Scheduled Monday 07:00','film','mint']];
+ var h=top+'<div class="gp"><span class="gpb eve">'+ic('clock',16)+'Needs you ('+need.length+')</span></div><div class="list">'+need.map(function(n){return '<div class="task"><div class="ic '+n[3]+'">'+ic(n[2]==='film'?'video':n[2],17)+'</div><button class="tb" data-act="item"><b>'+n[0]+'</b><small>'+n[1]+'</small></button></div>'}).join('')+'</div>';
+ h+='<div class="gp"><span class="gpb nod">'+ic('spark',16)+'Capture ideas</span></div><div class="card" style="margin-top:0"><div class="search" style="position:static;padding:0"><label><input id="idea" type="text" placeholder="New idea, keep it short"><button data-idea="1" aria-label="Save idea" style="color:var(--ink)">'+ic('plus',20)+'</button></label></div><div class="tline"><b>Sugar in bottled drinks</b><small>Pillar Habits</small></div><div class="tline"><b>Why you get hungry at 4 pm</b><small>Pillar Habits</small></div></div>';
+ return h+'<div class="card"><h2>Full pipeline is on iPad and Mac</h2><p>The board, posting schedule and spin-off details need a wide screen. On iPhone you just capture ideas and clear what is waiting for you.</p></div>'}
 function more(){
- var t=[['Sinkron',CFG.url?'Terhubung ke Sheet-mu':'Hubungkan Google Sheet','link'],['Impor kontak',RAW.length?RAW.length+' orang dari CRM lama':'Tempel dari CRM lama','users'],['Content','Ide dan jadwal posting','video'],['Lists','OPP, Convention, Meeting','list','lists'],['Trips','Jadwal dan persiapan perjalanan','plane','trips']];
- return '<div class="top"><div class="stats"></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button></div></div><div class="hrow"><h1>More</h1></div>'+(CFG.url?'':'<span class="sample">Contoh data</span>')+'<div class="tiles2">'+t.map(function(x,i){return '<button class="tile2'+(x[2]!=='link'&&!x[3]&&i>2?' soon':'')+'" '+(i===0?'data-sync="1"':i===1?'data-impor="1"':i===2?'data-tab="content"':x[3]?'data-tab="'+x[3]+'"':'data-act="item"')+'><span class="ic sky">'+ic(x[2],17)+'</span><span><b>'+x[0]+'</b><small>'+x[1]+'</small></span></button>'}).join('')+'</div>'}
+ var t=[['Sync',CFG.url?'Connected to your Sheet':'Connect Google Sheet','link'],['Import contacts',RAW.length?RAW.length+' people from the old CRM':'Paste from the old CRM','users'],['Content','Ideas and posting schedule','video'],['Lists','OPP, Convention, Meeting','list','lists'],['Trips','Trip schedule and prep','plane','trips']];
+ return '<div class="top"><div class="stats"></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button></div></div><div class="hrow"><h1>More</h1></div>'+(CFG.url?'':'<span class="sample">Sample data</span>')+'<div class="tiles2">'+t.map(function(x,i){return '<button class="tile2'+(x[2]!=='link'&&!x[3]&&i>2?' soon':'')+'" '+(i===0?'data-sync="1"':i===1?'data-impor="1"':i===2?'data-tab="content"':x[3]?'data-tab="'+x[3]+'"':'data-act="item"')+'><span class="ic sky">'+ic(x[2],17)+'</span><span><b>'+x[0]+'</b><small>'+x[1]+'</small></span></button>'}).join('')+'</div>'}
 
 /* ---------- shell ---------- */
 var NAV=[['today','tasks','Today'],['people','users','People'],['team','chart','Team'],['lists','list','Lists'],['trips','plane','Trips'],['content','video','Content'],['more','grid','More']];
 function renderNav(){
  var late=lateTasks().length,n=$('#nav');
  if(wide()){
-  n.innerHTML='<div class="side"><div class="brand">HQ</div>'+NAV.map(function(x){return '<button class="it" data-tab="'+x[0]+'"'+(tab===x[0]?' aria-current="page"':'')+'>'+ic(x[1],20)+x[2]+(x[0]==='today'&&late?'<span class="bd">'+late+'</span>':'')+'</button>'}).join('')+'<div class="foot meta">Tekan + untuk catat cepat. Semua tersimpan di database kamu sendiri.</div></div>';return}
+  n.innerHTML='<div class="side"><div class="brand">HQ</div>'+NAV.map(function(x){return '<button class="it" data-tab="'+x[0]+'"'+(tab===x[0]?' aria-current="page"':'')+'>'+ic(x[1],20)+x[2]+(x[0]==='today'&&late?'<span class="bd">'+late+'</span>':'')+'</button>'}).join('')+'<div class="foot meta">Tap + to add something fast. Everything is saved in your own database.</div></div>';return}
  n.innerHTML='<div class="in"><div class="pillnav">'+NAV.slice(0,4).map(function(x){return '<button data-tab="'+x[0]+'" aria-label="'+x[2]+'"'+(tab===x[0]?' aria-current="page"':'')+'>'+ic(x[1],22)+(x[0]==='today'&&late?'<span class="bd">'+late+'</span>':'')+'</button>'}).join('')+'</div><button class="more" data-tab="more" aria-label="More"'+(tab==='more'?' aria-current="page"':'')+'>'+ic('grid',22)+'</button></div>'}
 function render(keep){
  FR.classList.toggle('wide',wide());
@@ -1118,15 +1119,15 @@ function render(keep){
  SC.scrollTop=keep?y:0}
 function addSheet(part){
  var mt=false,when=part==='nod'?'nod':'today',pt=(part==='afternoon'||part==='evening'||part==='morning')?part:'morning',du='15m';
- var s=sheet('<h3>Tambah</h3><input id="nt" type="text" placeholder="Apa yang mau dikerjakan?" autocomplete="off"><div class="lbl">Kapan</div><div class="chips"><button class="chip" data-w="today">Today</button><button class="chip" data-w="tom">Tomorrow</button><button class="chip" data-w="nod">No date</button></div><div class="lbl">Bagian hari</div><div class="chips"><button class="chip" data-p="morning">Morning</button><button class="chip" data-p="afternoon">Afternoon</button><button class="chip" data-p="evening">Evening</button></div><div class="lbl">Meeting</div><div class="chips"><button class="chip" data-m="1">Meeting, 2 jam di kalender</button></div><input id="mtm" type="time" value="10:00" style="display:none"><div class="lbl">Durasi</div><div class="chips"><button class="chip" data-d="5m">5m</button><button class="chip" data-d="15m">15m</button><button class="chip" data-d="30m">30m</button><button class="chip" data-d="1h">1h</button></div><p class="meta" style="margin:0">Tanpa tanggal pun tetap muncul di Today, di bagian No date.</p><button class="btn" id="sv" style="margin-top:0">Simpan</button>');
+ var s=sheet('<h3>Tambah</h3><input id="nt" type="text" placeholder="What needs doing?" autocomplete="off"><div class="lbl">When</div><div class="chips"><button class="chip" data-w="today">Today</button><button class="chip" data-w="tom">Tomorrow</button><button class="chip" data-w="nod">No date</button></div><div class="lbl">Time of day</div><div class="chips"><button class="chip" data-p="morning">Morning</button><button class="chip" data-p="afternoon">Afternoon</button><button class="chip" data-p="evening">Evening</button></div><div class="lbl">Meeting</div><div class="chips"><button class="chip" data-m="1">Meeting, 2 hours on the calendar</button></div><input id="mtm" type="time" value="10:00" style="display:none"><div class="lbl">Duration</div><div class="chips"><button class="chip" data-d="5m">5m</button><button class="chip" data-d="15m">15m</button><button class="chip" data-d="30m">30m</button><button class="chip" data-d="1h">1h</button></div><p class="meta" style="margin:0">Even without a date it still shows in Today, under No date.</p><button class="btn" id="sv" style="margin-top:0">Save</button>');
  function sync(){s.querySelectorAll('[data-w]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.w===when)});s.querySelectorAll('[data-p]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.p===pt)});s.querySelectorAll('[data-d]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.d===du)});s.querySelectorAll('[data-m]').forEach(function(b){b.setAttribute('aria-pressed',mt)});s.querySelector('#mtm').style.display=mt?'block':'none'}
  sync();
  s.addEventListener('click',function(e){var b=e.target.closest('[data-w],[data-p],[data-d],[data-m]');if(!b)return;if(b.dataset.m)mt=!mt;if(b.dataset.w)when=b.dataset.w;if(b.dataset.p)pt=b.dataset.p;if(b.dataset.d)du=b.dataset.d;sync()});
- s.querySelector('#sv').onclick=function(){var v=s.querySelector('#nt').value.trim();if(!v){toast('Tulis dulu isinya');return}
-  if(mt){if(!CFG.url){toast('Hubungkan Sheet dulu di Sinkron');return}if(when==='nod'){toast('Pilih Today atau Tomorrow untuk meeting');return}
-   var dd=when==='tom'?TD+1:TD,tm=s.querySelector('#mtm').value||'10:00';s.remove();toast('Menambah ke kalender...');
-   fetch(CFG.url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({token:CFG.token,action:'event',title:v,date:isoOf(dd),time:tm,minutes:120})}).then(function(r){return r.json()}).then(function(j){if(j.ok){toast('Masuk kalender, 2 jam');haptic(true);pullEvents()}else toast('Gagal menambah. Update Apps Script dulu')}).catch(function(){toast('Gagal menambah')});return}
-  tasks.push({id:Date.now(),t:v,day:when==='nod'?null:when==='tom'?TD+1:TD,part:pt,dur:du,ic:'spark',c:'sand',done:false});saveTasks();s.remove();tab='today';sel=TD;render();haptic();toast(when==='nod'?'Masuk ke No date':'Masuk ke Today')}}
+ s.querySelector('#sv').onclick=function(){var v=s.querySelector('#nt').value.trim();if(!v){toast('Write something first');return}
+  if(mt){if(!CFG.url){toast('Connect the Sheet first in Sync');return}if(when==='nod'){toast('Pick Today or Tomorrow for a meeting');return}
+   var dd=when==='tom'?TD+1:TD,tm=s.querySelector('#mtm').value||'10:00';s.remove();toast('Adding to calendar...');
+   fetch(CFG.url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({token:CFG.token,action:'event',title:v,date:isoOf(dd),time:tm,minutes:120})}).then(function(r){return r.json()}).then(function(j){if(j.ok){toast('On the calendar, 2 hours');haptic(true);pullEvents()}else toast('Could not add. Update the Apps Script first')}).catch(function(){toast('Could not add')});return}
+  tasks.push({id:Date.now(),t:v,day:when==='nod'?null:when==='tom'?TD+1:TD,part:pt,dur:du,ic:'spark',c:'sand',done:false});saveTasks();s.remove();tab='today';sel=TD;render();haptic();toast(when==='nod'?'Added to No date':'Added to Today')}}
 
 /* ---------- Trips (data lives in the Sheet tab "trips", Claude keeps it fresh) ---------- */
 var TR={trips:[],cards:[],past:[],upd:''},TK=[],moreView='';
@@ -1137,12 +1138,12 @@ function pullTrips(){if(!CFG.url)return;Promise.all([getTab('trips'),getTab('tri
  n.trips.sort(function(x,y){return x.start<y.start?-1:1});TR=n;TK=a[1].rows.map(function(r){return r.id});
  try{localStorage.setItem('hq-trips',JSON.stringify(TR));localStorage.setItem('hq-tticks',JSON.stringify(TK))}catch(e){}
  if(!document.querySelector('.sheet-bg')&&tab==='trips')render(true)}).catch(function(){})}
-function tripSub(){if(!CFG.url||!TR.trips.length)return 'Belum ada trip';var t=upTrips()[0];return t?t.name+', '+fmtShort(t.start)+' sampai '+fmtShort(t.end):'Tidak ada trip mendatang'}
+function tripSub(){if(!CFG.url||!TR.trips.length)return 'No trips yet';var t=upTrips()[0];return t?t.name+', '+fmtShort(t.start)+' to '+fmtShort(t.end):'No upcoming trips'}
 function tzDate(d){return new Date(d.length===10?d+'T00:00:00+07:00':d)}
 function upTrips(){var now=Date.now();return TR.trips.filter(function(t){return tzDate(t.end).getTime()+864e5>now})}
 function fmtShort(d){var x=new Date(d.slice(0,10)+'T12:00:00Z');return WD[x.getUTCDay()].slice(0,3)+' '+x.getUTCDate()+' '+MON[x.getUTCMonth()]}
 function dUntil(d){return Math.ceil((tzDate(d)-Date.now())/864e5)}
-function relD(n){return n<0?'lewat':n===0?'hari ini':n===1?'besok':n+' hari lagi'}
+function relD(n){return n<0?'passed':n===0?'today':n===1?'tomorrow':'in '+n+' days'}
 function lhm(iso){return iso.slice(11,16)}
 function offOf(iso){var m=iso.match(/([+-])(\d\d):(\d\d)$/);return m?(m[1]==='-'?-1:1)*(+m[2]+ +m[3]/60):0}
 function homeHM(iso){var d=new Date(new Date(iso).getTime()+7*36e5);return String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0')}
@@ -1158,37 +1159,37 @@ function tFlight(f){var past=new Date(f.arr)<new Date(),h='<div class="card tp">
  return h+'<div class="tp-foot">'+tRefs(f.refs)+(f.paid?'<small>'+esc(f.paid)+'</small>':'')+'</div></div>'}
 function tHotel(x){var h='<div class="card tp"><div class="tp-top"><small>'+esc(x.kind||'Stay')+'</small></div><h2>'+esc(x.name)+'</h2><p>'+esc(x.addr||'')+'</p><div class="tp-stay"><div><small>Check in</small><b>'+esc(x.inDate)+'</b><small>'+esc(x.inRule||'')+'</small></div><div><small>Check out</small><b>'+esc(x.outDate)+'</b><small>'+esc(x.outRule||'')+'</small></div></div>'+tFacts(x.facts);
  if(x.note)h+='<div class="tp-note">'+esc(x.note)+'</div>';if(x.tip)h+='<div class="tp-note">'+esc(x.tip)+'</div>';
- return h+'<div class="tp-foot">'+tRefs(x.refs)+(x.map?'<a class="chip sm" href="'+esc(x.map)+'" target="_blank" rel="noopener">Peta</a>':'')+'</div></div>'}
+ return h+'<div class="tp-foot">'+tRefs(x.refs)+(x.map?'<a class="chip sm" href="'+esc(x.map)+'" target="_blank" rel="noopener">Map</a>':'')+'</div></div>'}
 function tItem(i){if(i.type==='flight')return tFlight(i);if(i.type==='hotel')return tHotel(i);
  if(i.type==='gap')return '<div class="tp-note warn">'+i.html+'</div>';if(i.type==='plain')return '<div class="tp-note">'+i.html+'</div>';
  if(i.type==='fold')return '<details class="tp-fold"><summary>'+esc(i.title)+'</summary><p>'+i.html+'</p></details>';return ''}
-function pDue(p){var n=dUntil(p.due),on=p.opens?dUntil(p.opens.slice(0,10)):null;if(on!==null&&on>0)return {t:'buka '+fmtShort(p.opens),soon:false,n:on};return {t:n<0?'lewat':'sebelum '+fmtShort(p.due),soon:n<=3,n:n}}
+function pDue(p){var n=dUntil(p.due),on=p.opens?dUntil(p.opens.slice(0,10)):null;if(on!==null&&on>0)return {t:'opens '+fmtShort(p.opens),soon:false,n:on};return {t:n<0?'overdue':'before '+fmtShort(p.due),soon:n<=3,n:n}}
 function tripHead(t){var n=dUntil(t.start),nt=Math.round((tzDate(t.end)-tzDate(t.start))/864e5),fl=0,left=0;(t.days||[]).forEach(function(d){(d.items||[]).forEach(function(i){if(i.type==='flight')fl++})});(t.prep||[]).forEach(function(p){if(TK.indexOf(t.id+':'+p.id)<0)left++});
- return '<div class="card tp-hero"><small>'+esc(t.codes||'')+'</small><h2>'+esc(t.name)+'</h2><p>'+fmtShort(t.start)+' sampai '+fmtShort(t.end)+' · '+nt+' malam</p><div class="tp-pills"><span class="tp-pill ok">'+(n>0?'Berangkat '+relD(n):'Sedang berlangsung')+'</span><span class="tp-pill">'+fl+' penerbangan</span><span class="tp-pill'+(left?' warn':' ok')+'">'+(left?left+' persiapan belum':'Siap berangkat')+'</span></div></div>'}
+ return '<div class="card tp-hero"><small>'+esc(t.codes||'')+'</small><h2>'+esc(t.name)+'</h2><p>'+fmtShort(t.start)+' to '+fmtShort(t.end)+' · '+nt+' nights</p><div class="tp-pills"><span class="tp-pill ok">'+(n>0?'Departs '+relD(n):'In progress')+'</span><span class="tp-pill">'+fl+' flights</span><span class="tp-pill'+(left?' warn':' ok')+'">'+(left?left+' prep items open':'Ready to go')+'</span></div></div>'}
 function tripBlock(t){var h=tripHead(t);
  if((t.prep||[]).length){h+='<div class="list">'+t.prep.map(function(p){var done=TK.indexOf(t.id+':'+p.id)>-1,du=pDue(p);return '<div class="task'+(done?' done':'')+'"><div class="tb" style="padding:12px 4px 12px 14px"><b>'+esc(p.label)+'</b><small class="'+(du.soon&&!done?'tp-soon':'')+'">'+du.t+'</small><small style="display:block;margin-top:3px">'+(p.detail||'')+'</small></div><button class="ck" data-ttick="'+esc(t.id+':'+p.id)+'" aria-label="Done"><i>'+ic('check',14)+'</i></button></div>'}).join('')+'</div>'}
  (t.days||[]).forEach(function(d){var dt=new Date(d.date+'T12:00:00Z');h+='<div class="tp-day"><div class="tp-date"><small>'+WD[dt.getUTCDay()].slice(0,3)+'</small><b>'+dt.getUTCDate()+'</b><small>'+MON[dt.getUTCMonth()]+'</small></div><div style="min-width:0">'+(d.items||[]).map(tItem).join('')+'</div></div>'});
  return h}
 function tripsPage(){
- var top='<div class="top"><div class="stats"><span style="color:var(--mute)">'+(TR.upd?'Diperbarui '+esc(TR.upd):'')+'</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button></div></div><div class="hrow"><h1>Trips</h1></div>';
- if(!CFG.url)return top+'<p class="note">Hubungkan Sheet dulu di Sinkron.</p>';
+ var top='<div class="top"><div class="stats"><span style="color:var(--mute)">'+(TR.upd?'Updated '+esc(TR.upd):'')+'</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button></div></div><div class="hrow"><h1>Trips</h1></div>';
+ if(!CFG.url)return top+'<p class="note">Connect the Sheet first in Sync.</p>';
  var ups=upTrips(),h=top;
- if(!TR.trips.length)return h+'<div class="missed"><b>Belum ada trip</b><p class="meta" style="margin:6px 0 0">Bilang ke Claude: "update trip-ku". Claude baca Gmail dan mengisi tab trips di Sheet.</p></div>';
+ if(!TR.trips.length)return h+'<div class="missed"><b>No trips yet</b><p class="meta" style="margin:6px 0 0">Tell Claude: "update my trip". Claude reads Gmail and fills the trips tab in the Sheet.</p></div>';
  var nx=allFl().filter(function(x){return new Date(x.f.dep)>new Date()})[0];
  if(nx){var ms=new Date(nx.f.dep)-Date.now(),dd=Math.floor(ms/864e5),hh=Math.floor(ms%864e5/36e5),mm=Math.floor(ms%36e5/6e4);
-  h+='<div class="tp-board"><small>Berangkat berikutnya · '+esc(nx.t.name)+'</small><div><b>'+esc(nx.f.from.code)+' → '+esc(nx.f.to.code)+'</b><span>'+dd+'h '+hh+'j '+mm+'m</span></div><small>'+esc(nx.f.fno)+' · '+fmtShort(nx.f.dep)+' · '+lhm(nx.f.dep)+' '+esc(nx.f.from.tz)+'</small></div>'}
+  h+='<div class="tp-board"><small>Next departure · '+esc(nx.t.name)+'</small><div><b>'+esc(nx.f.from.code)+' → '+esc(nx.f.to.code)+'</b><span>'+dd+'h '+hh+'j '+mm+'m</span></div><small>'+esc(nx.f.fno)+' · '+fmtShort(nx.f.dep)+' · '+lhm(nx.f.dep)+' '+esc(nx.f.from.tz)+'</small></div>'}
  var due=[];ups.forEach(function(t){(t.prep||[]).forEach(function(p){if(TK.indexOf(t.id+':'+p.id)>-1)return;var n=dUntil(p.due);if(n<=14)due.push({n:n,t:t.name,l:p.label,w:pDue(p).t})})});due.sort(function(a,b){return a.n-b.n});
- if(due.length)h+=gp('tdue','late','alert','Jatuh tempo 2 minggu',due.length)+(collapsed.tdue?'':'<div class="list">'+due.map(function(x){return '<div class="task"><div class="tb" style="padding:12px 14px"><b>'+esc(x.l)+'</b><small>'+esc(x.t)+' · '+x.w+' · '+relD(x.n)+'</small></div></div>'}).join('')+'</div>');
+ if(due.length)h+=gp('tdue','late','alert','Due in 2 weeks',due.length)+(collapsed.tdue?'':'<div class="list">'+due.map(function(x){return '<div class="task"><div class="tb" style="padding:12px 14px"><b>'+esc(x.l)+'</b><small>'+esc(x.t)+' · '+x.w+' · '+relD(x.n)+'</small></div></div>'}).join('')+'</div>');
  ups.forEach(function(t){h+=tripBlock(t)});
- if((TR.cards||[]).length)h+='<details class="tp-fold"><summary>Kartu: lounge dan perks</summary>'+TR.cards.map(function(c){return '<p><b>'+esc(c.name)+'</b><br>'+(c.lines||[]).map(esc).join('<br>')+'</p>'}).join('')+'</details>';
- if((TR.past||[]).length)h+='<details class="tp-fold"><summary>Trip lalu</summary>'+TR.past.map(function(p){return '<p><b>'+esc(p.name)+'</b> · '+esc(p.dates)+'<br>'+(p.lines||[]).map(esc).join('<br>')+'</p>'}).join('')+'</details>';
+ if((TR.cards||[]).length)h+='<details class="tp-fold"><summary>Cards: lounge and perks</summary>'+TR.cards.map(function(c){return '<p><b>'+esc(c.name)+'</b><br>'+(c.lines||[]).map(esc).join('<br>')+'</p>'}).join('')+'</details>';
+ if((TR.past||[]).length)h+='<details class="tp-fold"><summary>Past trips</summary>'+TR.past.map(function(p){return '<p><b>'+esc(p.name)+'</b> · '+esc(p.dates)+'<br>'+(p.lines||[]).map(esc).join('<br>')+'</p>'}).join('')+'</details>';
  return h}
 function tickTrip(id){var i=TK.indexOf(id);if(i>-1)TK.splice(i,1);else TK.push(id);try{localStorage.setItem('hq-tticks',JSON.stringify(TK))}catch(e){}
  if(CFG.url){setSync('idle');postTab('tripticks',TK.map(function(x){return {id:x}})).then(function(j){setSync(j.ok?'ok':'err')}).catch(function(){setSync('err')})}haptic(false);render(true)}
 
 /* ---------- preview mode and theme ---------- */
 var DEV={phone:[390,844],ipad:[1024,768],mac:[1280,800]};
-/* iPhone dibuka dari home screen: tinggi 100% lebih pendek dari layar, jadi pakai 100vh supaya penuh sampai bawah */
+/* iPhone dibuka of home screen: tinggi 100% lebih pendek of layar, jadi pakai 100vh supaya penuh to bawah */
 function fixVh(){var h=navigator.standalone?'100vh':'';if(document.body.style.height!==h)document.body.style.height=h}
 function fit(){
  fixVh();
@@ -1212,16 +1213,16 @@ function completeTask(el){
   var sp=$('#spk b');if(sp){sp.textContent=sparkN();sp.parentNode.classList.remove('bump');void sp.offsetWidth;sp.parentNode.classList.add('bump')}
   var gone=t.day===null||t.day<TD;
   setTimeout(function(){if(gone)row.classList.add('leave')},REDUCE?0:380);
-  setTimeout(function(){render(true);if(wasLate>0&&lateTasks().length===0){haptic(true);toast('Overdue kosong. Tidak ada yang terlewat.');var f=$('#spk');f&&burst(f,true)}},REDUCE?0:760);
+  setTimeout(function(){render(true);if(wasLate>0&&lateTasks().length===0){haptic(true);toast('Nothing overdue. Nothing missed.');var f=$('#spk');f&&burst(f,true)}},REDUCE?0:760);
  }else{row.classList.remove('done','pop');haptic(false);setTimeout(function(){render(true)},120)}}
 document.addEventListener('click',function(e){
  var el=e.target.closest('[data-today],[data-tab],[data-done],[data-fold],[data-day],[data-add],[data-open],[data-act],[data-pv],[data-ptoggle],[data-msg],[data-log],[data-next],[data-pdet],[data-jump],[data-tt],[data-copy],[data-wa],[data-addp],[data-goto],[data-ct],[data-cmove],[data-cv],[data-idea],[data-mode],[data-theme-set],[data-gotab],[data-sync],[data-impor],[data-hab],[data-trips],[data-tback],[data-ttick],[data-tcopy],[data-fudone],[data-evdone],[data-pprod],[data-promo],[data-newlist],[data-laddm],[data-lmenu],[data-lmst],[data-lmprod],[data-lmtick],[data-buy],[data-edit],[data-hs],[data-fwa],[data-lwa],[data-score],[data-rwa],[data-bdwa],[data-chkin],[data-chkwa],[data-bulk],[data-tmove],[data-nbwa]');if(!el)return;
  var d=el.dataset;
- if(d.impor){if(!CFG.url){toast('Hubungkan Sheet dulu di Sinkron');return}var ib=sheet('<h3>Impor kontak</h3><p class="meta" style="margin:0">Tempel hasil Salin dari halaman impor. Ini menggantikan daftar kontak di Sheet-mu.</p><textarea id="it" rows="5" style="width:100%;border-radius:16px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:10px;font:12px ui-monospace,monospace" aria-label="Data kontak"></textarea><button class="btn" id="ig" style="margin-top:0">Impor</button>');ib.querySelector('#ig').onclick=function(){try{var a=JSON.parse(ib.querySelector('#it').value);if(!Array.isArray(a)||!a.length||!a[0].name)throw 0;RAW=a.map(function(r){var o={};Object.keys(r).forEach(function(k){o[k]=r[k]==null?'':String(r[k])});return o});savePeople();ib.remove();tab='people';render();toast(RAW.length+' orang masuk ke People');haptic(true)}catch(e){toast('Teksnya belum cocok. Salin ulang dari halaman impor.')}};return}
- if(d.sync){var sb=sheet('<h3>Hubungkan Google Sheet</h3><p class="meta" style="margin:0">Tempel alamat Apps Script dan kode rahasia yang kamu buat. Keduanya hanya disimpan di perangkat ini.</p><input id="su" type="url" placeholder="Alamat Apps Script (https://script.google.com/...)" value="'+esc(CFG.url)+'" autocomplete="off"><input id="st" type="text" placeholder="Kode rahasia" value="'+esc(CFG.token)+'" autocomplete="off"><button class="btn" id="sg" style="margin-top:0">Hubungkan</button>'+(CFG.url?'<button class="btn alt" id="sx" style="margin-top:0">Putuskan</button>':''));
-  sb.querySelector('#sg').onclick=function(){var u=sb.querySelector('#su').value.trim(),k=sb.querySelector('#st').value.trim();if(!/^https?:\/\//.test(u)||!k){toast('Isi alamat dan kode dulu');return}
-   fetch(u+'?token='+encodeURIComponent(k)+'&name=tasks').then(function(r){return r.json()}).then(function(j){if(j.error){toast('Kode rahasia belum cocok');return}
-    var had=tasks.slice();CFG={url:u,token:k};try{localStorage.setItem('hq-sync',JSON.stringify(CFG))}catch(e){}tasks=j.rows.map(normTask);try{localStorage.setItem('hq-tasks2',JSON.stringify(tasks))}catch(e){}pullPeople();pullX();sb.remove();render();toast('Terhubung. Sheet-mu berisi '+tasks.length+' catatan');haptic(true)}).catch(function(){toast('Alamat belum bisa dibuka')})};
+ if(d.impor){if(!CFG.url){toast('Connect the Sheet first in Sync');return}var ib=sheet('<h3>Impor kontak</h3><p class="meta" style="margin:0">Paste the result of Copy from the import page. This replaces the contact list in your Sheet.</p><textarea id="it" rows="5" style="width:100%;border-radius:16px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:10px;font:12px ui-monospace,monospace" aria-label="Contact data"></textarea><button class="btn" id="ig" style="margin-top:0">Import</button>');ib.querySelector('#ig').onclick=function(){try{var a=JSON.parse(ib.querySelector('#it').value);if(!Array.isArray(a)||!a.length||!a[0].name)throw 0;RAW=a.map(function(r){var o={};Object.keys(r).forEach(function(k){o[k]=r[k]==null?'':String(r[k])});return o});savePeople();ib.remove();tab='people';render();toast(RAW.length+' people added to People');haptic(true)}catch(e){toast('The text does not match. Copy it again from the import page.')}};return}
+ if(d.sync){var sb=sheet('<h3>Connect Google Sheet</h3><p class="meta" style="margin:0">Paste your Apps Script address and the secret code you made. Both are stored only on this device.</p><input id="su" type="url" placeholder="Apps Script address (https://script.google.com/...)" value="'+esc(CFG.url)+'" autocomplete="off"><input id="st" type="text" placeholder="Secret code" value="'+esc(CFG.token)+'" autocomplete="off"><button class="btn" id="sg" style="margin-top:0">Connect</button>'+(CFG.url?'<button class="btn alt" id="sx" style="margin-top:0">Disconnect</button>':''));
+  sb.querySelector('#sg').onclick=function(){var u=sb.querySelector('#su').value.trim(),k=sb.querySelector('#st').value.trim();if(!/^https?:\/\//.test(u)||!k){toast('Enter the address and code first');return}
+   fetch(u+'?token='+encodeURIComponent(k)+'&name=tasks').then(function(r){return r.json()}).then(function(j){if(j.error){toast('Secret code does not match');return}
+    var had=tasks.slice();CFG={url:u,token:k};try{localStorage.setItem('hq-sync',JSON.stringify(CFG))}catch(e){}tasks=j.rows.map(normTask);try{localStorage.setItem('hq-tasks2',JSON.stringify(tasks))}catch(e){}pullPeople();pullX();sb.remove();render();toast('Connected. Your Sheet has '+tasks.length+' notes');haptic(true)}).catch(function(){toast('Address cannot be opened')})};
   var sx=sb.querySelector('#sx');if(sx)sx.onclick=function(){CFG={url:'',token:''};try{localStorage.removeItem('hq-sync');localStorage.removeItem('hq-tasks2')}catch(e){}sb.remove();location.reload()};return}
  if(d.mode){setMode(d.mode);return}
  if(d.themeSet){setTheme(d.themeSet);return}
@@ -1229,65 +1230,65 @@ document.addEventListener('click',function(e){
  if(d.trips){tab='trips';pullTrips();render();return}
  if(d.tback){moreView='';render();return}
  if(d.ttick){tickTrip(d.ttick);return}
- if(d.tcopy){try{navigator.clipboard.writeText(d.tcopy);toast('Disalin')}catch(e){toast(d.tcopy)}return}
+ if(d.tcopy){try{navigator.clipboard.writeText(d.tcopy);toast('Copied')}catch(e){toast(d.tcopy)}return}
  if(d.hab){toggleHab(el);return}
  if(d.done){completeTask(el);return}
  if(d.fold){collapsed[d.fold]=!collapsed[d.fold];render(true);return}
  if(d.day){goDay(+d.day);return}
  if(d.today){goDay(TD);return}
  if(d.add){addSheet(d.add);return}
- if(d.addp){var ab=sheet('<h3>Orang baru</h3><input id="an" type="text" placeholder="Nama" autocomplete="off"><input id="ap" type="tel" placeholder="Nomor WhatsApp (boleh kosong)" autocomplete="off"><button class="btn" id="as" style="margin-top:0">Simpan sebagai Namelist</button>');ab.querySelector('#as').onclick=function(){var n=ab.querySelector('#an').value.trim();if(!n){toast('Isi namanya dulu');return}var row={id:n.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+Date.now().toString(36),name:n,stage:'Namelist',tags:'',market:'',phone:ab.querySelector('#ap').value.trim(),lastContact:'',lastOrder:'',nextDate:'',nextAction:'',hot:'',notes:'',verify:'',trmeStart:'',sponsor:'',birthday:'',created:isoOf(TD)};if(CFG.url){RAW.push(row);savePeople()}else{people.push({id:people.length,n:n,st:'Namelist',next:null,last:9999,note:''})}ab.remove();render(true);toast('Masuk ke Namelist');haptic()};return}
+ if(d.addp){var ab=sheet('<h3>New person</h3><input id="an" type="text" placeholder="Name" autocomplete="off"><input id="ap" type="tel" placeholder="WhatsApp number (optional)" autocomplete="off"><button class="btn" id="as" style="margin-top:0">Save as Namelist</button>');ab.querySelector('#as').onclick=function(){var n=ab.querySelector('#an').value.trim();if(!n){toast('Enter a name first');return}var row={id:n.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+Date.now().toString(36),name:n,stage:'Namelist',tags:'',market:'',phone:ab.querySelector('#ap').value.trim(),lastContact:'',lastOrder:'',nextDate:'',nextAction:'',hot:'',notes:'',verify:'',trmeStart:'',sponsor:'',birthday:'',created:isoOf(TD)};if(CFG.url){RAW.push(row);savePeople()}else{people.push({id:people.length,n:n,st:'Namelist',next:null,last:9999,note:''})}ab.remove();render(true);toast('Added to Namelist');haptic()};return}
  if(d.goto){var g=d.goto.split(':');tab=g[0];if(g[0]==='people'){pview=g[1];pq=''}else teamTab=g[1];render();return}
- if(d.open){var tk=tasks.filter(function(x){return x.id==d.open})[0];sheet('<h3>'+esc(tk.t)+'</h3><p class="meta" style="margin:0">'+(tk.ev?esc(tk.ev)+' · 2 jam di kalender AJ Jonathan':((tk.at?esc(tk.at)+' · ':'')+esc(tk.dur||'')))+'</p>'+(tk.go==='team'?'<button class="btn" data-close="1" data-gotab="team" style="margin-top:0">Buka Team</button>':'')+'<div class="lbl">Pindah tanggal</div><div class="chips" style="flex-wrap:wrap"><button class="chip" data-tmove="'+tk.id+'|1">Besok</button><button class="chip" data-tmove="'+tk.id+'|2">Lusa</button><button class="chip" data-tmove="'+tk.id+'|7">Minggu depan</button></div>');return}
- if(d.tmove){var tm2=d.tmove.split('|'),tt=tasks.filter(function(x){return String(x.id)===tm2[0]})[0];if(!tt)return;tt.day=TD+Number(tm2[1]);saveTasks();document.querySelectorAll('.sheet-bg').forEach(function(x){x.remove()});render(true);toast('Dipindah ke '+dueTxt(tt.day-TD));haptic();return}
+ if(d.open){var tk=tasks.filter(function(x){return x.id==d.open})[0];sheet('<h3>'+esc(tk.t)+'</h3><p class="meta" style="margin:0">'+(tk.ev?esc(tk.ev)+' · 2 hours on the AJ Jonathan calendar':((tk.at?esc(tk.at)+' · ':'')+esc(tk.dur||'')))+'</p>'+(tk.go==='team'?'<button class="btn" data-close="1" data-gotab="team" style="margin-top:0">Open Team</button>':'')+'<div class="lbl">Move date</div><div class="chips" style="flex-wrap:wrap"><button class="chip" data-tmove="'+tk.id+'|1">Tomorrow</button><button class="chip" data-tmove="'+tk.id+'|2">Lusa</button><button class="chip" data-tmove="'+tk.id+'|7">Next week</button></div>');return}
+ if(d.tmove){var tm2=d.tmove.split('|'),tt=tasks.filter(function(x){return String(x.id)===tm2[0]})[0];if(!tt)return;tt.day=TD+Number(tm2[1]);saveTasks();document.querySelectorAll('.sheet-bg').forEach(function(x){x.remove()});render(true);toast('Moved to '+dueTxt(tt.day-TD));haptic();return}
  if(d.pv){pview=d.pv;pq='';render();return}
  if(d.ptoggle){var id=+d.ptoggle;
   if(wide()){selPid=id;document.querySelectorAll('.prow').forEach(function(r){r.classList.toggle('sel',+r.dataset.pid===id)});$('#pdetail').innerHTML=pdetail(people[id]);return}
   var row=el.closest('.prow'),pa=row.querySelector('.pact'),was=!pa.hidden;document.querySelectorAll('.pact').forEach(function(x){x.hidden=true});pa.hidden=was;return}
- if(d.pdet){sheet(pdetail(people[d.pdet])+'<button class="btn alt" data-close="1">Tutup</button>');return}
- if(d.msg){var p=people[d.msg];var b=sheet('<h3>Kirim ke '+esc(p.n)+'</h3><div class="bubble">'+esc(msgFor(p))+'</div><button class="btn" id="go" style="margin-top:0">Buka WhatsApp</button><button class="btn alt" data-close="1" style="margin-top:0">Ubah teks dulu</button><p class="meta" style="margin:0">Kamu kembali ke HQ setelah mengirim, lalu HQ bertanya "Sudah kirim?" dan mencatatnya.</p>');b.querySelector('#go').onclick=function(){var t=msgFor(p);if(p.phone){if(openWA(p,{text:t,type:'Follow-up'})){b.remove();render(true)}}else{copy(t,'Belum ada nomornya. Pesan disalin, pilih kontaknya di WhatsApp.');var a2=document.createElement('a');a2.href='https://wa.me/?text='+encodeURIComponent(t);a2.target='_blank';a2.rel='noopener';document.body.appendChild(a2);a2.click();a2.remove();b.remove()}};return}
- if(d.log){var lp=people[d.log];if(!lp)return;var lu=contactDone(lp,{type:'Ngobrol'});if(!lu)return;haptic();document.querySelectorAll('.sheet-bg').forEach(function(x){x.remove()});render(true);toastU(lp.n+' dicatat. Next '+dueTxt(lu.next),function(){undoContact(lu);render(true)});return}
+ if(d.pdet){sheet(pdetail(people[d.pdet])+'<button class="btn alt" data-close="1">Close</button>');return}
+ if(d.msg){var p=people[d.msg];var b=sheet('<h3>Send to '+esc(p.n)+'</h3><div class="bubble">'+esc(msgFor(p))+'</div><button class="btn" id="go" style="margin-top:0">Open WhatsApp</button><button class="btn alt" data-close="1" style="margin-top:0">Edit text first</button><p class="meta" style="margin:0">Come back to HQ after sending and HQ asks "Did you send it?" and logs it.</p>');b.querySelector('#go').onclick=function(){var t=msgFor(p);if(p.phone){if(openWA(p,{text:t,type:'Follow-up'})){b.remove();render(true)}}else{copy(t,'No number yet. Message copied, pick the contact in WhatsApp.');var a2=document.createElement('a');a2.href='https://wa.me/?text='+encodeURIComponent(t);a2.target='_blank';a2.rel='noopener';document.body.appendChild(a2);a2.click();a2.remove();b.remove()}};return}
+ if(d.log){var lp=people[d.log];if(!lp)return;var lu=contactDone(lp,{type:'Talked'});if(!lu)return;haptic();document.querySelectorAll('.sheet-bg').forEach(function(x){x.remove()});render(true);toastU(lp.n+' logged. Next '+dueTxt(lu.next),function(){undoContact(lu);render(true)});return}
  if(d.fudone){doFollow(el);return}
  if(d.fwa){var fp=people[d.fwa];if(fp)openWA(fp,{type:el.dataset.ft||'Follow-up',text:msgFor(fp,el.dataset.fk)});return}
  if(d.score){scoreSheet();return}
  if(d.chkin){var ck=d.chkin.split('|'),cp=people[ck[0]],cd=+ck[1];if(!cp)return;var old=resOf(pid(cp),cd)||{};
-  var cb=sheet('<h3>'+esc(cp.n)+' · hari ke-'+cd+'</h3><input id="cw" type="text" inputmode="decimal" placeholder="Berat badan (kg)" autocomplete="off" value="'+esc(old.weight||'')+'"><input id="cb" type="text" inputmode="numeric" placeholder="Body age" autocomplete="off"><input id="cl" type="text" inputmode="decimal" placeholder="Lean mass (kg)" autocomplete="off"><input id="cn" type="text" placeholder="Catatan singkat" autocomplete="off"><button class="btn" id="cs" style="margin-top:0">Simpan</button><button class="btn alt" data-close="1" style="margin-top:0">Tutup</button>');
+  var cb=sheet('<h3>'+esc(cp.n)+' · day '+cd+'</h3><input id="cw" type="text" inputmode="decimal" placeholder="Weight (kg)" autocomplete="off" value="'+esc(old.weight||'')+'"><input id="cb" type="text" inputmode="numeric" placeholder="Body age" autocomplete="off"><input id="cl" type="text" inputmode="decimal" placeholder="Lean mass (kg)" autocomplete="off"><input id="cn" type="text" placeholder="Short note" autocomplete="off"><button class="btn" id="cs" style="margin-top:0">Save</button><button class="btn alt" data-close="1" style="margin-top:0">Close</button>');
   cb.querySelector('#cs').onclick=function(){var g=function(i){return cb.querySelector(i).value.trim()};
    RES.push({id:'r'+Date.now().toString(36),pid:pid(cp),day:String(cd),date:isoOf(TD),weight:g('#cw'),bodyAge:g('#cb'),lean:g('#cl'),note:g('#cn')});saveX('results');
-   contactDone(cp,{type:'Check-in hari '+cd});cb.remove();render(true);toast('Hasil '+cp.n+' tercatat');haptic()};return}
- if(d.bulk){var BL=lById(d.bulk);if(!BL)return;if(!CFG.url){toast('Hubungkan Sheet dulu supaya orangnya tersimpan');return}
-  var bk=sheet('<h3>Tempel banyak nama ke '+esc(BL.name)+'</h3><textarea id="bt" rows="8" placeholder="Satu nama per baris" style="width:100%"></textarea><button class="btn" id="bgo" style="margin-top:0">Tambahkan</button><button class="btn alt" data-close="1" style="margin-top:0">Tutup</button><p class="meta" style="margin:0">Nama yang sudah ada di data tidak dibuat dobel, cuma dimasukkan ke list.</p>');
+   contactDone(cp,{type:'Check-in day '+cd});cb.remove();render(true);toast('Results for '+cp.n+' logged');haptic()};return}
+ if(d.bulk){var BL=lById(d.bulk);if(!BL)return;if(!CFG.url){toast('Connect the Sheet first so the people are saved');return}
+  var bk=sheet('<h3>Paste many names into '+esc(BL.name)+'</h3><textarea id="bt" rows="8" placeholder="One name per line" style="width:100%"></textarea><button class="btn" id="bgo" style="margin-top:0">Add</button><button class="btn alt" data-close="1" style="margin-top:0">Close</button><p class="meta" style="margin:0">Names already in your data are not duplicated, just added to the list.</p>');
   bk.querySelector('#bgo').onclick=function(){var seen={},names=bk.querySelector('#bt').value.split(/\n/).map(function(x){return x.replace(/^[\s\-*\u2022\d.)]+/,'').trim()}).filter(function(x){if(!x)return false;var k=x.toLowerCase();if(seen[k])return false;seen[k]=1;return true});
-   if(!names.length){toast('Belum ada nama');return}
+   if(!names.length){toast('No names yet');return}
    var nw=0,ad=0,i=0;names.forEach(function(nm){var ex=people.filter(function(p){return p.n.toLowerCase()===nm.toLowerCase()})[0];
     if(!ex){RAW.push({id:nm.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+Date.now().toString(36)+(i++),name:nm,stage:'Namelist',tags:'',market:'',phone:'',email:'',lastContact:'',lastOrder:'',nextDate:'',nextAction:'',hot:'',notes:'',verify:'',trmeStart:'',sponsor:'',birthday:'',created:isoOf(TD)});buildPeople();ex=people[people.length-1];nw++}
-    if(!mOf(BL.id,pid(ex))){LM.push({lid:BL.id,pid:pid(ex),status:isEv(BL)?'Belum':'',product:'',added:isoOf(TD),done:'',doneDate:'',tid:'',plc:'',pnd:''});ad++}});
-   savePeople();saveX('listmembers');bk.remove();render(true);toast(nw+' orang baru, '+ad+' masuk ke '+BL.name);haptic()};return}
+    if(!mOf(BL.id,pid(ex))){LM.push({lid:BL.id,pid:pid(ex),status:isEv(BL)?'Not yet':'',product:'',added:isoOf(TD),done:'',doneDate:'',tid:'',plc:'',pnd:''});ad++}});
+   savePeople();saveX('listmembers');bk.remove();render(true);toast(nw+' new people, '+ad+' added to '+BL.name);haptic()};return}
  if(d.lwa){var lk=d.lwa.split('|'),lw=lById(lk[0]),pw=byPid(lk[1]);if(lw&&pw)openWA(pw,{type:'List: '+lw.name,lid:lw.id});return}
  if(d.evdone){doEv(el);return}
  if(d.pprod){pprod=pprod===d.pprod?'':d.pprod;render(true);return}
- if(d.promo){var pr=people[d.promo];if(!pr)return;if(pr.raw&&pr.last===0){toast(pr.n+' sudah dicatat hari ini');return}var prw=el.closest('.task'),pu2=contactDone(pr,{type:'Promo '+pprod});if(!pu2)return;prw.classList.add('done','pop');burst(prw.querySelector('.ck i'),false);haptic(false);setTimeout(function(){render(true);toastU(pr.n+' dicatat sebagai promo '+pprod+'. Next '+dueTxt(pu2.next),function(){undoContact(pu2);render(true)})},REDUCE?0:560);return}
- if(d.newlist){var kind='OPP',nb2=sheet('<h3>List baru</h3><input id="ln" type="text" placeholder="Nama list, contoh OPP November" autocomplete="off"><div class="lbl">Jenis</div><div class="chips" style="flex-wrap:wrap">'+KINDS.map(function(k){return '<button class="chip" data-lk="'+k+'">'+k+'</button>'}).join('')+'</div><button class="btn" id="lc" style="margin-top:0">Buat list</button>');
+ if(d.promo){var pr=people[d.promo];if(!pr)return;if(pr.raw&&pr.last===0){toast(pr.n+' already logged today');return}var prw=el.closest('.task'),pu2=contactDone(pr,{type:'Promo '+pprod});if(!pu2)return;prw.classList.add('done','pop');burst(prw.querySelector('.ck i'),false);haptic(false);setTimeout(function(){render(true);toastU(pr.n+' logged as promo '+pprod+'. Next '+dueTxt(pu2.next),function(){undoContact(pu2);render(true)})},REDUCE?0:560);return}
+ if(d.newlist){var kind='OPP',nb2=sheet('<h3>New list</h3><input id="ln" type="text" placeholder="List name, e.g. OPP November" autocomplete="off"><div class="lbl">Type</div><div class="chips" style="flex-wrap:wrap">'+KINDS.map(function(k){return '<button class="chip" data-lk="'+k+'">'+k+'</button>'}).join('')+'</div><button class="btn" id="lc" style="margin-top:0">Create list</button>');
   var sk=function(){nb2.querySelectorAll('[data-lk]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.lk===kind)})};sk();
   nb2.addEventListener('click',function(e){var c=e.target.closest('[data-lk]');if(c){kind=c.dataset.lk;sk()}});
-  nb2.querySelector('#lc').onclick=function(){var n=nb2.querySelector('#ln').value.trim();if(!n){toast('Isi nama list dulu');return}LISTS.push({id:'l'+Date.now().toString(36),name:n,kind:kind,status:'active',created:isoOf(TD),archived:''});saveX('lists');nb2.remove();render(true);toast('List dibuat. Tekan + di list untuk tambah nama');haptic()};return}
+  nb2.querySelector('#lc').onclick=function(){var n=nb2.querySelector('#ln').value.trim();if(!n){toast('Enter a list name first');return}LISTS.push({id:'l'+Date.now().toString(36),name:n,kind:kind,status:'active',created:isoOf(TD),archived:''});saveX('lists');nb2.remove();render(true);toast('List created. Tap + on the list to add names');haptic()};return}
  if(d.laddm){var L0=lById(d.laddm);if(!L0)return;
-  var ab2=sheet('<h3>Tambah ke '+esc(L0.name)+'</h3><input id="am" type="text" placeholder="Ketik nama" autocomplete="off"><div id="amr" class="chips" style="flex-wrap:wrap"></div>'),inp=ab2.querySelector('#am'),res=ab2.querySelector('#amr');
-  var show=function(){var q=inp.value.trim().toLowerCase();if(!q){res.innerHTML='<p class="meta" style="margin:0">Orang yang sudah ada di data muncul di sini, jadi tidak ada data dobel.</p>';return}
+  var ab2=sheet('<h3>Add to '+esc(L0.name)+'</h3><input id="am" type="text" placeholder="Type a name" autocomplete="off"><div id="amr" class="chips" style="flex-wrap:wrap"></div>'),inp=ab2.querySelector('#am'),res=ab2.querySelector('#amr');
+  var show=function(){var q=inp.value.trim().toLowerCase();if(!q){res.innerHTML='<p class="meta" style="margin:0">People already in your data show up here, so there are no duplicates.</p>';return}
    var m=people.filter(function(p){return p.n.toLowerCase().indexOf(q)>-1}).slice(0,8),ex=people.some(function(p){return p.n.toLowerCase()===q});
-   res.innerHTML=m.map(function(p){var inl=!!mOf(L0.id,pid(p));return '<button class="chip" data-amp="'+p.id+'">'+esc(p.n)+(inl?' (sudah ada)':'')+'</button>'}).join('')+(ex?'':'<button class="chip" data-amnew="1">+ Orang baru: '+esc(inp.value.trim())+'</button>')};
+   res.innerHTML=m.map(function(p){var inl=!!mOf(L0.id,pid(p));return '<button class="chip" data-amp="'+p.id+'">'+esc(p.n)+(inl?' (already there)':'')+'</button>'}).join('')+(ex?'':'<button class="chip" data-amnew="1">+ New person: '+esc(inp.value.trim())+'</button>')};
   show();inp.addEventListener('input',show);
   ab2.addEventListener('click',function(e){var c=e.target.closest('[data-amp],[data-amnew]');if(!c)return;var p;
-   if(c.dataset.amp!==undefined){p=people[+c.dataset.amp]}else{var nm=inp.value.trim();if(!nm)return;if(!CFG.url){toast('Hubungkan Sheet dulu supaya orang barunya tersimpan');return}
+   if(c.dataset.amp!==undefined){p=people[+c.dataset.amp]}else{var nm=inp.value.trim();if(!nm)return;if(!CFG.url){toast('Connect the Sheet first so the new person is saved');return}
     RAW.push({id:nm.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+Date.now().toString(36),name:nm,stage:'Namelist',tags:'',market:'',phone:'',email:'',lastContact:'',lastOrder:'',nextDate:'',nextAction:'',hot:'',notes:'',verify:'',trmeStart:'',sponsor:'',birthday:'',created:isoOf(TD)});savePeople();p=people[people.length-1]}
    if(!p)return;
-   if(mOf(L0.id,pid(p))){toast(p.n+' sudah ada di list ini');return}
-   LM.push({lid:L0.id,pid:pid(p),status:isEv(L0)?'Belum':'',product:'',added:isoOf(TD),done:'',doneDate:'',tid:'',plc:'',pnd:''});saveX('listmembers');inp.value='';show();render(true);toast(p.n+' masuk ke '+L0.name);haptic()});
+   if(mOf(L0.id,pid(p))){toast(p.n+' is already on this list');return}
+   LM.push({lid:L0.id,pid:pid(p),status:isEv(L0)?'Not yet':'',product:'',added:isoOf(TD),done:'',doneDate:'',tid:'',plc:'',pnd:''});saveX('listmembers');inp.value='';show();render(true);toast(p.n+' added to '+L0.name);haptic()});
   inp.focus();return}
  if(d.lmenu){var L1=lById(d.lmenu);if(!L1)return;var isA=L1.status==='archived',ms1=LM.filter(function(m){return m.lid===L1.id});
-  var mb=sheet('<h3>'+esc(L1.name)+'</h3><p class="meta" style="margin:0">'+esc(L1.kind)+' · '+ms1.length+' nama'+(isA?' · arsip '+esc(L1.archived):'')+'</p>'+(isA?ms1.map(function(m){var p=byPid(m.pid);return p?'<div class="tline"><small>'+esc(m.status||m.product||'')+'</small><b>'+esc(p.n)+'</b></div>':''}).join(''):'')+'<button class="btn" id="lar" style="margin-top:0">'+(isA?'Aktifkan lagi':'Archive list')+'</button><button class="btn alt" data-close="1" style="margin-top:0">Tutup</button><p class="meta" style="margin:0">Archive tidak menghapus apa-apa. Datanya tetap ada untuk referensi, dan follow-up pribadi tetap muncul di Today.</p>');
-  mb.querySelector('#lar').onclick=function(){L1.status=isA?'active':'archived';L1.archived=isA?'':isoOf(TD);saveX('lists');mb.remove();render(true);toastU(isA?'List aktif lagi':'List diarsipkan',function(){L1.status=isA?'archived':'active';L1.archived=isA?isoOf(TD):'';saveX('lists');render(true)})};return}
- if(d.lmst||d.lmprod){var ky=(d.lmst||d.lmprod).split('|'),mm=mOf(ky[0],ky[1]);if(!mm)return;if(d.lmst)mm.status=STS[(STS.indexOf(mm.status||'Belum')+1)%STS.length];else mm.product=PRODS[(PRODS.indexOf(mm.product||'')+1)%PRODS.length];saveX('listmembers');haptic(false);render(true);return}
+  var mb=sheet('<h3>'+esc(L1.name)+'</h3><p class="meta" style="margin:0">'+esc(L1.kind)+' · '+ms1.length+' names'+(isA?' · archived '+esc(L1.archived):'')+'</p>'+(isA?ms1.map(function(m){var p=byPid(m.pid);return p?'<div class="tline"><small>'+esc(m.status||m.product||'')+'</small><b>'+esc(p.n)+'</b></div>':''}).join(''):'')+'<button class="btn" id="lar" style="margin-top:0">'+(isA?'Reactivate':'Archive list')+'</button><button class="btn alt" data-close="1" style="margin-top:0">Close</button><p class="meta" style="margin:0">Archive deletes nothing. The data stays for reference and personal follow-ups still show in Today.</p>');
+  mb.querySelector('#lar').onclick=function(){L1.status=isA?'active':'archived';L1.archived=isA?'':isoOf(TD);saveX('lists');mb.remove();render(true);toastU(isA?'List is active again':'List diarsipkan',function(){L1.status=isA?'archived':'active';L1.archived=isA?isoOf(TD):'';saveX('lists');render(true)})};return}
+ if(d.lmst||d.lmprod){var ky=(d.lmst||d.lmprod).split('|'),mm=mOf(ky[0],ky[1]);if(!mm)return;if(d.lmst)mm.status=STS[(STS.indexOf(mm.status||'Not yet')+1)%STS.length];else mm.product=PRODS[(PRODS.indexOf(mm.product||'')+1)%PRODS.length];saveX('listmembers');haptic(false);render(true);return}
  if(d.lmtick){var kt=d.lmtick.split('|'),lt=lById(kt[0]),mt=mOf(kt[0],kt[1]),pt=byPid(kt[1]);if(!lt||!mt||!pt)return;
   var lrow=el.closest('.task');
   if(mDone(mt)){
@@ -1295,42 +1296,42 @@ document.addEventListener('click',function(e){
    if(hadT)undoContact({r:pt.raw,prev:{lc:mt.plc||'',nd:mt.pnd||''},e:{id:mt.tid}});
    mt.done='';mt.doneDate='';mt.tid='';mt.plc='';mt.pnd='';saveX('listmembers');haptic(false);render(true);toast('Centang '+pt.n+' dilepas');return}
   var lu2=null;
-  if(!pt.raw){toast('Hubungkan Sheet dulu, supaya tersimpan');return}
+  if(!pt.raw){toast('Connect the Sheet first so it is saved');return}
   mt.done='1';mt.doneDate=isoOf(TD);mt.tid='';mt.plc='';mt.pnd='';
   if(pt.last!==0){lu2=contactDone(pt,{type:(isEv(lt)?'Invite: ':'List: ')+lt.name});if(lu2){mt.tid=lu2.e.id;mt.plc=lu2.prev.lc;mt.pnd=lu2.prev.nd}}
-  if(isEv(lt)&&(!mt.status||mt.status==='Belum'))mt.status='Invited';
+  if(isEv(lt)&&(!mt.status||mt.status==='Not yet'))mt.status='Invited';
   saveX('listmembers');
   lrow.classList.add('done','pop');burst(lrow.querySelector('.ck i'),false);haptic(false);
   setTimeout(function(){render(true);
-   if(lu2)toastU(pt.n+' dicentang dan dicatat. Next '+dueTxt(lu2.next),function(){undoContact(lu2);mt.done='';mt.doneDate='';mt.tid='';mt.plc='';mt.pnd='';saveX('listmembers');render(true)});
-   else toast(pt.n+' dicentang di list ini')},REDUCE?0:560);return}
- if(d.buy){var bp=people[d.buy];if(!bp)return;if(!bp.raw){toast('Hubungkan Sheet dulu supaya pembelian tersimpan');return}
+   if(lu2)toastU(pt.n+' ticked and logged. Next '+dueTxt(lu2.next),function(){undoContact(lu2);mt.done='';mt.doneDate='';mt.tid='';mt.plc='';mt.pnd='';saveX('listmembers');render(true)});
+   else toast(pt.n+' ticked on this list')},REDUCE?0:560);return}
+ if(d.buy){var bp=people[d.buy];if(!bp)return;if(!bp.raw){toast('Connect the Sheet first so the purchase is saved');return}
   document.querySelectorAll('.sheet-bg').forEach(function(x){x.remove()});
-  var bprod='TRME',bb=sheet('<h3>Pembelian '+esc(bp.n)+'</h3><div class="lbl">Produk</div><div class="chips" style="flex-wrap:wrap">'+['TRME','Duo','RESET','Lainnya'].map(function(k){return '<button class="chip" data-bp="'+k+'">'+k+'</button>'}).join('')+'</div><input id="bo" type="text" placeholder="Nama produknya" autocomplete="off" style="display:none"><div class="lbl">Tanggal</div><input id="bd" type="date" value="'+isoOf(TD)+'"><input id="bq" type="number" inputmode="numeric" placeholder="Jumlah (kosong = 1)" autocomplete="off"><input id="bdy" type="number" inputmode="numeric" placeholder="Cukup untuk berapa hari (kosong = 30)" autocomplete="off"><button class="btn" id="bs" style="margin-top:0">Simpan</button>');
-  var sb3=function(){bb.querySelectorAll('[data-bp]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.bp===bprod)});bb.querySelector('#bo').style.display=bprod==='Lainnya'?'block':'none'};sb3();
+  var bprod='TRME',bb=sheet('<h3>Purchase: '+esc(bp.n)+'</h3><div class="lbl">Product</div><div class="chips" style="flex-wrap:wrap">'+['TRME','Duo','RESET','Other'].map(function(k){return '<button class="chip" data-bp="'+k+'">'+k+'</button>'}).join('')+'</div><input id="bo" type="text" placeholder="Product name" autocomplete="off" style="display:none"><div class="lbl">Date</div><input id="bd" type="date" value="'+isoOf(TD)+'"><input id="bq" type="number" inputmode="numeric" placeholder="Quantity (empty = 1)" autocomplete="off"><input id="bdy" type="number" inputmode="numeric" placeholder="Days of supply (empty = auto: TRME 90, Duo/RESET 180, other 30)" autocomplete="off"><button class="btn" id="bs" style="margin-top:0">Save</button>');
+  var sb3=function(){bb.querySelectorAll('[data-bp]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.bp===bprod)});bb.querySelector('#bo').style.display=bprod==='Other'?'block':'none'};sb3();
   bb.addEventListener('click',function(e){var c=e.target.closest('[data-bp]');if(c){bprod=c.dataset.bp;sb3()}});
-  bb.querySelector('#bs').onclick=function(){var nm=bprod==='Lainnya'?bb.querySelector('#bo').value.trim():bprod,dv=bb.querySelector('#bd').value;if(!nm){toast('Isi nama produknya dulu');return}if(!dv){toast('Pilih tanggalnya dulu');return}
-   PUR.push({id:'p'+Date.now().toString(36),pid:pid(bp),date:dv,product:nm,qty:bb.querySelector('#bq').value.trim(),days:bb.querySelector('#bdy').value.trim()});if(!bp.raw.lastOrder||dv>bp.raw.lastOrder)bp.raw.lastOrder=dv;savePeople();saveX('purchases');bb.remove();render(true);toast('Pembelian dicatat');haptic()};return}
+  bb.querySelector('#bs').onclick=function(){var nm=bprod==='Other'?bb.querySelector('#bo').value.trim():bprod,dv=bb.querySelector('#bd').value;if(!nm){toast('Enter the product name first');return}if(!dv){toast('Pick a date first');return}
+   PUR.push({id:'p'+Date.now().toString(36),pid:pid(bp),date:dv,product:nm,qty:bb.querySelector('#bq').value.trim(),days:bb.querySelector('#bdy').value.trim()});if(!bp.raw.lastOrder||dv>bp.raw.lastOrder)bp.raw.lastOrder=dv;savePeople();saveX('purchases');bb.remove();render(true);toast('Purchase logged');haptic()};return}
  if(d.edit){var ep=people[d.edit];if(!ep||!ep.raw)return;document.querySelectorAll('.sheet-bg').forEach(function(x){x.remove()});
-  var eb=sheet('<h3>Kontak '+esc(ep.n)+'</h3><input id="ep" type="tel" placeholder="Nomor WhatsApp" value="'+esc(ep.raw.phone||'')+'" autocomplete="off"><input id="ee" type="email" placeholder="Email" value="'+esc(ep.raw.email||'')+'" autocomplete="off"><input id="eb" type="text" placeholder="Ulang tahun, contoh 24 November" value="'+esc(ep.raw.birthday||'')+'" autocomplete="off"><button class="btn" id="es" style="margin-top:0">Simpan</button>');
-  eb.querySelector('#es').onclick=function(){var ph=eb.querySelector('#ep').value.trim(),em=eb.querySelector('#ee').value.trim();if(ph&&normPhone(ph).length<9){toast('Nomor belum lengkap. Isi lengkap, contoh 0812...');return}if(em&&!/^\S+@\S+\.\S+$/.test(em)){toast('Format emailnya belum benar');return}ep.raw.phone=ph;ep.raw.email=em;ep.raw.birthday=eb.querySelector('#eb').value.trim();savePeople();eb.remove();render(true);toast('Kontak disimpan');haptic()};return}
- if(d.next){var pp=people[d.next];var nb=sheet('<h3>Follow-up '+esc(pp.n)+'</h3><div class="chips" style="flex-wrap:wrap"><button class="chip" data-nx="1">Tomorrow</button><button class="chip" data-nx="3">3 hari</button><button class="chip" data-nx="7">Next week</button><button class="chip" data-nx="30">Bulan depan</button></div><input id="nd" type="date" aria-label="Pilih tanggal"><input id="nt2" type="text" placeholder="Next step (boleh kosong)" value="'+esc(pp.raw?pp.raw.nextAction||'':'')+'" autocomplete="off"><button class="btn" id="ns" style="margin-top:0">Simpan</button>');
+  var eb=sheet('<h3>Contact: '+esc(ep.n)+'</h3><input id="ep" type="tel" placeholder="WhatsApp number" value="'+esc(ep.raw.phone||'')+'" autocomplete="off"><input id="ee" type="email" placeholder="Email" value="'+esc(ep.raw.email||'')+'" autocomplete="off"><input id="eb" type="text" placeholder="Birthday, e.g. 24 November" value="'+esc(ep.raw.birthday||'')+'" autocomplete="off"><button class="btn" id="es" style="margin-top:0">Save</button>');
+  eb.querySelector('#es').onclick=function(){var ph=eb.querySelector('#ep').value.trim(),em=eb.querySelector('#ee').value.trim();if(ph&&normPhone(ph).length<9){toast('Number looks incomplete. Enter the full number, e.g. 0812...');return}if(em&&!/^\S+@\S+\.\S+$/.test(em)){toast('The email format is not right');return}ep.raw.phone=ph;ep.raw.email=em;ep.raw.birthday=eb.querySelector('#eb').value.trim();savePeople();eb.remove();render(true);toast('Contact saved');haptic()};return}
+ if(d.next){var pp=people[d.next];var nb=sheet('<h3>Follow-up '+esc(pp.n)+'</h3><div class="chips" style="flex-wrap:wrap"><button class="chip" data-nx="1">Tomorrow</button><button class="chip" data-nx="3">3 days</button><button class="chip" data-nx="7">Next week</button><button class="chip" data-nx="30">Month depan</button></div><input id="nd" type="date" aria-label="Pick a date"><input id="nt2" type="text" placeholder="Next step (optional)" value="'+esc(pp.raw?pp.raw.nextAction||'':'')+'" autocomplete="off"><button class="btn" id="ns" style="margin-top:0">Save</button>');
   var pick=null;nb.addEventListener('click',function(e){var c=e.target.closest('[data-nx]');if(c){pick=TD+Number(c.dataset.nx);nb.querySelector('#nd').value=isoOf(pick);nb.querySelectorAll('[data-nx]').forEach(function(x){x.setAttribute('aria-pressed',x===c)})}});
-  nb.querySelector('#ns').onclick=function(){var v=nb.querySelector('#nd').value;if(!v){toast('Pilih tanggalnya dulu');return}if(pp.raw){pp.raw.nextDate=v;pp.raw.nextAction=nb.querySelector('#nt2').value.trim();savePeople()}nb.remove();render(true);toast('Follow-up disimpan');haptic()};return}
+  nb.querySelector('#ns').onclick=function(){var v=nb.querySelector('#nd').value;if(!v){toast('Pick a date first');return}if(pp.raw){pp.raw.nextDate=v;pp.raw.nextAction=nb.querySelector('#nt2').value.trim();savePeople()}nb.remove();render(true);toast('Follow-up saved');haptic()};return}
  if(d.jump){var idx=PITEMS.findIndex(function(x){return x.k==='l'&&x.l===d.jump});while(PSHOWN<=idx&&PSHOWN<PITEMS.length)appendChunk();var t2=document.getElementById('L'+d.jump);if(t2)t2.scrollIntoView({block:'start'});return}
  if(d.tt){teamTab=d.tt;render();return}
  if(d.hs){histSel=d.hs;render(true);return}
- if(d.copy){var rt=reportText();if(rt.indexOf('Belum ada data')===0){toast('Belum ada data volume tim, laporan tidak disalin');return}copy(rt,'Disalin. Buka WhatsApp dan tempel.');return}
- if(d.wa){var wq=String(d.wa).toLowerCase(),wp=people.filter(function(x){return String(x.n||'').toLowerCase().indexOf(wq)>=0&&x.phone&&x.phone.length>=9})[0];if(wp){var wl=document.createElement('a');wl.href='https://wa.me/'+wp.phone;wl.target='_blank';wl.rel='noopener';document.body.appendChild(wl);wl.click();wl.remove()}else toast('Nomor WA '+d.wa+' belum ada di tab People');return}
+ if(d.copy){var rt=reportText();if(rt.indexOf('No data yet')===0){toast('No team volume yet, report not copied');return}copy(rt,'Copied. Open WhatsApp and paste.');return}
+ if(d.wa){var wq=String(d.wa).toLowerCase(),wp=people.filter(function(x){return String(x.n||'').toLowerCase().indexOf(wq)>=0&&x.phone&&x.phone.length>=9})[0];if(wp){var wl=document.createElement('a');wl.href='https://wa.me/'+wp.phone;wl.target='_blank';wl.rel='noopener';document.body.appendChild(wl);wl.click();wl.remove()}else toast('WhatsApp number for '+d.wa+' is not in the People tab');return}
  if(d.ct){ctSel=+d.ct;render(true);return}
- if(d.cmove){var c=ctById(ctSel);c.st=d.cmove;saveCt();haptic();render(true);toast('Dipindah ke '+d.cmove);return}
+ if(d.cmove){var c=ctById(ctSel);c.st=d.cmove;saveCt();haptic();render(true);toast('Moved to '+d.cmove);return}
  if(d.cv){ctView=d.cv;render();return}
- if(d.idea){var v=$('#idea').value.trim();if(!v){toast('Tulis dulu idenya');return}if(CFG.url){CT.push({id:Date.now(),t:v,type:'Reel',pillar:'',st:'Idea'});saveCt();render(true);toast('Ide disimpan')}else{toast('Belum terhubung ke Sheet, ide tidak tersimpan');return}haptic();if($('#idea'))$('#idea').value='';return}
+ if(d.idea){var v=$('#idea').value.trim();if(!v){toast('Write the idea first');return}if(CFG.url){CT.push({id:Date.now(),t:v,type:'Reel',pillar:'',st:'Idea'});saveCt();render(true);toast('Idea saved')}else{toast('Not connected to the Sheet, idea not saved');return}haptic();if($('#idea'))$('#idea').value='';return}
  if(d.gotab){tab=d.gotab;render();return}
  if(d.act==='m1'){var l=document.querySelector('.gpb.late');l&&l.scrollIntoView({behavior:'smooth',block:'center'});return}
  if(d.act==='m2'){var n=document.querySelector('.nodate');n&&n.scrollIntoView({behavior:'smooth',block:'center'});return}
- if(d.act==='m3'){toast('Besok ada '+tasks.filter(function(x){return x.day===TD+1}).length+' hal');return}
- if(d.act==='menu'){var sm=sheet('<h3>Pengaturan</h3><div class="lbl">Tampilan</div><div class="chips"><button class="chip" data-theme-set="auto">Auto</button><button class="chip" data-theme-set="light">Light</button><button class="chip" data-theme-set="dark">Dark</button></div><div class="lbl">Sinkron</div><p class="meta" style="margin:0">'+(CFG.url?'Terhubung ke Sheet-mu.':'Belum terhubung.')+'</p><button class="btn alt" data-close="1" data-sync="1" style="margin-top:10px">'+(CFG.url?'Atur sinkron':'Hubungkan Google Sheet')+'</button>');sm.querySelectorAll('[data-theme-set]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.themeSet===theme)});return}
+ if(d.act==='m3'){toast('Tomorrow has '+tasks.filter(function(x){return x.day===TD+1}).length+' items');return}
+ if(d.act==='menu'){var sm=sheet('<h3>Settings</h3><div class="lbl">Appearance</div><div class="chips"><button class="chip" data-theme-set="auto">Auto</button><button class="chip" data-theme-set="light">Light</button><button class="chip" data-theme-set="dark">Dark</button></div><div class="lbl">Sync</div><p class="meta" style="margin:0">'+(CFG.url?'Connected to your Sheet.':'Not connected.')+'</p><button class="btn alt" data-close="1" data-sync="1" style="margin-top:10px">'+(CFG.url?'Set up sync':'Connect Google Sheet')+'</button>');sm.querySelectorAll('[data-theme-set]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.themeSet===theme)});return}
 });
 if(window.ResizeObserver){new ResizeObserver(function(){fit()}).observe($('#stage'))}
 window.addEventListener('resize',fit);

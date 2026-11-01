@@ -319,7 +319,7 @@ function burst(host,big){if(REDUCE||!host)return;var n=big?18:10,r0=document.cre
 
 /* ---------- state ---------- */
 var TD=Math.floor((Date.now()+7*36e5)/864e5);
-var tab='today',sel=TD,collapsed={},teamTab='Volume',pview='Follow-up',pq='',pprod='',selPid=0,ctSel=1,ctView='Board',mode='auto',theme='auto';
+var tab='today',sel=TD,collapsed={},teamTab='Pulse',pview='Follow-up',pq='',pprod='',selPid=0,ctSel=1,ctView='Board',mode='auto',theme='auto';
 var tasks=[
  {id:1,t:'Follow up Rina, Prysm result',day:30,part:'morning',dur:'10m',ic:'chat',c:'sky',done:false},
  {id:2,t:'PPh 21 payment proof',day:29,part:'afternoon',dur:'15m',ic:'tasks',c:'sand',done:false},
@@ -620,14 +620,14 @@ function reorderCard(){if(!CFG.url)return '';var L=reorderList();if(!L.length)re
 function bdCard(){if(!CFG.url)return '';var L=birthdayList();if(!L.length)return '';
  return gp('bday','nod','spark','Birthday',L.length)+(collapsed.bday?'':'<div class="list">'+L.map(function(o){return actRow(o.p,o.d===0?'Today':o.d===1?'Tomorrow':o.d+' days','bd','Birthday')}).join('')+'</div>')}
 function numStrip(){if(!CFG.url)return '';var P=null,M=null;try{P=pvData();M=teamModel()}catch(e){}
- if(!P||!M)return '<div class="missed" data-goto="team:Volume"><b>No numbers for this month yet</b><p class="meta" style="margin:6px 0 0">Send the latest genealogy file to Claude and your personal PV and org volume show up here.</p></div>';
+ if(!P||!M)return '<div class="missed" data-goto="team:Pulse"><b>No numbers for this month yet</b><p class="meta" style="margin:6px 0 0">Send the latest genealogy file to Claude and your personal PV and org volume show up here.</p></div>';
  var pp=pvPace(P),me=LEAD.filter(function(m){return m.n==='AJ'})[0],mine=me?me.v:0,org=M.rows[0].c,goal=(P.tree.orgGoal||0)*1000;
  var y=+P.p.slice(0,4),mo=+P.p.slice(5,7),dim=new Date(y,mo,0).getDate(),left=pp.live?Math.max(1,dim-(+isoOf(TD).slice(8,10))+1):0;
  var need=function(v,g){return pp.live&&g>v?' · need '+num((g-v)/left)+' per day':(g&&v>=g?' · reached':'')};
  var behind=LEAD.filter(function(m){return !m.pan&&m.n!=='AJ'&&['behind','urgent'].indexOf(pvSt(m,pp.pc))>-1}).length;
  var age=dn(P.hi)!=null?TD-dn(P.hi):0;
- var h='<div class="card" data-goto="team:Volume" role="button" style="margin-top:0;cursor:pointer"><h2>This month\'s numbers</h2>';
- h+='<div class="lt" style="margin-top:8px"><b>Personal</b><span class="meta">'+num(mine)+' / 3.000'+need(mine,3000)+'</span></div><div class="trk"><b style="width:'+Math.min(100,mine/3000*100)+'%"></b></div>';
+ var h='<div class="card" data-goto="team:Pulse" role="button" style="margin-top:0;cursor:pointer"><h2>This month\'s numbers</h2>';
+ h+='<div class="lt" style="margin-top:8px"><b>Personal</b><span class="meta">'+num(mine)+' / 3,000'+need(mine,3000)+'</span></div><div class="trk"><b style="width:'+Math.min(100,mine/3000*100)+'%"></b></div>';
  if(goal)h+='<div class="lt" style="margin-top:10px"><b>Org</b><span class="meta">'+num(org)+' / '+num(goal)+need(org,goal)+'</span></div><div class="trk"><b style="width:'+Math.min(100,org/goal*100)+'%"></b></div>';
  h+='<div class="meta" style="margin-top:8px">'+(behind?behind+' leaders behind pace · ':'')+'Data as of '+dLab(P.hi)+(pp.live?'':' (new month not in yet)')+(age>=2?'. '+age+' days old, send the latest genealogy PDF':'')+'</div></div>';
  return h}
@@ -642,10 +642,12 @@ function scoreSheet(){var a=dayAct(isoOf(TD)),T={names:tgt('target_names',5),fu:
 function noNext(p){return p.next===null&&['Prospect','Closing','Warming Partner','TRME Active','Partner'].indexOf(p.st)>-1}
 function blindspots(){
  var nNo=people.filter(noNext).length,reoN=reorderList().length,out=[];
- if(!CFG.url){out.push({t:'Your personal volume is 1,610 of 3,000',d:'Under the minimum, far behind pace',go:'team:Volume',c:'sand',i:'chart'},{t:'Team data stops at 26 Oct',d:'No genealogy PDF for 27 to 30 Oct yet',go:'team:Overview',c:'peach',i:'monitor'})}
+ if(CFG.url){var PVb=null;try{PVb=pvData()}catch(e){}
+  if(PVb){var ab=dn(PVb.hi),ag=ab==null?0:TD-ab;if(ag>=2)out.push({t:'Team data is '+ag+' days old',d:'Send the latest genealogy PDF to Claude',go:'team:Pulse',c:'sand',i:'chart'});
+   var rk=leadRisk(PVb);if(rk.length)out.push({t:rk.length+' leader'+(rk.length>1?'s':'')+' behind pace',d:rk.slice(0,3).map(function(m){return m.n}).join(', ')+(rk.length>3?'...':''),go:'team:Pulse',c:'peach',i:'users'});
+   var cvb=convOpen();if(cvb&&cvb.un.length&&cvb.left<=60)out.push({t:cvb.un.length+' not paid for convention',d:cvb.left+' days left',go:'team:Convention',c:'sky',i:'eye'})}}
  if(nNo)out.push({t:nNo+' people in the pipeline with no follow-up',d:'Not shown in Today because there is no date',go:'people:No next step',c:'lav',i:'users'});
  if(reoN)out.push({t:reoN+' customers due for reorder',d:'Based on the last order and the supply you logged',go:'people:Customers',c:'mint',i:'chat'});
- if(!CFG.url)out.push({t:'Check who rarely attends RCP',d:'See team attendance and volume under pace',go:'team:Meetings',c:'sky',i:'eye'});
  return out}
 function bsRow(b){return '<div class="task"><div class="ic '+b.c+'">'+ic(b.i,17)+'</div><button class="tb" data-goto="'+b.go+'"><b>'+esc(b.t)+'</b><small>'+esc(b.d)+'</small></button><span class="ck" style="color:var(--mute)">'+ic('right',16)+'</span></div>'}
 function durMin(s){if(!s)return 30;return /h/.test(s)?parseInt(s)*60:parseInt(s)}
@@ -862,7 +864,13 @@ var TDATA=[];try{TDATA=JSON.parse(localStorage.getItem('hq-team')||'[]')}catch(e
 var THIST=[],histSel='ORG TOV';try{THIST=JSON.parse(localStorage.getItem('hq-thist')||'[]')}catch(e){}
 function pullTeam(){if(!CFG.url)return;getTab('teamdata').then(function(j){if(j.error||!j.rows)return;TDATA=j.rows.filter(function(r){return r.type});buildLead();try{localStorage.setItem('hq-team',JSON.stringify(TDATA))}catch(e){}if(!document.querySelector('.sheet-bg'))render(true)}).catch(function(){})}
 var MONID=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-function nf(s){s=String(s==null?'':s);if(s.indexOf(',')>-1&&s.indexOf('.')<0)s=s.replace(',','.');var n=Number(s);return isNaN(n)?0:n}
+function nfp(s){s=String(s==null?'':s).trim().replace(/\s/g,'');if(s==='')return null;
+ if(/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(s))s=s.replace(/,/g,'');
+ else if(/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(s))s=s.replace(/\./g,'').replace(',','.');
+ else if(s.indexOf(',')>-1&&s.indexOf('.')<0)s=s.replace(',','.');
+ var n=Number(s);return isNaN(n)?null:n}
+function nf(s){var n=nfp(s);return n===null?0:n}
+function badNums(){var n=0;TDATA.forEach(function(r){if(['tov','pv','cfg'].indexOf(r.type)>-1&&String(r.value==null?'':r.value).trim()!==''&&nfp(r.value)===null)n++});return n}
 function pLab(p){return MONID[+p.slice(5,7)-1]+' '+p.slice(0,4)}
 function pAdd(p,k){var m=+p.slice(0,4)*12+(+p.slice(5,7)-1)+k;return Math.floor(m/12)+'-'+('0'+(m%12+1)).slice(-2)}
 function dLab(s){var m=String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);return m?(+m[3])+' '+MONID[+m[2]-1]+' '+m[1]:''}
@@ -878,9 +886,10 @@ function teamModel(){
  if(ps.length<2)return null;
  var cur=ps[ps.length-1],prev=ps[ps.length-2],C=tov[cur],P=tov[prev];
  var gm=cfg.growth_min?cfg.growth_min.v:.1,gs=cfg.growth_stretch?cfg.growth_stretch.v:.2,cr=cfg.comm_rate?cfg.comm_rate.v:.05;
+ var tdy=isoOf(TD),live=tdy.slice(0,7)===cur,dim=new Date(+cur.slice(0,4),+cur.slice(5,7),0).getDate(),day=+tdy.slice(8,10),frac=live?day/dim:1;
  var legs=Object.keys(C).filter(function(k){return k.indexOf('leg:')===0}).sort(function(a,b){return C[b]-C[a]});
  var rows=['org','personal'].concat(legs).map(function(k){var c=C[k]||0,p=P[k]||0;
-  return {k:k,n:k==='org'?'Org total':k==='personal'?'Personal (PT AHU)':k.slice(4),c:c,p:p,g:p>0?c/p-1:null,min:p*(1+gm),str:p*(1+gs),nmin:c*(1+gm),nstr:c*(1+gs)}});
+  var pj=live&&frac>0?c/frac:c;return {k:k,n:k==='org'?'Org total':k==='personal'?'Personal (PT AHU)':k.slice(4),c:c,p:p,pj:pj,early:live&&day<4,g:p>0?c/p-1:null,gp:p>0?pj/p-1:null,min:p*(1+gm),str:p*(1+gs),nmin:c*(1+gm),nstr:c*(1+gs)}});
  var base=C.org,c0=base*cr,life=cfg.lifetime?cfg.lifetime.v:0,paths={};
  [['min',gm],['str',gs]].forEach(function(a){var cum=life,arr=[],yr={};
   for(var k=1;k<=120;k++){var f=Math.pow(1+a[1],k),com=c0*f,per=pAdd(cur,k),y=per.slice(0,4);cum+=com;arr.push({p:per,com:com,cum:cum});
@@ -888,8 +897,8 @@ function teamModel(){
   paths[a[0]]={arr:arr,yr:yr}});
  var coe=[1,2,3,4,5].map(function(i){var t=cfg['coe'+i];if(!t)return null;var o={i:i,t:t.v,gy:(t.n.match(/\d{4}/)||[''])[0]};
   ['min','str'].forEach(function(s){var a=paths[s].arr,hit=null;for(var j=0;j<a.length;j++)if(a[j].cum>=t.v){hit=a[j].p;break}o[s]=hit});return o}).filter(Boolean);
- return {cur:cur,prev:prev,note:tov[cur]._n||'',rows:rows,gm:gm,gs:gs,cr:cr,c0:c0,life:life,lifeAt:cfg.lifetime?cfg.lifetime.p:'',paths:paths,coe:coe,coe1:cfg.coe1?cfg.coe1.v:1e6}}
-function gStat(r){if(r.g===null)return r.c>0?['pan','New']:['pan','Empty'];if(r.c>=r.str)return ['reached','Stretch'];if(r.c>=r.min)return ['track','Minimum'];return r.g<0?['urgent','Down']:['behind','Below']}
+ return {cur:cur,prev:prev,live:live,day:day,dim:dim,note:tov[cur]._n||'',rows:rows,gm:gm,gs:gs,cr:cr,c0:c0,life:life,lifeAt:cfg.lifetime?cfg.lifetime.p:'',paths:paths,coe:coe,coe1:cfg.coe1?cfg.coe1.v:1e6}}
+function gStat(r){if(r.g===null)return r.c>0?['pan','New']:['pan','Empty'];if(r.early)return ['pan','Early month'];var v=r.pj;if(v>=r.str)return ['reached','Stretch pace'];if(v>=r.min)return ['track','On pace'];return r.gp<0?['urgent','Falling']:['behind','Below pace']}
 function growthChart(M){
  var cp=M.cur,gy=+((M.coe[0]&&M.coe[0].gy)||2028),n=(gy-(+cp.slice(0,4)))*12+(12-(+cp.slice(5,7)));
  if(n<3)n=24;
@@ -928,7 +937,7 @@ function teamGrowth(){
  var gy=+((M.coe[0]&&M.coe[0].gy)||2028),yrs=Object.keys(M.paths.min.yr).filter(function(y){return +y<=gy}).sort();
  var c='<div class="card"><h2>Commission per year</h2><p>Compounding from commission '+pLab(M.cur)+' ('+usd(M.c0)+'). The yearly goal is the sum of the monthly projections.</p>';
  yrs.forEach(function(y){var m=M.paths.min.yr[y],s=M.paths.str.yr[y];
-  c+='<div class="tline"><b>'+(m.n<12?MONID[12-m.n]+'-Des '+y:y)+'</b><small>Min '+usd(m.com)+' · Stretch '+usd(s.com)+'</small><small>TOV min '+num(m.tov)+' · stretch '+num(s.tov)+'</small></div>'});
+  c+='<div class="tline"><b>'+(m.n<12?MONID[12-m.n]+'-Dec '+y:y)+'</b><small>Min '+usd(m.com)+' · Stretch '+usd(s.com)+'</small><small>TOV min '+num(m.tov)+' · stretch '+num(s.tov)+'</small></div>'});
  out.push(c+'</div>');
  out.push('<div class="card"><h2>Lifetime earning and COE</h2><p>Starting from '+usd(M.life)+(M.lifeAt?' per '+dLab(M.lifeAt):'')+', plus projected commission each month.</p>'+growthChart(M)+'<div class="lg"><span><i></i>Stretch +'+gs+'%</span><span><i class="m"></i>Minimum +'+gm+'%</span><span><i class="d"></i>COE1</span></div></div>');
  var e='<div class="card"><h2>When each COE is reached</h2>';
@@ -952,14 +961,46 @@ function pvPace(P){var y=+P.p.slice(0,4),mo=+P.p.slice(5,7),dim=new Date(y,mo,0)
  if(t.slice(0,7)===P.p)return {pc:3000*(+t.slice(8,10))/dim,live:true};return {pc:3000,live:false}}
 function pvSt(m,pc){if(m.v>=3000)return 'reached';if(m.pan)return 'pan';if(m.v>=pc)return 'track';if(m.v>=pc*.6)return 'behind';return 'urgent'}
 function pvTree(P,fn){P.tree.sections.forEach(function(sc){fn.leg(sc);var walk=function(ns,d){ns.forEach(function(n){fn.node(n,d);if(n.children)walk(n.children,d+1)})};walk(sc.nodes,0)})}
+function fresh(P){if(!P)return '';var a=dn(P.hi),age=a==null?0:TD-a,cl=age>=4?'urgent':age>=2?'behind':'reached';
+ return '<span class="cs '+cl+'">'+(age<=0?'Data is current':'Data is '+age+' day'+(age>1?'s':'')+' old')+'</span> <span class="meta">as of '+dLab(P.hi)+'</span>'}
+function leadRisk(P){var pp=pvPace(P),pc=pp.pc,rk={urgent:0,behind:1};
+ return LEAD.filter(function(m){return !m.pan&&m.n!=='AJ'&&pvSt(m,pc)in rk}).sort(function(x,y){var a1=rk[pvSt(x,pc)],b1=rk[pvSt(y,pc)];return a1!==b1?a1-b1:x.v-y.v})}
+function convOpen(){var C=convData();if(!C||!C.meta||!C.meta.start)return null;var dd=dn(C.meta.start);if(dd==null)return null;var left=dd-TD;if(left<0)return null;var un=C.ppl.filter(function(p){return p.tr==='st26'&&!p.paid});return {C:C,left:left,un:un}}
+function teamPulse(){var P=pvData(),M=teamModel();
+ if(!P)return ['<div class="card"><h2>Pulse</h2><p>No team volume from the Sheet yet. Send a genealogy file to Claude and this page fills in.</p></div>'];
+ var pp=pvPace(P),pc=pp.pc,goal=(P.tree.orgGoal||0)*1000,out=[],bn=badNums();
+ var head='<div class="card" style="margin-top:0"><div class="lt"><b>'+pLab(P.p)+'</b></div>'+(bn?'<div class="flag" style="margin-top:8px">'+bn+' number'+(bn>1?'s':'')+' in the teamdata tab could not be read. Totals may be low.</div>':'');
+ if(M){var o=M.rows[0],dim=new Date(+P.p.slice(0,4),+P.p.slice(5,7),0).getDate(),dd=+isoOf(TD).slice(8,10),left=Math.max(1,dim-dd);
+  head+='<div class="lt" style="margin-top:12px"><b>Org TOV</b><span class="meta">'+num(o.c)+(goal?' / '+num(goal):'')+'</span></div>';
+  if(goal){var pace=goal*dd/dim,pcnt=Math.round(o.c/Math.max(1,pace)*100);
+   head+='<div class="trk'+(o.c>=goal?' reached':'')+'"><b style="width:'+Math.min(100,o.c/goal*100)+'%"></b>'+(pp.live?'<i style="left:calc('+Math.min(100,dd/dim*100)+'% - 1px)"></i>':'')+'</div>';
+   head+='<div class="meta" style="margin-top:6px">'+(pp.live?(o.c>=goal?'Goal reached.':(dd>=4?'Pace '+pcnt+'%. ':'')+'Need '+num((goal-o.c)/left)+' per day for '+left+' days. '+(dd>=4?'Projected '+num(o.c/(dd/dim))+'.':'')):'Month is over.')+'</div>'}
+  else head+='<div class="meta" style="margin-top:6px">No org goal in the Sheet yet.</div>'}
+ var me=LEAD.filter(function(m){return m.n==='AJ'})[0],mine=me?me.v:0;
+ head+='<div class="lt" style="margin-top:14px"><b>Personal</b><span class="meta">'+num(mine)+' / 3,000'+(mine<3000?' · short by '+num(3000-mine):' · reached')+'</span></div><div class="trk'+(mine>=3000?' reached':'')+'"><b style="width:'+Math.min(100,mine/3000*100)+'%"></b>'+(pp.live?'<i style="left:calc('+(pc/3000*100)+'% - 1px)"></i>':'')+'</div></div>';
+ out.push(head);
+ var rows=[],risk=leadRisk(P);
+ risk.slice(0,4).forEach(function(m){rows.push({n:m.n,t:pvSt(m,pc)==='urgent'?'Far behind pace':'Behind pace',s:num(m.v)+' of 3,000, pace line '+num(pc),wa:1})});
+ if(M)M.rows.filter(function(r){return r.k.indexOf('leg:')===0&&!r.early&&r.gp!==null&&r.gp<0}).slice(0,2).forEach(function(r){rows.push({n:'Leg '+r.n,t:'Falling',s:'Projected '+num(r.pj)+' vs '+num(r.p)+' last month',wa:0})});
+ var cv=convOpen();if(cv&&cv.un.length&&cv.left<=60)rows.push({n:'Convention',t:cv.un.length+' not paid',s:cv.left+' days left. '+cv.un.slice(0,4).map(function(p){return p.n}).join(', ')+(cv.un.length>4?'...':''),wa:0});
+ var M2=mtgData();if(M2){var rc=LEAD.filter(function(m){var r=mtgCount(M2,m,'rcp');return !m.pan&&m.n!=='AJ'&&LKEY[m.n]&&r[1]&&r[0]/r[1]<.5}).length;if(rc)rows.push({n:'RCP attendance',t:rc+' leader'+(rc>1?'s':'')+' under half',s:'See the Meetings tab',wa:0})}
+ var nd='<div class="card"><h2>Needs you now</h2>';
+ if(!rows.length)nd+='<p>Nothing is flagged. Everyone is at or above pace.</p>';
+ else rows.slice(0,6).forEach(function(r,i){nd+='<div class="lrow'+(i?'':' first')+'"><div class="lt"><b>'+esc(r.n)+'</b>'+(r.wa?'<button class="chip" style="min-height:44px" data-wa="'+esc(r.n)+'">'+ic('send',14)+'Chat</button>':'<span class="cs behind">'+esc(r.t)+'</span>')+'</div><div class="meta">'+(r.wa?esc(r.t)+' · ':'')+esc(r.s)+'</div></div>'});
+ out.push(nd+'</div>');
+ if(M){var lg=M.rows.filter(function(r){return r.k.indexOf('leg:')===0}),ll='<div class="card"><h2>Legs vs last month</h2><p>'+(M.live?'Pace-adjusted to day '+M.day+' of '+M.dim+'.':'Full month.')+'</p>';
+  lg.forEach(function(r,i){var st=gStat(r);ll+='<div class="lrow'+(i?'':' first')+'"><div class="lt"><b>'+esc(r.n)+'</b><span class="cs '+st[0]+'">'+st[1]+'</span></div><div class="meta">'+num(r.c)+' now'+(M.live&&!r.early?', projected '+num(r.pj):'')+' · last month '+num(r.p)+(r.gp!==null&&!r.early?' ('+pct(r.gp)+')':'')+'</div></div>'});
+  if(lg.length)out.push(ll+'</div>')}
+ out.push('<div class="card"><button class="btn" data-tt="Report" style="margin:0">Open the daily report</button></div>');
+ return out}
 function teamVolume(){
  var P=pvData();
  if(!P)return teamVolumeSample();
  var pp=pvPace(P),pc=pp.pc;
- var a='<div class="card"><h2>3.000 minimum</h2><p>'+(pp.live?'The white line is where you should be today ('+num(pc)+').':'Month '+pLab(P.p)+' is over, the white line is at 3,000.')+'</p>';
+ var a='<div class="card"><h2>3,000 minimum</h2><p>'+(pp.live?'The white line is where you should be today ('+num(pc)+').':'Month '+pLab(P.p)+' is over, the white line is at 3,000.')+'</p>';
  var rk={urgent:0,behind:1,track:2,pan:3,reached:4};
  LEAD.slice().sort(function(x,y){var a1=rk[pvSt(x,pc)],b1=rk[pvSt(y,pc)];return a1!==b1?a1-b1:(a1===4?y.v-x.v:x.v-y.v)}).forEach(function(m,i){var st=pvSt(m,pc),w=Math.min(100,m.v/3000*100);
-  a+='<div class="lrow'+(i?'':' first')+'"><div class="lt"><b>'+esc(m.n)+'</b><span class="cs '+st+'">'+STL[st]+'</span></div><div class="trk '+(st==='pan'?'':st)+'"><b style="width:'+w+'%"></b><i style="left:calc('+(pc/3000*100)+'% - 1px)"></i></div><div class="meta">'+num(m.v)+' of 3.000'+(m.v<3000?' · short by '+num(3000-m.v):'')+'</div></div>'});
+  a+='<div class="lrow'+(i?'':' first')+'"><div class="lt"><b>'+esc(m.n)+'</b><span class="cs '+st+'">'+STL[st]+'</span></div><div class="trk '+(st==='pan'?'':st)+'"><b style="width:'+w+'%"></b><i style="left:calc('+(pc/3000*100)+'% - 1px)"></i></div><div class="meta">'+num(m.v)+' of 3,000'+(m.v<3000?' · short by '+num(3000-m.v):'')+'</div></div>'});
  a+='</div>';
  var b='<div class="card"><h2>Personal goals · '+pLab(P.p)+'</h2><p>Your monitoring list. Leg rows use the leader\'s LTSV.</p>',first=true;
  var bar=function(g,goal){return '<div class="trk'+(g>=goal?' reached':'')+'"><b style="width:'+Math.min(100,g/goal*100)+'%"></b></div>'};
@@ -993,7 +1034,7 @@ function histCard(){
  pts.forEach(function(p){sv+='<circle cx="'+X(p.d)+'" cy="'+Y(p.v)+'" r="3" fill="var(--chart)"/>'});
  var lp=pts[pts.length-1];sv+='<text x="'+(X(lp.d)-6)+'" y="'+(Y(lp.v)-8)+'" text-anchor="end" style="fill:var(--ink);font-weight:600;font-size:11px">'+num(lp.v)+'</text></svg>';
  var chips=[['ORG TOV','Org']].concat(LEAD.map(function(m){return [LKEY[m.n],m.n]}).filter(function(x){return x[0]}));
- var h='<div class="card"><h2>Daily movement</h2><p>'+(isOrg?'TOV org':esc((chips.filter(function(c){return c[0]===sel})[0]||['',sel])[1])+' (volume pribadi)')+' from each genealogy file. The dashed line is the straight path to '+(tgt?num(tgt):'target')+'). A dot is a day with a file.</p><div class="chips" style="flex-wrap:wrap;margin-top:8px">'+chips.map(function(c){return '<button class="chip" style="height:30px;padding:0 11px;font-size:12px" data-hs="'+esc(c[0])+'" aria-pressed="'+(sel===c[0])+'">'+esc(c[1])+'</button>'}).join('')+'</div>'+sv;
+ var h='<div class="card"><h2>Daily movement</h2><p>'+(isOrg?'TOV org':esc((chips.filter(function(c){return c[0]===sel})[0]||['',sel])[1])+' (personal volume)')+' from each genealogy file. The dashed line is the straight path to '+(tgt?num(tgt):'target')+'. A dot is a day with a file.</p><div class="chips" style="flex-wrap:wrap;margin-top:8px">'+chips.map(function(c){return '<button class="chip" style="min-height:44px;padding:0 12px;font-size:12px" data-hs="'+esc(c[0])+'" aria-pressed="'+(sel===c[0])+'">'+esc(c[1])+'</button>'}).join('')+'</div>'+sv;
  var miss=[];for(var d=1;d<=dim;d++){var dd=mon+'-'+('0'+d).slice(-2);if(days.indexOf(dd)<0&&d<=+days[days.length-1].slice(8,10))miss.push(d)}
  if(miss.length)h+='<p class="meta" style="margin-top:6px">No file yet: day '+miss.join(', ')+'</p>';
  return h+'</div>'}
@@ -1012,13 +1053,13 @@ function teamMeet(){var P=pvData(),M=mtgData();
  if(!M)return ['<div class="card"><h2>Meeting attendance</h2><p>No meeting data in your Sheet yet (teamdata tab, rows of type mtg). Ask me to pull it from ST Monitoring.</p></div>',''];
  var bse=M.bse1.concat(M.bse2).sort(function(x,y){return x.d<y.d?-1:1}),B={bse:bse};
  var a='<div class="card"><h2>Meeting attendance</h2><p>RCP Tuesday to Friday 08:00, System Meeting Monday, BSE. Panelists and AJ count as present. Sessions logged: RCP '+M.rcp.length+' ('+mtgRange(M.rcp)+'), System '+M.msm.length+', BSE '+bse.length+'.</p>';
- var rows=LEAD.map(function(m){var r=mtgCount(M,m,'rcp'),s=mtgCount(M,m,'msm'),b2=mtgCount(B,m,'bse');return {m:m,r:r,s:s,b:b2}});
+ var rows=LEAD.map(function(m){var r=mtgCount(M,m,'rcp'),s=mtgCount(M,m,'msm'),b2=mtgCount(B,m,'bse');return {m:m,r:r,s:s,b:b2,nk:!m.pan&&!LKEY[m.n]}});
  rows.forEach(function(x,i){var m=x.m;
-  a+='<div class="lrow'+(i?'':' first')+'"><div class="lt"><b>'+esc(m.n)+'</b>'+(m.pan?'<span class="cs pan">Panelist</span>':'')+'</div><div class="mt"><span'+(x.r[1]&&x.r[0]/x.r[1]<.5&&!m.pan?' class="bad"':'')+'>RCP '+x.r[0]+'/'+x.r[1]+'</span><span'+(x.s[1]&&!x.s[0]&&!m.pan?' class="bad"':'')+'>System '+x.s[0]+'/'+x.s[1]+'</span><span'+(x.b[1]&&!x.b[0]&&!m.pan?' class="bad"':'')+'>BSE '+x.b[0]+'/'+x.b[1]+'</span></div></div>'});
+  a+='<div class="lrow'+(i?'':' first')+'"><div class="lt"><b>'+esc(m.n)+'</b>'+(m.pan?'<span class="cs pan">Panelist</span>':x.nk?'<span class="cs behind">No key in Sheet</span>':'')+'</div><div class="mt"><span'+(x.r[1]&&x.r[0]/x.r[1]<.5&&!m.pan&&!x.nk?' class="bad"':'')+'>RCP '+x.r[0]+'/'+x.r[1]+'</span><span'+(x.s[1]&&!x.s[0]&&!m.pan?' class="bad"':'')+'>System '+x.s[0]+'/'+x.s[1]+'</span><span'+(x.b[1]&&!x.b[0]&&!m.pan?' class="bad"':'')+'>BSE '+x.b[0]+'/'+x.b[1]+'</span></div></div>'});
  a+='</div>';
  var pc=P?pvPace(P).pc:pacePersonal();
- var cf=rows.filter(function(x){return !x.m.pan&&x.r[1]&&x.r[0]/x.r[1]<.5&&x.m.v<pc});
- var b='<div class="card"><h2>Call first</h2><p>Rarely attends RCP and volume is still under pace.</p>'+(cf.length?cf.map(function(x,i){var m=x.m;return '<div class="lrow'+(i?'':' first')+'"><div class="lt"><b>'+esc(m.n)+'</b><button class="chip" data-wa="'+esc(m.n)+'">'+ic('send',14)+'Chat</button></div><div class="meta">'+num(m.v)+' volume · attended RCP '+x.r[0]+' of '+x.r[1]+'</div></div>'}).join(''):'<div class="meta">None, everyone attends enough or is above pace.</div>')+'</div>';
+ var cf=P?rows.filter(function(x){return !x.m.pan&&!x.nk&&x.r[1]&&x.r[0]/x.r[1]<.5&&x.m.v<pc}):[];
+ var b='<div class="card"><h2>Call first</h2><p>Rarely attends RCP and volume is still under pace.'+(P?'':' Volume data is missing, so this list is empty.')+'</p>'+(cf.length?cf.map(function(x,i){var m=x.m;return '<div class="lrow'+(i?'':' first')+'"><div class="lt"><b>'+esc(m.n)+'</b><button class="chip" data-wa="'+esc(m.n)+'">'+ic('send',14)+'Chat</button></div><div class="meta">'+num(m.v)+' volume · attended RCP '+x.r[0]+' of '+x.r[1]+'</div></div>'}).join(''):'<div class="meta">None, everyone attends enough or is above pace.</div>')+'</div>';
  return [a,b]}
 function convData(){
  var meta=null,ppl=[];
@@ -1027,9 +1068,10 @@ function convData(){
 function teamConv(){var C=convData();
  if(!C)return ['<div class="card"><h2>Convention</h2><p>No convention data in your Sheet yet (teamdata tab, rows of type conv). Ask me to pull it from ST Monitoring.</p></div>','','',''];
  var mt=C.meta,st=C.ppl.filter(function(p){return p.tr==='st26'}),mv=C.ppl.filter(function(p){return p.tr==='mvp'}),paid=st.filter(function(p){return p.paid}).length;
- var t=isoOf(TD),dd=Math.round((new Date(mt.start+'T00:00:00')-new Date(t+'T00:00:00'))/864e5),left=dd>0?dd+' days':(t<=mt.end?'In progress':'Done');
+ var t=isoOf(TD),dd=mt.start?Math.round((new Date(mt.start+'T00:00:00')-new Date(t+'T00:00:00'))/864e5):NaN,left=isNaN(dd)?'Date missing':dd>0?dd+' days':(t<=mt.end?'In progress':'Done');
  var names=function(l){return '<div class="names">'+l.map(function(p){return '<span'+(p.paid?' class="paid"':'')+'>'+esc(p.n)+'</span>'}).join('')+'</div>'};
- var out=['<div class="card"><h2>'+esc(mt.name||'Convention')+'</h2><p>'+dLab(mt.start)+' to '+dLab(mt.end)+', '+esc(mt.city||'')+(mt.tier?' · '+esc(mt.tier):'')+'</p><div class="tiles" style="margin-top:10px;grid-template-columns:1fr 1fr"><div class="tile"><small>Days left</small><b>'+left+'</b></div><div class="tile"><small>Paid</small><b>'+paid+' of '+st.length+'</b></div></div></div>'];
+ var unp=st.filter(function(p){return !p.paid});
+ var out=['<div class="card"><h2>'+esc(mt.name||'Convention')+'</h2><p>'+dLab(mt.start)+' to '+dLab(mt.end)+', '+esc(mt.city||'')+(mt.tier?' · '+esc(mt.tier):'')+'</p><div class="tiles" style="margin-top:10px;grid-template-columns:1fr 1fr"><div class="tile"><small>Days left</small><b>'+left+'</b></div><div class="tile"><small>Paid</small><b>'+paid+' of '+st.length+'</b></div></div></div>'].concat(unp.length?['<div class="card"><h2>Not paid yet ('+unp.length+')</h2>'+names(unp)+'</div>']:[]);
  var gs=[];st.forEach(function(p){if(gs.indexOf(p.g)<0)gs.push(p.g)});
  gs.forEach(function(g){var l=st.filter(function(p){return p.g===g});out.push('<div class="card"><h2>Group '+esc(g)+'</h2><p>Paid '+l.filter(function(p){return p.paid}).length+' of '+l.length+'</p>'+names(l)+'</div>')});
  if(mv.length)out.push('<div class="card"><h2>MVP SRD</h2><p>Ruby and above only. Paid '+mv.filter(function(p){return p.paid}).length+' of '+mv.length+'</p>'+names(mv)+'</div>');
@@ -1048,21 +1090,22 @@ function reportText(){
    if(x&&n.goal)t+=' '+num(x.g)+' / '+num(n.goal*1000);else if(n.label)t+=' '+n.label;
    L.push(t);if(n.children)walk(n.children,d+1)})};
   walk(sc.nodes,0)});
- var ok=LEAD.filter(function(m){return m.v>=3000}).length,need=LEAD.filter(function(m){return m.v<3000&&!m.pan}).map(function(m){return m.n});
+ var ok=LEAD.filter(function(m){return m.v>=3000}).length,need=LEAD.filter(function(m){return !m.pan&&m.n!=='AJ'&&['behind','urgent'].indexOf(pvSt(m,pc))>-1}).map(function(m){return m.n});
  L.push('');L.push('Reached 3,000: '+ok+' of '+LEAD.length);
- if(need.length)L.push('Needs a call: '+need.join(', '));
+ if(need.length)L.push('Behind pace, needs a call: '+need.join(', '));
  return L.join('\n')}
 function teamRep(){return '<div class="card"><h2>Daily report to upline</h2><p>Built from the numbers above, in the same format as now.</p><pre id="wat">'+esc(reportText())+'</pre><button class="btn" data-copy="1">Copy and open WhatsApp</button></div>'}
 function team(){
- var tabs=['Overview','Volume','Meetings','Convention','Report'],M=teamModel();
+ var tabs=['Pulse','Volume','Meetings','Convention','Report','Long game'],M=teamModel();
  var h='<div class="top"><div class="stats"><span style="color:var(--mute)">'+(M?pLab(M.cur)+(M.note?' · '+esc(M.note):''):'Team')+'</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button><button data-add="today" aria-label="Add">'+ic('plus',22)+'</button></div></div>';
  h+='<div class="hrow"><h1>Team</h1><small>'+(M?pLab(M.cur):'')+'</small></div><p class="sub">PT. Alvacy Hana Utama</p>';
  if(wide()){
-  var g=teamGrowth(),v=teamVolume(),m=teamMeet(),c=teamConv();
-  var PV=pvData();return h+'<span class="sample">'+(PV?'All tabs come from your Sheet. '+pvSrc(PV)+'. Meetings and Convention from ST Monitoring (your Sheet)':'Overview from your Sheet, Volume is still sample data')+'</span>'+g[0]+'<div class="tgrid">'+g.slice(1).concat([v[0],v[1],m[0],m[1]].concat(c,[teamRep()])).join('')+'</div>'}
- if(teamTab!=='Overview'){var PV=pvData();h+='<span class="sample">'+(PV&&(teamTab==='Volume'||teamTab==='Report')?pvSrc(PV):((teamTab==='Meetings'&&mtgData())||(teamTab==='Convention'&&convData())?'From ST Monitoring, saved in your Sheet':'Numbers on this tab are still sample data'))+'</span>'}
+  var g=teamGrowth(),v=teamVolume(),m=teamMeet(),c=teamConv(),pl=teamPulse();
+  var PV=pvData();return h+'<div style="margin:6px 0">'+(PV?fresh(PV):'<span class="meta">No genealogy data yet</span>')+'</div>'+pl[0]+'<div class="tgrid">'+pl.slice(1).concat([v[0],v[1],m[0],m[1]].concat(c,[teamRep()]),g).join('')+'</div>'}
+ {var PV=pvData();h+='<div style="margin:6px 0">'+(PV?fresh(PV):'<span class="meta">No genealogy data yet</span>')+'</div>'}
  h+='<div class="seg">'+tabs.map(function(t){return '<button class="chip" data-tt="'+t+'" aria-pressed="'+(teamTab===t)+'">'+t+'</button>'}).join('')+'</div>';
- if(teamTab==='Overview')return h+teamGrowth().join('');
+ if(teamTab==='Pulse')return h+teamPulse().join('');
+ if(teamTab==='Long game')return h+teamGrowth().join('');
  if(teamTab==='Volume')return h+teamVolume().join('');
  if(teamTab==='Meetings')return h+teamMeet().join('');
  if(teamTab==='Convention')return h+teamConv().join('');

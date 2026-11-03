@@ -445,8 +445,11 @@ try{HP=JSON.parse(localStorage.getItem('hq-hpeople')||'[]');HL=JSON.parse(localS
 XT.healthpeople=['hq-hpeople',function(){return HP},function(r){HP=r}];
 XT.healthlog=['hq-hlog',function(){return HL},function(r){HL=r}];
 XT.healthvisits=['hq-hvisits',function(){return HV},function(r){HV=r}];
-var HM={height:['Height','cm'],weight:['Weight','kg'],waist:['Waist','cm'],bodyfat:['Body fat','%'],muscle:['Skeletal muscle','%'],visceral:['Visceral fat','level'],rm:['Resting metabolism','kcal'],bodyage:['Body age','years'],bpsys:['Blood pressure, top','mmHg'],bpdia:['Blood pressure, bottom','mmHg'],pulse:['Pulse','bpm'],glucose:['Fasting glucose','mg/dL'],hba1c:['HbA1c','%'],tc:['Total cholesterol','mg/dL'],ldl:['LDL cholesterol','mg/dL'],hdl:['HDL cholesterol','mg/dL'],tg:['Triglycerides','mg/dL'],vitd:['Vitamin D','ng/mL']};
-var HRANGE={height:[50,230],weight:[5,250],waist:[30,200],bodyfat:[3,60],muscle:[5,70],visceral:[0.5,59],rm:[300,4000],bodyage:[6,99],bpsys:[60,260],bpdia:[30,160],pulse:[30,220],glucose:[30,600],hba1c:[3,18],tc:[50,500],ldl:[20,400],hdl:[10,150],tg:[20,2000],vitd:[2,200]};
+var HN=[];try{HN=JSON.parse(localStorage.getItem('hq-hnotes')||'[]')}catch(e){}
+XT.healthnotes=['hq-hnotes',function(){return HN},function(r){HN=r}];
+var HKINDS={m:['Voice change','Wet dream','Morning erection','Body hair','Growth spurt','Other'],f:['Breast development','Body hair','First period','Growth spurt','Other']};
+var HM={height:['Height','cm'],weight:['Weight','kg'],waist:['Waist','cm'],bodyfat:['Body fat','%'],muscle:['Skeletal muscle','%'],visceral:['Visceral fat','level'],rm:['Resting metabolism','kcal'],bodyage:['Body age','years'],bpsys:['Blood pressure, top','mmHg'],bpdia:['Blood pressure, bottom','mmHg'],pulse:['Pulse','bpm'],glucose:['Fasting glucose','mg/dL'],hba1c:['HbA1c','%'],tc:['Total cholesterol','mg/dL'],ldl:['LDL cholesterol','mg/dL'],hdl:['HDL cholesterol','mg/dL'],tg:['Triglycerides','mg/dL'],vitd:['Vitamin D','ng/mL'],testis:['Testicular volume','ml']};
+var HRANGE={height:[50,230],weight:[5,250],waist:[30,200],bodyfat:[3,60],muscle:[5,70],visceral:[0.5,59],rm:[300,4000],bodyage:[6,99],bpsys:[60,260],bpdia:[30,160],pulse:[30,220],glucose:[30,600],hba1c:[3,18],tc:[50,500],ldl:[20,400],hdl:[10,150],tg:[20,2000],vitd:[2,200],testis:[1,30]};
 function hxToday(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function hxParts(s){var a=String(s).split('-');return [+a[0],+a[1],+a[2]]}
 function hxMonths(dob,on){var a=hxParts(dob),b=hxParts(on);return (b[0]-a[0])*12+(b[1]-a[1])+(b[2]-a[2])/30.4375}
@@ -487,7 +490,8 @@ function hxKid(p,bmi,h,date){
  if(bmi!=null){var lb=hxLms('b',p.sex,mo);if(lb){var z=hxZ(bmi,lb);o.bz=z;o.bp=hxCdf(z)*100;o.bmed=lb[1];o.b1=hxAt(lb,1);o.b2=hxAt(lb,2);o.bm=function(zz){return hxAt(lb,zz)}}}
  if(h!=null){var lh=hxLms('h',p.sex,mo);if(lh){var zh=hxZ(h,lh);o.hz=zh;o.hp=hxCdf(zh)*100;o.hmed=lh[1]}}
  return o}
-function hxKidBmiStatus(z){return z<-3?['high','Severe thinness (below -3 SD)']:z<-2?['watch','Thinness (-3 to -2 SD)']:z<=1?['ok','Normal (-2 to +1 SD)']:z<=2?['watch','Overweight range (+1 to +2 SD)']:['high','Obesity range (above +2 SD)']}
+function hxZs(z){return (z>0?'+':'')+z.toFixed(2)}
+function hxKidBmiStatus(z){return z<-3?['high','Severe thinness (below -3 SD)']:z<-2?['watch','Thinness (-3 to -2 SD)']:z<0.95?['ok','Normal (-2 to +1 SD)']:z<=1.05?['watch','At the +1 SD line, the top of the normal band']:z<1.95?['watch','Overweight range (+1 to +2 SD)']:z<=2.05?['high','At the +2 SD line, the WHO border between overweight and obesity']:['high','Obesity range (above +2 SD)']}
 function hxKidHeightStatus(z){return z<-3?['high','Severe stunting (below -3 SD)']:z<-2?['watch','Short for age (-3 to -2 SD)']:z>2?['info','Tall for age (above +2 SD)']:['ok','Normal (-2 to +2 SD)']}
 /* Builds everything shown for one person: key numbers, flags and what is due. */
 function hxAssess(p){
@@ -497,11 +501,11 @@ function hxAssess(p){
  if(h)F.push({k:'Height',v:hxFmt(h.v,1)+' cm',d:h.d});
  if(bl){
   if(kid){var K=hxKid(p,bl.v,h?h.v:null,bl.d);
-   if(K.bz!=null){var st=hxKidBmiStatus(K.bz);F.push({k:'BMI',v:hxFmt(bl.v,1),d:bl.d,st:st[0],note:'z '+(K.bz>0?'+':'')+hxFmt(K.bz,2)+', '+hxFmt(K.bp,0)+'th percentile. '+st[1]});
-    FL.push({st:st[0],txt:'BMI for age is '+hxFmt(bl.v,1)+' (z '+(K.bz>0?'+':'')+hxFmt(K.bz,2)+', '+hxFmt(K.bp,0)+'th percentile). '+st[1]+'. WHO median at this age is '+hxFmt(K.bmed,1)+'.'});
+   if(K.bz!=null){var st=hxKidBmiStatus(K.bz);F.push({k:'BMI',v:hxFmt(bl.v,1),d:bl.d,st:st[0],note:'z '+hxZs(K.bz)+', '+hxFmt(K.bp,0)+'th percentile. '+st[1]});
+    FL.push({st:st[0],txt:'BMI for age is '+hxFmt(bl.v,1)+' (z '+hxZs(K.bz)+', '+hxFmt(K.bp,0)+'th percentile). '+st[1]+'. WHO median at this age is '+hxFmt(K.bmed,1)+'.'});
     if(K.bz>1){var hh=bl.h/100;FL.push({st:'info',txt:'For '+hxShort(p)+'\'s current height the top of the WHO normal band (+1 SD) is about '+hxFmt(K.b1*hh*hh,1)+' kg and the median is about '+hxFmt(K.bmed*hh*hh,1)+' kg. In growing children the usual goal is steady weight while height catches up, so ask the doctor which approach fits.'})}}
    else F.push({k:'BMI',v:hxFmt(bl.v,1),d:bl.d,st:'info',note:'WHO tables start at age 5'});
-   if(K.hz!=null){var sh=hxKidHeightStatus(K.hz);FL.push({st:sh[0],txt:'Height '+hxFmt(h.v,1)+' cm is z '+(K.hz>0?'+':'')+hxFmt(K.hz,2)+' ('+hxFmt(K.hp,0)+'th percentile). '+sh[1]+'. WHO median at this age is '+hxFmt(K.hmed,1)+' cm.'})}}
+   if(K.hz!=null){var sh=hxKidHeightStatus(K.hz);FL.push({st:sh[0],txt:'Height '+hxFmt(h.v,1)+' cm is z '+hxZs(K.hz)+' ('+hxFmt(K.hp,0)+'th percentile). '+sh[1]+'. WHO median at this age is '+hxFmt(K.hmed,1)+' cm.'})}}
   else{var sa=hxBmiAdult(bl.v);F.push({k:'BMI',v:hxFmt(bl.v,1),d:bl.d,st:sa[0],note:sa[1]});FL.push({st:sa[0],txt:'BMI '+hxFmt(bl.v,1)+'. '+sa[1]+'.'})}}
  var y=hxAgeY(p.dob,t);
  var bf=hxLast(p.id,'bodyfat');if(bf){if(!kid){var s1=hxFatAdult(bf.v,p.sex);F.push({k:'Body fat',v:hxFmt(bf.v,1)+'%',d:bf.d,st:s1[0],note:s1[1]});FL.push({st:s1[0],txt:'Body fat '+hxFmt(bf.v,1)+'%. '+s1[1]+'.'})}else F.push({k:'Body fat',v:hxFmt(bf.v,1)+'%',d:bf.d,st:'info',note:'Trend only for children. Read it with the doctor.'})}
@@ -511,6 +515,7 @@ function hxAssess(p){
  var ba=hxLast(p.id,'bodyage');if(ba&&!kid){var df=Math.round(ba.v-y);F.push({k:'Body age',v:Math.round(ba.v)+'',d:ba.d,st:df>3?'watch':df<=0?'ok':'info',note:df===0?'Same as real age':(df>0?df+' years older than real age':(-df)+' years younger than real age')});if(df>3)FL.push({st:'watch',txt:'Body age is '+df+' years above real age.'})}
  var sy=hxLast(p.id,'bpsys'),di=hxLast(p.id,'bpdia');
  if(sy&&di){if(!kid){var s3=hxBp(sy.v,di.v);F.push({k:'Blood pressure',v:Math.round(sy.v)+'/'+Math.round(di.v),d:sy.d,st:s3[0],note:s3[1]});FL.push({st:s3[0],txt:'Blood pressure '+Math.round(sy.v)+'/'+Math.round(di.v)+'. '+s3[1]+'. One reading is not a diagnosis, repeat it on another day.'})}else F.push({k:'Blood pressure',v:Math.round(sy.v)+'/'+Math.round(di.v),d:sy.d,st:'info',note:'Children need age and height charts, ask the doctor'})}
+ var tv=hxLast(p.id,'testis');if(tv&&p.sex==='m'){F.push({k:'Testicular volume',v:hxFmt(tv.v,0)+' ml',d:tv.d,st:'info',note:'4 ml or more is the usual start of puberty'});if(tv.v>=4){var ty=hxAgeY(p.dob,tv.d);FL.push(ty<9?{st:'watch',txt:'Testicular volume '+hxFmt(tv.v,0)+' ml before age 9. Puberty signs this early should be reviewed by the doctor.'}:{st:'info',txt:'Testicular volume '+hxFmt(tv.v,0)+' ml is the usual marker of puberty starting. Normal onset for boys is age 9 to 14. Keep watching voice, height speed and body hair.'})}}
  var pu=hxLast(p.id,'pulse');if(pu)F.push({k:'Pulse',v:Math.round(pu.v)+' bpm',d:pu.d,st:'info'});
  var wa=hxLast(p.id,'waist');if(wa){var sw=kid?null:hxLab('waist',wa.v,p.sex);F.push({k:'Waist',v:hxFmt(wa.v,1)+' cm',d:wa.d,st:sw?sw[0]:'info',note:sw?sw[1]:''});if(sw&&sw[0]!=='ok')FL.push({st:sw[0],txt:'Waist '+hxFmt(wa.v,1)+' cm. '+sw[1]+'.'})}
  ['glucose','hba1c','tc','ldl','hdl','tg','vitd'].forEach(function(k){var r=hxLast(p.id,k);if(!r)return;var s=kid?null:hxLab(k,r.v,p.sex);F.push({k:HM[k][0],v:hxFmt(r.v,k==='hba1c'?1:0)+' '+HM[k][1],d:r.d,st:s?s[0]:'info',note:s?s[1]:'Child ranges differ, use the lab printout'});if(s&&s[0]!=='ok')FL.push({st:s[0],txt:HM[k][0]+' '+hxFmt(r.v,k==='hba1c'?1:0)+' '+HM[k][1]+'. '+s[1]+'.'})});
@@ -575,11 +580,12 @@ function hxOverview(){
  return s+'</div><p class="meta" style="margin:14px 2px 0">A screening aid. It does not replace the doctor. Children are scored against WHO growth references, adults against standard screening ranges.</p>'}
 function hxProfile(p){
  var a=hxAssess(p),t=hxToday(),s='<div class="card"><div class="hx-h"><b style="font-size:18px">'+esc(p.name)+'</b></div><p class="meta" style="margin:4px 0 0">'+esc(a.age)+', born '+esc(p.dob)+(p.sex==='f'?', female':', male')+'</p>';
- s+='<div class="chips" style="margin-top:12px"><button class="chip" data-hx="om">+ Omron scan</button><button class="chip" data-hx="ck">+ Checkup or labs</button><button class="chip" data-hx="visit">+ Doctor visit</button></div></div>';
+ s+='<div class="chips" style="margin-top:12px"><button class="chip" data-hx="om">+ Omron scan</button><button class="chip" data-hx="ck">+ Checkup or labs</button><button class="chip" data-hx="visit">+ Doctor visit</button><button class="chip" data-hx="sum">Summary for a doctor</button></div></div>';
  if(a.DUE.length)s+='<div class="card hx-dues"><h2>Due</h2>'+a.DUE.map(function(d){return '<p class="hx-due">'+ic('clock',14)+esc(d)+'</p>'}).join('')+'</div>';
  if(a.FL.length){s+='<div class="card"><h2>Assessment</h2>'+a.FL.map(function(f){return '<div class="hx-flag">'+hxChip(f.st==='info'?'info':f.st,f.st==='ok'?'OK':f.st==='watch'?'Watch':f.st==='high'?'Flag':'Note')+'<p>'+esc(f.txt)+'</p></div>'}).join('')+'<p class="meta" style="margin:10px 0 0">Screening aid only. Decisions belong with the doctor.</p></div>'}
  else s+='<div class="card"><h2>Assessment</h2><p class="meta" style="margin:6px 0 0">Add height and weight to get the first assessment.</p></div>';
  if(a.F.length){s+='<div class="hx-grid">'+a.F.map(function(f){return '<div class="card hx-tile"><small>'+esc(f.k)+'</small><b>'+esc(f.v)+'</b>'+(f.st&&f.st!=='info'?hxChip(f.st,f.st==='ok'?'OK':f.st==='watch'?'Watch':'Flag'):'')+(f.note?'<span class="meta">'+esc(f.note)+'</span>':'')+'<span class="meta">'+esc(f.d)+'</span></div>'}).join('')+'</div>'}
+ if(a.kid)s+=hxPuberty(p);
  if(a.kid){var gb=hxGrowth(p,'b'),gh=hxGrowth(p,'h');
   if(gb)s+='<div class="card"><h2>BMI for age (WHO)</h2>'+gb+'<p class="meta" style="margin:6px 0 0">Lines show -2, -1, median, +1 and +2 SD. Your child is the blue line.</p></div>';
   if(gh)s+='<div class="card"><h2>Height for age (WHO)</h2>'+gh+hxVelocity(p)+'</div>'}
@@ -619,6 +625,52 @@ function hxVisitForm(p){
   if(!g('#vdoc')&&!g('#vre')){toast('Add the doctor or the reason');return}
   HV.push({id:'v'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),date:g('#vd'),pid:p.id,doctor:g('#vdoc'),spec:g('#vsp'),place:g('#vpl'),reason:g('#vre'),findings:g('#vfi'),fu:g('#vfu'),fudate:g('#vfd'),fudone:''});
   saveX('healthvisits');b.remove();render(true);toast('Visit saved')}}
+function hxPuberty(p){
+ var y=hxAgeY(p.dob,hxToday());if(y<8||y>17)return '';
+ var tv=hxLast(p.id,'testis'),ns=HN.filter(function(n){return n.pid===p.id}).sort(function(x,z){return x.date<z.date?1:x.date>z.date?-1:0});
+ var s='<div class="card"><h2>Puberty watch</h2><div class="chips" style="margin-top:10px"><button class="chip" data-hx="pub">+ Puberty note</button></div>';
+ if(tv&&p.sex==='m')s+='<p style="margin:10px 0 0;font-size:13.5px"><b>'+hxFmt(tv.v,0)+' ml</b> testicular volume <span class="meta">('+esc(tv.d)+')</span></p>';
+ s+=hxVelocity(p);
+ s+=ns.length?ns.slice(0,10).map(function(n){return '<div class="hx-visit"><b>'+esc(n.date)+'</b> '+esc(n.kind)+'<p>'+esc(n.text)+'</p></div>'}).join(''):'<p class="meta" style="margin:10px 0 0">No notes yet</p>';
+ return s+'<p class="meta" style="margin:10px 0 0">Tell the doctor about '+(p.sex==='f'?'breast development before age 8, a first period before age 10, ':'voice breaking, wet dreams, ')+'new body hair, or growing faster than 7 cm a year.</p></div>'}
+function hxPubForm(p){
+ var ks=HKINDS[p.sex==='f'?'f':'m'],kind=ks[0];
+ var b=sheet('<h3>Puberty note</h3><p class="meta" style="margin:0">'+esc(hxShort(p))+'</p><label class="hx-f"><span>Date</span><input type="date" id="pd" value="'+hxToday()+'" max="'+hxToday()+'"></label><div class="chips" style="margin:10px 0 0">'+ks.map(function(x,i){return '<button class="chip" data-k2="'+esc(x)+'" aria-pressed="'+(i===0)+'">'+esc(x)+'</button>'}).join('')+'</div><label class="hx-f"><span>What you saw</span><input type="text" id="pt" autocomplete="off"></label>'+(p.sex==='m'?'<label class="hx-f"><span>Testicular volume <small>ml, only if the doctor measured it</small></span><input type="text" inputmode="decimal" data-k="testis" autocomplete="off"></label>':'')+'<button class="btn" id="ps" style="margin-top:8px">Save</button>');
+ b.querySelectorAll('[data-k2]').forEach(function(c){c.onclick=function(){kind=c.dataset.k2;b.querySelectorAll('[data-k2]').forEach(function(x){x.setAttribute('aria-pressed',x===c)})}});
+ b.querySelector('#ps').onclick=function(){
+  var d=b.querySelector('#pd').value,tx=b.querySelector('#pt').value.trim(),ti=b.querySelector('[data-k="testis"]'),tr=ti?ti.value.trim():'',tvv=NaN;
+  if(!d||d>hxToday()){toast('Pick a date that is not in the future');return}
+  if(tr){tvv=hxNum(tr);if(isNaN(tvv)||tvv<HRANGE.testis[0]||tvv>HRANGE.testis[1]){toast('Testicular volume should be between 1 and 30 ml');return}}
+  if(!tx&&isNaN(tvv)){toast('Describe what you saw, or enter a volume');return}
+  if(tx){HN.push({id:'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),date:d,pid:p.id,kind:kind,text:tx});saveX('healthnotes')}
+  if(!isNaN(tvv)){var g='g'+Date.now().toString(36);HL.push({id:g+'t'+Math.random().toString(36).slice(2,5),date:d,pid:p.id,src:'Clinic',metric:'testis',value:String(tvv),unit:'ml',note:tx,grp:g,void:''});saveX('healthlog')}
+  b.remove();render(true);toast('Saved for '+hxShort(p))}}
+/* Plain-text summary a new doctor or hospital can read, so the record belongs to the family and not to one clinic. */
+function hxSummary(p){
+ var t=hxToday(),a=hxAssess(p),L=[];
+ L.push('HEALTH SUMMARY: '+p.name);L.push('Born '+p.dob+' ('+a.age+'), '+(p.sex==='f'?'female':'male'));L.push('Prepared '+t+' from the family health record kept in HQ. Children are scored with the WHO 2007 growth reference.');L.push('');
+ if(a.F.length){L.push('LATEST');a.F.forEach(function(f){L.push('- '+f.k+': '+f.v+' ('+f.d+')'+(f.note&&f.st!=='info'?', '+f.note:''))});L.push('')}
+ var hr=hxRows(p.id,'height'),wr=hxRows(p.id,'weight'),ds={};hr.concat(wr).forEach(function(r){ds[r.d]=1});var dl=Object.keys(ds).sort();
+ if(dl.length){L.push('GROWTH HISTORY (date, height, weight, BMI'+(a.kid?', BMI z-score':'')+')');
+  dl.forEach(function(d){var h=hr.filter(function(r){return r.d===d}).pop(),w=wr.filter(function(r){return r.d===d}).pop(),hh=hxHeightAt(p.id,d),bm=w&&hh?w.v/Math.pow(hh.v/100,2):null,z='';
+   if(a.kid&&bm){var K=hxKid(p,bm,null,d);if(K.bz!=null)z=', z '+hxZs(K.bz)}
+   L.push('- '+d+': '+(h?hxFmt(h.v,1)+' cm':'-')+', '+(w?hxFmt(w.v,1)+' kg':'-')+(bm?', BMI '+hxFmt(bm,1)+z:''))});L.push('')}
+ var oth=Object.keys(HM).filter(function(k){return k!=='height'&&k!=='weight'}).map(function(k){var r=hxRows(p.id,k);return r.length?'- '+HM[k][0]+' ('+HM[k][1]+'): '+r.map(function(x){return x.d+' '+hxFmt(x.v,1)}).join('; '):''}).filter(function(x){return x});
+ if(oth.length){L.push('OTHER MEASUREMENTS');oth.forEach(function(x){L.push(x)});L.push('')}
+ var vs=HV.filter(function(v){return v.pid===p.id}).sort(function(x,y){return x.date<y.date?1:-1});
+ if(vs.length){L.push('DOCTOR VISITS');vs.forEach(function(v){L.push('- '+v.date+': '+[v.doctor,v.spec,v.place].filter(function(x){return x}).join(', ')+(v.reason?'. Reason: '+v.reason:'')+(v.findings?'. Findings: '+v.findings:'')+(v.fu?'. Follow-up: '+v.fu+(v.fudate?' ('+v.fudate+')':''):''))});L.push('')}
+ var ns=HN.filter(function(n){return n.pid===p.id}).sort(function(x,y){return x.date<y.date?1:-1});
+ if(ns.length){L.push('PUBERTY NOTES');ns.forEach(function(n){L.push('- '+n.date+' '+n.kind+': '+n.text)});L.push('')}
+ L.push('Screening aid only, not a diagnosis. Measurements marked wrong are left out.');
+ return L.join('\n')}
+function hxSumSheet(p){
+ var txt=hxSummary(p),b=sheet('<h3>Summary for a doctor</h3><p class="meta" style="margin:0">Copy this and send it or show it at any clinic. It is plain text.</p><textarea id="hxt" rows="14" readonly style="width:100%;border-radius:16px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:10px;font:12px ui-monospace,monospace" aria-label="Summary"></textarea><button class="btn" id="hxc" style="margin-top:8px">Copy</button>');
+ var ta=b.querySelector('#hxt');ta.value=txt;
+ b.querySelector('#hxc').onclick=function(){
+  function ok(){toast('Copied')}
+  function fail(){ta.focus();ta.select();toast('Could not copy automatically. The text is selected, tap Copy in the iPhone menu')}
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(ok).catch(function(){try{ta.focus();ta.select();document.execCommand('copy')?ok():fail()}catch(e){fail()}})}
+  else{try{ta.focus();ta.select();document.execCommand('copy')?ok():fail()}catch(e){fail()}}}}
 function hxAct(code){
  var p=HSEL!=='all'?hxPerson(HSEL):null;
  if(code.indexOf('p:')===0){HSEL=code.slice(2);HMORE=false;render();return}
@@ -627,6 +679,8 @@ function hxAct(code){
  if(code==='om'){hxOmron(p);return}
  if(code==='ck'){hxCheckup(p);return}
  if(code==='visit'){hxVisitForm(p);return}
+ if(code==='pub'){hxPubForm(p);return}
+ if(code==='sum'){hxSumSheet(p);return}
  if(code.indexOf('void:')===0){var id=code.slice(5),r=HL.filter(function(x){return x.id===id})[0];if(!r)return;if(!confirm('Mark this entry as wrong? It stays in the history but is left out of the numbers.'))return;r.void='1';saveX('healthlog');render(true);return}
  if(code.indexOf('fudone:')===0){var vid=code.slice(7),v=HV.filter(function(x){return x.id===vid})[0];if(!v)return;v.fudone='1';saveX('healthvisits');render(true);return}}
 var CAD={'Closing':7,'Prospect':14,'Warming Partner':14,'TRME Active':14,'Partner':21,'Customer':30,'Relationship':60,'Namelist':14,'Not Now':60};

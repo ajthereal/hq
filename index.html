@@ -148,6 +148,8 @@ h1{font-family:var(--display);font-weight:500;font-size:31px;line-height:1.05;ma
 .av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-size:15px;color:#1E2430;flex:none}
 .pn{flex:1;min-width:0}.pn b{display:block;font-weight:600;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pn small{color:var(--mute);font-size:12px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pn small.na{color:var(--ink);opacity:.82}
+.pn small.nn{font-style:italic;padding:3px 0}
 .due{font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:99px;background:var(--card2);color:var(--mute);white-space:nowrap}
 .due.late{background:var(--late-bg);color:var(--late-ink)}.due.today{background:var(--morning-bg);color:var(--morning-ink)}
 .pact{display:flex;gap:7px;padding:0 10px 10px}
@@ -225,6 +227,8 @@ pre{margin:10px 0 0;font:12px/1.55 ui-monospace,Menlo,monospace;white-space:pre-
 .sheet{background:var(--card);border-top:1px solid var(--line);width:100%;max-width:480px;border-radius:26px 26px 0 0;padding:18px 16px calc(20px + env(safe-area-inset-bottom,0px));display:grid;gap:12px;max-height:88%;overflow:auto}
 .wide .sheet{border-radius:26px;border:1px solid var(--line)}
 .sheet h3{font-family:var(--display);font-weight:500;font-size:21px;margin:0}
+.sheet textarea{width:100%;border-radius:18px;background:var(--bg);border:1px solid var(--line);color:var(--ink);font:inherit;font-size:16px;padding:12px 16px;resize:none;line-height:1.45}
+.btn[disabled]{opacity:.4}
 .sheet input{height:46px;border-radius:99px;background:var(--bg);border:1px solid var(--line);color:var(--ink);font:inherit;font-size:15px;padding:0 18px;width:100%}
 .bubble{background:var(--eve-bg);color:var(--eve-ink);border-radius:20px 20px 5px 20px;padding:12px 14px;font-size:14px}
 .lbl{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);font-weight:600}
@@ -694,8 +698,20 @@ function hxAct(code){
  if(code.indexOf('fudone:')===0){var vid=code.slice(7),v=HV.filter(function(x){return x.id===vid})[0];if(!v)return;v.fudone='1';saveX('healthvisits');render(true);return}}
 var CAD={'Closing':7,'Prospect':14,'Warming Partner':14,'TRME Active':14,'Partner':21,'Customer':30,'Relationship':60,'Namelist':14,'Not Now':60};
 function cad(st){return CAD[st]||14}
+var STAGES=['Namelist','Relationship','Prospect','Closing','TRME Active','Customer','Warming Partner','Partner','Not Now'];
 function pid(p){return p.raw&&p.raw.id?p.raw.id:p.n}
 function byPid(id){return people.filter(function(p){return pid(p)===id})[0]}
+function parseNameLines(txt){
+ var out=[],bad=0;
+ String(txt||'').split(/\r?\n/).forEach(function(line){
+  var s=line.replace(/^\s*(?:[-*\u2022]|\d{1,3}[.)])\s+/,'').trim();if(!s)return;
+  var name=s,phone='',note='',m=s.match(/\+?\d[\d\s().\-]{6,}\d/);
+  if(m&&normPhone(m[0]).length>=9){phone=m[0].trim();name=s.slice(0,m.index);note=s.slice(m.index+m[0].length)}
+  else{var sp=s.match(/\s[-\u2013|]\s|[,;|]/);if(sp){name=s.slice(0,sp.index);note=s.slice(sp.index+sp[0].length)}}
+  name=name.replace(/[\s,;|:\u2013-]+$/,'').trim();note=note.replace(/^[\s,;|:\u2013-]+/,'').replace(/[\s,;|]+$/,'').trim();
+  if(!name){bad++;return}
+  out.push({name:name,phone:phone,note:note})});
+ out.bad=bad;return out}
 function normPhone(s){var d=String(s||'').replace(/[^0-9]/g,'');if(d.indexOf('620')===0)d='62'+d.slice(3);else if(d.indexOf('0')===0)d='62'+d.slice(1);else if(d.indexOf('8')===0)d='62'+d;return d}
 function sparkN(){return TLOG.filter(function(x){return x.date===isoOf(TD)}).length}
 function toastU(m,fn){var d=document.createElement('div');d.className='toast';d.appendChild(document.createTextNode(m));var b=document.createElement('button');b.className='un';b.textContent='Undo';d.appendChild(b);FR.appendChild(d);var t=setTimeout(function(){d.remove()},5200);b.onclick=function(){clearTimeout(t);d.remove();fn();haptic()}}
@@ -1085,7 +1101,7 @@ function buildItems(){
  L.forEach(function(p){out.push({k:'r',p:p})});return out}
 function rowHtml(p){
  var d=dueTxt(p.next),cls=p.next!==null&&p.next<0?' late':p.next===0?' today':'',last=p.last>=9999?'not logged':p.last===0?'today':p.last+'d ago';
- return '<div class="prow'+(wide()&&selPid===p.id?' sel':'')+'" data-pid="'+p.id+'"><button class="phead" data-ptoggle="'+p.id+'"><span class="av" style="background:'+avc(p)+'">'+esc(String(p.n||'?').charAt(0))+'</span><span class="pn"><b>'+esc(p.n)+'</b><small>'+esc(p.st||'')+' · '+last+'</small></span>'+(d?'<span class="due'+cls+'">'+d+'</span>':'')+'</button><div class="pact" hidden><button class="main" data-msg="'+p.id+'">Message</button><button data-log="'+p.id+'">Done</button><button data-pdet="'+p.id+'">Open</button><button data-next="'+p.id+'">Next</button></div></div>'}
+ return '<div class="prow'+(wide()&&selPid===p.id?' sel':'')+'" data-pid="'+p.id+'"><button class="phead" data-ptoggle="'+p.id+'"><span class="av" style="background:'+avc(p)+'">'+esc(String(p.n||'?').charAt(0))+'</span><span class="pn"><b>'+esc(p.n)+'</b><small>'+esc(p.st||'')+' · '+last+'</small>'+(p.raw?(p.raw.nextAction?'<small class="na">'+esc(p.raw.nextAction)+'</small>':p.st==='Not Now'?'':'<small class="nn" data-next="'+p.id+'">No next step yet</small>'):'')+'</span>'+(d?'<span class="due'+cls+'">'+d+'</span>':'')+'</button><div class="pact" hidden><button class="main" data-msg="'+p.id+'">Message</button><button data-log="'+p.id+'">Done</button><button data-pdet="'+p.id+'">Open</button><button data-next="'+p.id+'">Next</button></div></div>'}
 function itemHtml(it){
  if(it.k==='pp')return '<div class="chips" style="margin:6px 0 10px;flex-wrap:wrap">'+it.prods.map(function(x){return '<button class="chip" data-pprod="'+esc(x)+'" aria-pressed="'+(pprod===x)+'">'+esc(x)+'</button>'}).join('')+'</div>';
  if(it.k==='pr'){var dn2=it.p.raw&&it.p.last===0;return '<div class="task'+(dn2?' done':'')+'" style="margin-bottom:6px"><span class="av" style="background:'+avc(it.p)+'">'+esc(it.p.n[0])+'</span><button class="tb" data-pdet="'+it.p.id+'"><b>'+esc(it.p.n)+'</b><small>'+esc(it.x.product)+' · '+esc(it.x.date)+'</small></button><button class="ck" data-promo="'+it.p.id+'" aria-label="Already offered"><i>'+ic('check',14)+'</i></button></div>'}
@@ -1123,7 +1139,7 @@ function pdetail(p){
 function pdetailReal(p){
  var r=p.raw,fm=function(x){var d=dn(x);return d==null?'':dueTxt(d-TD)+' ('+x+')'};
  var h='<div class="card" style="margin-top:0"><div style="display:flex;gap:12px;align-items:center"><span class="av" style="background:'+avc(p)+';width:52px;height:52px;font-size:22px">'+esc(p.n[0])+'</span><div style="min-width:0"><h2 style="font-size:21px">'+esc(p.n)+'</h2><div class="meta">'+esc(p.st)+(r.market?' · '+esc(r.market):'')+'</div></div></div>';
- h+='<div style="display:flex;gap:7px;margin-top:12px;flex-wrap:wrap"><button class="btn sm main" data-msg="'+p.id+'">Message</button><button class="btn sm alt" data-log="'+p.id+'">Talked</button><button class="btn sm alt" data-next="'+p.id+'">Next: '+(p.next===null?'none yet':dueTxt(p.next))+'</button><button class="btn sm alt" data-edit="'+p.id+'">Edit contact</button></div></div>';
+ h+='<div style="display:flex;gap:7px;margin-top:12px;flex-wrap:wrap"><button class="btn sm main" data-msg="'+p.id+'">Message</button><button class="btn sm alt" data-log="'+p.id+'">Talked</button><button class="btn sm alt" data-next="'+p.id+'">Next: '+(p.next===null?'none yet':dueTxt(p.next))+'</button><button class="btn sm alt" data-pstage="'+p.id+'">Stage: '+esc(p.st)+'</button><button class="btn sm alt" data-edit="'+p.id+'">Edit contact</button></div></div>';
  var rows=[['Next step',r.nextAction],['Follow-up',fm(r.nextDate)],['Last contact',fm(r.lastContact)],['Last order',fm(r.lastOrder)],['Tag',r.tags],['Phone',r.phone],['Email',r.email],['Sponsor',r.sponsor],['Birthday',r.birthday],['TRME start',r.trmeStart]].filter(function(x){return x[1]});
  if(rows.length)h+='<div class="card">'+rows.map(function(x,i){return '<div class="tline"><small>'+x[0]+'</small><b>'+esc(x[1])+'</b></div>'}).join('')+'</div>';
  var pu=PUR.filter(function(x){return x.pid===pid(p)}).sort(function(a,b){return a.date<b.date?1:-1});
@@ -1541,7 +1557,7 @@ function completeTask(el){
   setTimeout(function(){render(true);if(wasLate>0&&lateTasks().length===0){haptic(true);toast('Nothing overdue. Nothing missed.');var f=$('#spk');f&&burst(f,true)}},REDUCE?0:760);
  }else{row.classList.remove('done','pop');haptic(false);setTimeout(function(){render(true)},120)}}
 document.addEventListener('click',function(e){
- var el=e.target.closest('[data-today],[data-tab],[data-done],[data-fold],[data-day],[data-add],[data-open],[data-act],[data-pv],[data-ptoggle],[data-msg],[data-log],[data-next],[data-pdet],[data-jump],[data-tt],[data-copy],[data-wa],[data-addp],[data-goto],[data-ct],[data-cmove],[data-cv],[data-idea],[data-mode],[data-theme-set],[data-gotab],[data-sync],[data-impor],[data-hab],[data-trips],[data-hx],[data-tback],[data-ttick],[data-tcopy],[data-fudone],[data-evdone],[data-pprod],[data-promo],[data-newlist],[data-laddm],[data-lmenu],[data-lmst],[data-lmprod],[data-lmtick],[data-buy],[data-edit],[data-hs],[data-fwa],[data-lwa],[data-score],[data-rwa],[data-bdwa],[data-chkin],[data-chkwa],[data-bulk],[data-tmove],[data-nbwa]');if(!el)return;
+ var el=e.target.closest('[data-today],[data-tab],[data-done],[data-fold],[data-day],[data-add],[data-open],[data-act],[data-pv],[data-ptoggle],[data-msg],[data-log],[data-next],[data-pdet],[data-jump],[data-tt],[data-copy],[data-wa],[data-addp],[data-goto],[data-ct],[data-cmove],[data-cv],[data-idea],[data-mode],[data-theme-set],[data-gotab],[data-sync],[data-impor],[data-hab],[data-trips],[data-hx],[data-tback],[data-ttick],[data-tcopy],[data-fudone],[data-evdone],[data-pprod],[data-promo],[data-newlist],[data-laddm],[data-lmenu],[data-lmst],[data-lmprod],[data-lmtick],[data-buy],[data-edit],[data-hs],[data-fwa],[data-lwa],[data-score],[data-rwa],[data-bdwa],[data-chkin],[data-chkwa],[data-bulk],[data-tmove],[data-nbwa],[data-pstage]');if(!el)return;
  var d=el.dataset;
  if(d.impor){if(!CFG.url){toast('Connect the Sheet first in Sync');return}var ib=sheet('<h3>Impor kontak</h3><p class="meta" style="margin:0">Paste the result of Copy from the import page. This replaces the contact list in your Sheet.</p><textarea id="it" rows="5" style="width:100%;border-radius:16px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:10px;font:12px ui-monospace,monospace" aria-label="Contact data"></textarea><button class="btn" id="ig" style="margin-top:0">Import</button>');ib.querySelector('#ig').onclick=function(){try{var a=JSON.parse(ib.querySelector('#it').value);if(!Array.isArray(a)||!a.length||!a[0].name)throw 0;RAW=a.map(function(r){var o={};Object.keys(r).forEach(function(k){o[k]=r[k]==null?'':String(r[k])});return o});savePeople();ib.remove();tab='people';render();toast(RAW.length+' people added to People');haptic(true)}catch(e){toast('The text does not match. Copy it again from the import page.')}};return}
  if(d.sync){var sb=sheet('<h3>Connect Google Sheet</h3><p class="meta" style="margin:0">Paste your Apps Script address and the secret code you made. Both are stored only on this device.</p><input id="su" type="url" placeholder="Apps Script address (https://script.google.com/...)" value="'+esc(CFG.url)+'" autocomplete="off"><input id="st" type="text" placeholder="Secret code" value="'+esc(CFG.token)+'" autocomplete="off"><button class="btn" id="sg" style="margin-top:0">Connect</button>'+(CFG.url?'<button class="btn alt" id="sx" style="margin-top:0">Disconnect</button>':''));
@@ -1563,7 +1579,28 @@ document.addEventListener('click',function(e){
  if(d.day){goDay(+d.day);return}
  if(d.today){goDay(TD);return}
  if(d.add){addSheet(d.add);return}
- if(d.addp){var ab=sheet('<h3>New person</h3><input id="an" type="text" placeholder="Name" autocomplete="off"><input id="ap" type="tel" placeholder="WhatsApp number (optional)" autocomplete="off"><button class="btn" id="as" style="margin-top:0">Save as Namelist</button>');ab.querySelector('#as').onclick=function(){var n=ab.querySelector('#an').value.trim();if(!n){toast('Enter a name first');return}var row={id:n.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+Date.now().toString(36),name:n,stage:'Namelist',tags:'',market:'',phone:ab.querySelector('#ap').value.trim(),lastContact:'',lastOrder:'',nextDate:'',nextAction:'',hot:'',notes:'',verify:'',trmeStart:'',sponsor:'',birthday:'',created:isoOf(TD)};if(CFG.url){RAW.push(row);savePeople()}else{people.push({id:people.length,n:n,st:'Namelist',next:null,last:9999,note:''})}ab.remove();render(true);toast('Added to Namelist');haptic()};return}
+ if(d.addp){if(!CFG.url){toast('Connect the Sheet first so the people are saved');return}
+  var act2=LISTS.filter(function(l){return l.status!=='archived'}),pickL='';
+  var ab=sheet('<h3>Add names</h3><textarea id="bt" rows="8" placeholder="One name per line. Add a phone number or note after the name, like: Budi 0812 3456 7890" autocomplete="off" autocapitalize="words"></textarea>'+(act2.length?'<div class="lbl">Also add to a list (optional)</div><div class="chips" style="flex-wrap:wrap">'+act2.map(function(l){return '<button class="chip" data-al="'+esc(l.id)+'" aria-pressed="false">'+esc(l.name)+'</button>'}).join('')+'</div>':'')+'<div id="bp" class="note" style="margin:0">Type or paste names. A preview shows here before anything is saved.</div><button class="btn" id="bgo" style="margin-top:0" disabled>Save</button><button class="btn alt" data-close="1" style="margin-top:0">Close</button>'),bt=ab.querySelector('#bt'),bpv=ab.querySelector('#bp'),bgo=ab.querySelector('#bgo'),PR={nw:[],ex:[]};
+  var lname=function(){var l=pickL&&lById(pickL);return l?l.name:''};
+  var prev=function(){var L=parseNameLines(bt.value),seen={},nm={},ph={};PR={nw:[],ex:[]};
+   RAW.forEach(function(r){if(r.name)nm[String(r.name).toLowerCase().trim()]=r;var q=normPhone(r.phone);if(q.length>=9)ph[q]=r});
+   var dup=0;L.forEach(function(x){var k=x.name.toLowerCase();if(seen[k]){dup++;return}seen[k]=1;var q=normPhone(x.phone),r=nm[k]||(q.length>=9?ph[q]:null);if(r)PR.ex.push({x:x,r:r});else PR.nw.push(x)});
+   if(!L.length&&!L.bad){bpv.textContent='Type or paste names. A preview shows here before anything is saved.';bgo.disabled=true;bgo.textContent='Save';return}
+   var h='';
+   if(PR.nw.length)h+='<b>'+PR.nw.length+' new</b> as Namelist: '+PR.nw.slice(0,8).map(function(x){return esc(x.name)+(x.phone?' ('+esc(x.phone)+')':'')}).join(', ')+(PR.nw.length>8?' and '+(PR.nw.length-8)+' more':'')+'.';
+   if(PR.ex.length)h+=(h?'<br>':'')+'<b>'+PR.ex.length+' already in HQ</b>, not duplicated: '+PR.ex.slice(0,5).map(function(e){return esc(e.r.name)+' ('+esc(e.r.stage||'')+')'}).join(', ')+(PR.ex.length>5?' and '+(PR.ex.length-5)+' more':'')+'.'+(lname()?' They are still added to '+esc(lname())+'.':'');
+   if(dup)h+=(h?'<br>':'')+dup+' repeated in your text, counted once.';
+   if(L.bad)h+=(h?'<br>':'')+L.bad+(L.bad>1?' lines have':' line has')+' no name and will be skipped.';
+   if(lname()&&PR.nw.length)h+='<br>New people are added to '+esc(lname())+'.';
+   bpv.innerHTML=h;var n=PR.nw.length;bgo.disabled=!(n||(PR.ex.length&&lname()));bgo.textContent=n?'Save '+n+' new '+(n>1?'people':'person'):(PR.ex.length&&lname()?'Add to '+lname():'Save')};
+  bt.addEventListener('input',prev);
+  ab.addEventListener('click',function(e){var c=e.target.closest('[data-al]');if(!c)return;pickL=pickL===c.dataset.al?'':c.dataset.al;ab.querySelectorAll('[data-al]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.al===pickL)});prev()});
+  bgo.onclick=function(){prev();if(bgo.disabled)return;var ids=[],i=0,BL=pickL&&lById(pickL);
+   PR.nw.forEach(function(x){var id=x.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+Date.now().toString(36)+(i++);RAW.push({id:id,name:x.name,stage:'Namelist',tags:'',market:'',phone:x.phone,email:'',lastContact:'',lastOrder:'',nextDate:'',nextAction:'',hot:'',notes:x.note,verify:'',trmeStart:'',sponsor:'',birthday:'',created:isoOf(TD)});ids.push(id)});
+   if(BL){PR.ex.forEach(function(e){if(e.r.id)ids.push(e.r.id)});var ad=0;ids.forEach(function(id){if(!mOf(BL.id,id)){LM.push({lid:BL.id,pid:id,status:isEv(BL)?'Not yet':'',product:'',added:isoOf(TD),done:'',doneDate:'',tid:'',plc:'',pnd:''});ad++}});if(ad)saveX('listmembers')}
+   var nw=PR.nw.length,ex=PR.ex.length;if(nw)savePeople();ab.remove();render(true);toast((nw?nw+' added to Namelist':'')+(nw&&ex?', ':'')+(ex?ex+' already in HQ':'')+(BL?' · list '+BL.name:''));haptic(true)};
+  bt.focus();return}
  if(d.goto){var g=d.goto.split(':');tab=g[0];if(g[0]==='people'){pview=g[1];pq=''}else teamTab=g[1];render();return}
  if(d.open){var tk=tasks.filter(function(x){return x.id==d.open})[0];sheet('<h3>'+esc(tk.t)+'</h3><p class="meta" style="margin:0">'+(tk.ev?esc(tk.ev)+' · 2 hours on the AJ Jonathan calendar':((tk.at?esc(tk.at)+' · ':'')+esc(tk.dur||'')))+'</p>'+(tk.go==='team'?'<button class="btn" data-close="1" data-gotab="team" style="margin-top:0">Open Team</button>':'')+'<div class="lbl">Move date</div><div class="chips" style="flex-wrap:wrap"><button class="chip" data-tmove="'+tk.id+'|1">Tomorrow</button><button class="chip" data-tmove="'+tk.id+'|2">Lusa</button><button class="chip" data-tmove="'+tk.id+'|7">Next week</button></div>');return}
  if(d.tmove){var tm2=d.tmove.split('|'),tt=tasks.filter(function(x){return String(x.id)===tm2[0]})[0];if(!tt)return;tt.day=TD+Number(tm2[1]);saveTasks();document.querySelectorAll('.sheet-bg').forEach(function(x){x.remove()});render(true);toast('Moved to '+dueTxt(tt.day-TD));haptic();return}
@@ -1638,6 +1675,9 @@ document.addEventListener('click',function(e){
   bb.addEventListener('click',function(e){var c=e.target.closest('[data-bp]');if(c){bprod=c.dataset.bp;sb3()}});
   bb.querySelector('#bs').onclick=function(){var nm=bprod==='Other'?bb.querySelector('#bo').value.trim():bprod,dv=bb.querySelector('#bd').value;if(!nm){toast('Enter the product name first');return}if(!dv){toast('Pick a date first');return}
    PUR.push({id:'p'+Date.now().toString(36),pid:pid(bp),date:dv,product:nm,qty:bb.querySelector('#bq').value.trim(),days:bb.querySelector('#bdy').value.trim()});if(!bp.raw.lastOrder||dv>bp.raw.lastOrder)bp.raw.lastOrder=dv;savePeople();saveX('purchases');bb.remove();render(true);toast('Purchase logged');haptic()};return}
+ if(d.pstage){var sp=people[d.pstage];if(!sp||!sp.raw){toast('Connect the Sheet first so the stage is saved');return}document.querySelectorAll('.sheet-bg').forEach(function(x){x.remove()});
+  var sb=sheet('<h3>Stage: '+esc(sp.n)+'</h3><div class="chips" style="flex-wrap:wrap">'+STAGES.map(function(g){return '<button class="chip" data-sg="'+g+'" aria-pressed="'+(g===sp.st)+'">'+g+'</button>'}).join('')+'</div><button class="btn alt" data-close="1" style="margin-top:0">Close</button>');
+  sb.addEventListener('click',function(e){var c=e.target.closest('[data-sg]');if(!c)return;var ns=c.dataset.sg,old=sp.raw.stage;if(ns===old){sb.remove();return}sp.raw.stage=ns;savePeople();sb.remove();render(true);haptic();toastU(sp.n+' moved to '+ns,function(){sp.raw.stage=old;savePeople();render(true)})});return}
  if(d.edit){var ep=people[d.edit];if(!ep||!ep.raw)return;document.querySelectorAll('.sheet-bg').forEach(function(x){x.remove()});
   var eb=sheet('<h3>Contact: '+esc(ep.n)+'</h3><input id="ep" type="tel" placeholder="WhatsApp number" value="'+esc(ep.raw.phone||'')+'" autocomplete="off"><input id="ee" type="email" placeholder="Email" value="'+esc(ep.raw.email||'')+'" autocomplete="off"><input id="eb" type="text" placeholder="Birthday, e.g. 24 November" value="'+esc(ep.raw.birthday||'')+'" autocomplete="off"><button class="btn" id="es" style="margin-top:0">Save</button>');
   eb.querySelector('#es').onclick=function(){var ph=eb.querySelector('#ep').value.trim(),em=eb.querySelector('#ee').value.trim();if(ph&&normPhone(ph).length<9){toast('Number looks incomplete. Enter the full number, e.g. 0812...');return}if(em&&!/^\S+@\S+\.\S+$/.test(em)){toast('The email format is not right');return}ep.raw.phone=ph;ep.raw.email=em;ep.raw.birthday=eb.querySelector('#eb').value.trim();savePeople();eb.remove();render(true);toast('Contact saved');haptic()};return}

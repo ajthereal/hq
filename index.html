@@ -723,6 +723,54 @@ function contactDone(p,o){o=o||{};var r=p.raw;if(!r){toast('Connect the Sheet fi
  TLOG.push(e);savePeople();saveX('touchlog');
  return {r:r,prev:prev,e:e,next:dn(r.nextDate)-TD}}
 function undoContact(u){u.r.lastContact=u.prev.lc;u.r.nextDate=u.prev.nd;TLOG=TLOG.filter(function(x){return x.id!==u.e.id});savePeople();saveX('touchlog')}
+/* ---------- Waiting + log step ----------
+   Tap Message = person is marked Sent and goes to Waiting (follow-up date in WAIT_DAYS). When they reply, Log asks what happened. */
+var WAIT_DAYS=2,OUTC=['Replied','No reply','Meeting set','Closed','Not now'],METH=['Message','Call','Met in person'];
+function isWait(p){return !!(p.raw&&String(p.raw.waiting)==='1')}
+function sentAgo(p){var d=dn(p.raw&&p.raw.sentDate);if(d==null)return '';var n=TD-d;return n<=0?'today':n===1?'yesterday':n+' days ago'}
+function grpOK(p){return p.st!=='Partner'}
+function grpP(){return people.filter(grpOK)}
+function gvMonth(){var m=isoOf(TD).slice(0,7),tot=0,out={};people.forEach(function(p){if(!grpOK(p))out[pid(p)]=1});
+ PUR.forEach(function(x){if(String(x.date||'').slice(0,7)===m&&!out[x.pid])tot+=Number(String(x.gv||'').replace(/,/g,''))||0});return tot}
+function markSent(p){var r=p.raw;if(!r)return null;
+ var prev={lc:r.lastContact||'',nd:r.nextDate||'',w:r.waiting||'',sa:r.sentDate||''};
+ r.lastContact=isoOf(TD);r.sentDate=isoOf(TD);r.waiting='1';r.nextDate=isoOf(TD+WAIT_DAYS);
+ var e={id:Date.now()+'-'+Math.floor(Math.random()*999),pid:pid(p),date:isoOf(TD),type:'Sent',result:'',note:'',method:'Message'};
+ TLOG.push(e);savePeople();saveX('touchlog');return {r:r,prev:prev,e:e}}
+function undoSent(u){u.r.lastContact=u.prev.lc;u.r.nextDate=u.prev.nd;u.r.waiting=u.prev.w;u.r.sentDate=u.prev.sa;TLOG=TLOG.filter(function(x){return x.id!==u.e.id});savePeople();saveX('touchlog')}
+function openLog(p){var r=p.raw;if(!r){toast('Connect the Sheet first so the log is saved');return}
+ var S={out:'',meth:isWait(p)?'Message':'Message',intr:'',nx:String(cad(p.st))};
+ var grp=function(k,L){return '<div class="chips" style="flex-wrap:wrap">'+L.map(function(x){return '<button class="chip" data-lg="'+k+'" data-v="'+esc(x[0])+'" aria-pressed="'+(S[k]===x[0])+'">'+esc(x[1])+'</button>'}).join('')+'</div>'};
+ var ints=[];for(var i=1;i<=10;i++)ints.push([String(i),String(i)]);
+ var nxs=[['1','Tomorrow'],['3','In 3 days'],['7','Next week'],[String(cad(p.st)),'Usual ('+cad(p.st)+'d)']];
+ var b=sheet('<h3>'+esc(p.n)+'</h3>'+(isWait(p)?'<p class="meta" style="margin:0">Sent '+esc(sentAgo(p))+', waiting for a reply</p>':'')+
+  '<div class="lbl">What happened</div>'+grp('out',OUTC.map(function(x){return [x,x]}))+
+  '<div class="lbl">How</div>'+grp('meth',METH.map(function(x){return [x,x]}))+
+  '<div class="lbl">Interest, 1 to 10 (optional)</div>'+grp('intr',ints)+
+  '<div class="lbl">Next follow-up</div>'+grp('nx',nxs)+'<input id="lgd" type="date" aria-label="Pick a date" value="'+isoOf(TD+cad(p.st))+'">'+
+  '<input id="lgn" type="text" placeholder="What did they like best? (optional)" autocomplete="off">'+
+  '<button class="btn" id="lgs" style="margin-top:0">Save</button><button class="btn alt" data-close="1" style="margin-top:0">Close</button>');
+ b.addEventListener('click',function(e){var c=e.target.closest('[data-lg]');if(!c)return;var k=c.dataset.lg,v=c.dataset.v;
+  if(S[k]===v&&k==='intr'){S[k]=''}else S[k]=v;
+  b.querySelectorAll('[data-lg="'+k+'"]').forEach(function(x){x.setAttribute('aria-pressed',S[k]!==''&&x.dataset.v===S[k])});
+  if(k==='nx'){b.querySelector('#lgd').value=isoOf(TD+Number(v))}});
+ b.querySelector('#lgd').addEventListener('change',function(){S.nx='';b.querySelectorAll('[data-lg="nx"]').forEach(function(x){x.setAttribute('aria-pressed','false')})});
+ b.querySelector('#lgs').onclick=function(){
+  if(!S.out){toast('Pick what happened first');return}
+  var nd=b.querySelector('#lgd').value;if(!nd){toast('Pick a next follow-up date first');return}
+  var note=b.querySelector('#lgn').value.trim();
+  var prev={lc:r.lastContact||'',nd:r.nextDate||'',w:r.waiting||'',sa:r.sentDate||'',st:r.stage||'',ex:r.exposures||'',it:r.interest||'',ts:r.trmeStart||''};
+  r.waiting='';r.lastContact=isoOf(TD);r.nextDate=nd;
+  if(S.out!=='Not now')r.exposures=String((Number(r.exposures)||0)+1);
+  if(S.intr)r.interest=S.intr;
+  var msg=p.n+' logged. Next '+dueTxt(dn(nd)-TD);
+  if(S.out==='Not now'){r.stage='Not Now'}
+  else if(S.out==='Closed'){
+   if(r.stage==='Warming Partner'){r.stage='Partner';msg=p.n+' is now a Partner and moves to your Team'}
+   else if(['Namelist','Relationship','Prospect','Closing'].indexOf(r.stage)>-1){r.stage='TRME Active';if(!r.trmeStart)r.trmeStart=isoOf(TD);msg=p.n+' started the 90 days'}}
+  var e={id:Date.now()+'-'+Math.floor(Math.random()*999),pid:pid(p),date:isoOf(TD),type:S.meth,result:S.out,interest:S.intr,note:note};
+  TLOG.push(e);savePeople();saveX('touchlog');b.remove();haptic();render(true);
+  toastU(msg,function(){r.lastContact=prev.lc;r.nextDate=prev.nd;r.waiting=prev.w;r.sentDate=prev.sa;r.stage=prev.st;r.exposures=prev.ex;r.interest=prev.it;r.trmeStart=prev.ts;TLOG=TLOG.filter(function(x){return x.id!==e.id});savePeople();saveX('touchlog');render(true)})}}
 function doFollow(el){var p=people[el.dataset.fudone],row=el.closest('.task');if(!p)return;
  var u=contactDone(p,{type:el.dataset.ftype||'Follow-up'});if(!u)return;
  row.classList.add('done','pop');burst(row.querySelector('.ck i'),false);haptic(false);
@@ -736,7 +784,8 @@ function openWA(p,o){o=o||{};
  if(!p.phone){toast('WhatsApp number for '+p.n+' is missing. Add it with Edit contact in the details');return false}
  if(p.phone.length<9){toast('Number for '+p.n+' looks incomplete. Fix it with Edit contact in the details');return false}
  var a=document.createElement('a');a.href='https://wa.me/'+p.phone+'?text='+encodeURIComponent(o.text||msgFor(p));a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
- PENDWA={pid:pid(p),type:o.type||'Follow-up',lid:o.lid||'',day:o.day||'',ts:Date.now()};try{localStorage.setItem('hq-pendwa',JSON.stringify(PENDWA))}catch(e){}
+ if(o.lid){PENDWA={pid:pid(p),type:o.type||'Follow-up',lid:o.lid||'',day:o.day||'',ts:Date.now()};try{localStorage.setItem('hq-pendwa',JSON.stringify(PENDWA))}catch(e){}}
+ var su=markSent(p);if(su)toastU(p.n+' marked as sent. Waiting for a reply',function(){undoSent(su);render(true)});
  return true}
 function listDone(lt,mt,pt){if(!pt.raw){toast('Connect the Sheet first so it is saved');return null}
  mt.done='1';mt.doneDate=isoOf(TD);mt.tid='';mt.plc='';mt.pnd='';var u=null;
@@ -882,7 +931,7 @@ function reoRel(p){if(p.st!=='Customer'&&p.st!=='TRME Active')return null;var du
 function reo(p){var r=reoRel(p);return (r!==null&&r<=7&&r>=-365)?{rel:r}:null}
 function reorderList(){return people.filter(function(p){return !(p.next!==null&&p.next<=0)&&p.last!==0}).map(function(p){var r=reo(p);return r?{p:p,r:r}:null}).filter(Boolean).sort(function(a,b){return a.r.rel-b.r.rel})}
 function birthdayList(){return people.filter(function(p){return p.last!==0}).map(function(p){var d=bdIn(p);return d!==null&&d<=3?{p:p,d:d}:null}).filter(Boolean).sort(function(a,b){return a.d-b.d})}
-var CHKD=[7,14,21];
+var CHKD=[7,30,60,90];
 function resOf(pd,day){return RES.filter(function(x){return x.pid===pd&&String(x.day)===String(day)})[0]}
 function chkDue(p){if(p.st!=='TRME Active'||!p.raw)return null;var t0=dn(p.raw.trmeStart);if(t0==null)return null;var age=TD-t0,id=pid(p);
  for(var i=CHKD.length-1;i>=0;i--){var d=CHKD[i];if(age>=d&&age<=d+3&&!resOf(id,d))return {day:d,age:age}}return null}
@@ -1076,24 +1125,33 @@ function filterPeople(){
  var q=pq.trim().toLowerCase();
  if(q)return {mode:'search',list:people.filter(function(p){return (p.n+' '+p.note+' '+esc(p.st||'')+' '+(p.tags||'')).toLowerCase().indexOf(q)>-1}).sort(function(a,b){return a.n<b.n?-1:1})};
  var L;
- if(pview==='Follow-up')L=people.filter(function(p){return p.next!==null&&p.next<=7&&p.st!=='Not Now'}).sort(function(a,b){return a.next-b.next||a.last-b.last});
+ if(pview==='Follow-up')L=grpP().filter(function(p){return p.next!==null&&p.next<=7&&p.st!=='Not Now'}).sort(function(a,b){return a.next-b.next||a.last-b.last});
  else if(pview==='No next step')L=people.filter(noNext).sort(function(a,b){return b.last-a.last});
  else if(pview==='TRME')L=people.filter(function(p){return p.st==='TRME Active'}).sort(byNext);
+ else if(pview==='Waiting')L=grpP().filter(isWait).sort(byNext);
+ else if(pview.indexOf('L:')===0)L=[];
  else if(pview==='Pipeline')L=people.filter(function(p){return ['Relationship','Prospect','Closing'].indexOf(p.st)>-1}).sort(byNext);
  else if(pview==='Customers')L=people.filter(function(p){return p.st==='Customer'||p.st==='TRME Active'}).sort(function(a,b){var x=reoRel(a),y=reoRel(b);x=x===null?99999:x;y=y===null?99999:y;return x-y});
  else if(pview==='Promo')L=[];
- else L=people.slice().sort(function(a,b){return a.n<b.n?-1:1});
+ else L=grpP().sort(function(a,b){return a.n<b.n?-1:1});
  return {mode:pview,list:L}}
-function counts(){var c={};c['Follow-up']=people.filter(function(p){return p.next!==null&&p.next<=7&&p.st!=='Not Now'}).length;
+function counts(){var c={};c['Follow-up']=grpP().filter(function(p){return p.next!==null&&p.next<=7&&p.st!=='Not Now'}).length;
  c['No next step']=people.filter(noNext).length;
  c.TRME=people.filter(function(p){return p.st==='TRME Active'}).length;
  c.Pipeline=people.filter(function(p){return ['Relationship','Prospect','Closing'].indexOf(p.st)>-1}).length;
- c.Customers=people.filter(function(p){return p.st==='Customer'||p.st==='TRME Active'}).length;c.All=people.length;c.Promo=PUR.length;return c}
+ c.Customers=people.filter(function(p){return p.st==='Customer'||p.st==='TRME Active'}).length;c.Waiting=grpP().filter(isWait).length;c.All=grpP().length;c.Promo=PUR.length;return c}
 var PITEMS=[],PSHOWN=0,PIO=null;
 function buildItems(){
  if(pview==='Promo'&&!pq.trim())return promoItems();
  var r=filterPeople(),L=r.list,out=[];
  if(r.mode==='search'){out.push({k:'n',txt:L.length+' results for "'+pq.trim()+'"'});L.forEach(function(p){out.push({k:'r',p:p})});return out}
+ if(pview.indexOf('L:')===0){var lx=lById(pview.slice(2));if(!lx){out.push({k:'n',txt:'This list is not available'});return out}
+  var lms=LM.filter(function(m){return m.lid===lx.id});out.push({k:'n',txt:lx.kind+' list, '+lms.filter(function(m){return mDone(m)}).length+' of '+lms.length+' done'});
+  lms.forEach(function(m){out.push({k:'lm',l:lx,m:m})});if(!lms.length)out.push({k:'n',txt:'Empty. Add names from the Lists tab.'});return out}
+ if(r.mode==='Waiting'){
+  [['Follow up now','late','alert',function(p){return p.next<=0}],['Waiting for a reply','eve','clock',function(p){return p.next>0}]].forEach(function(g){
+   var s=L.filter(g[3]);if(!s.length)return;out.push({k:'g',cls:g[1],icon:g[2],label:g[0],n:s.length});s.forEach(function(p){out.push({k:'r',p:p})})});
+  if(!out.length)out.push({k:'n',txt:'Nobody is waiting. Tap Message on someone and they show up here.'});return out}
  if(r.mode==='Follow-up'){
   [['Overdue','late','alert',function(p){return p.next<0}],['Today','morning','sun',function(p){return p.next===0}],['This week','eve','clock',function(p){return p.next>0}]].forEach(function(g){
    var s=L.filter(g[3]);if(!s.length)return;out.push({k:'g',cls:g[1],icon:g[2],label:g[0],n:s.length});s.forEach(function(p){out.push({k:'r',p:p})})});return out}
@@ -1101,10 +1159,11 @@ function buildItems(){
  L.forEach(function(p){out.push({k:'r',p:p})});return out}
 function rowHtml(p){
  var d=dueTxt(p.next),cls=p.next!==null&&p.next<0?' late':p.next===0?' today':'',last=p.last>=9999?'not logged':p.last===0?'today':p.last+'d ago';
- return '<div class="prow'+(wide()&&selPid===p.id?' sel':'')+'" data-pid="'+p.id+'"><button class="phead" data-ptoggle="'+p.id+'"><span class="av" style="background:'+avc(p)+'">'+esc(String(p.n||'?').charAt(0))+'</span><span class="pn"><b>'+esc(p.n)+'</b><small>'+esc(p.st||'')+' · '+last+'</small>'+(p.raw?(p.raw.nextAction?'<small class="na">'+esc(p.raw.nextAction)+'</small>':p.st==='Not Now'?'':'<small class="nn" data-next="'+p.id+'">No next step yet</small>'):'')+'</span>'+(d?'<span class="due'+cls+'">'+d+'</span>':'')+'</button><div class="pact" hidden><button class="main" data-msg="'+p.id+'">Message</button><button data-log="'+p.id+'">Done</button><button data-pdet="'+p.id+'">Open</button><button data-next="'+p.id+'">Next</button></div></div>'}
+ return '<div class="prow'+(wide()&&selPid===p.id?' sel':'')+'" data-pid="'+p.id+'"><button class="phead" data-ptoggle="'+p.id+'"><span class="av" style="background:'+avc(p)+'">'+esc(String(p.n||'?').charAt(0))+'</span><span class="pn"><b>'+esc(p.n)+'</b><small>'+esc(p.st||'')+' · '+last+'</small>'+(isWait(p)?'<small class="na">Sent '+sentAgo(p)+', waiting for a reply</small>':'')+(p.raw?(p.raw.nextAction?'<small class="na">'+esc(p.raw.nextAction)+'</small>':p.st==='Not Now'?'':'<small class="nn" data-next="'+p.id+'">No next step yet</small>'):'')+'</span>'+(d?'<span class="due'+cls+'">'+d+'</span>':'')+'</button><div class="pact" hidden><button class="main" data-msg="'+p.id+'">Message</button><button data-log="'+p.id+'">Log</button><button data-pdet="'+p.id+'">Open</button><button data-next="'+p.id+'">Next</button></div></div>'}
 function itemHtml(it){
  if(it.k==='pp')return '<div class="chips" style="margin:6px 0 10px;flex-wrap:wrap">'+it.prods.map(function(x){return '<button class="chip" data-pprod="'+esc(x)+'" aria-pressed="'+(pprod===x)+'">'+esc(x)+'</button>'}).join('')+'</div>';
  if(it.k==='pr'){var dn2=it.p.raw&&it.p.last===0;return '<div class="task'+(dn2?' done':'')+'" style="margin-bottom:6px"><span class="av" style="background:'+avc(it.p)+'">'+esc(it.p.n[0])+'</span><button class="tb" data-pdet="'+it.p.id+'"><b>'+esc(it.p.n)+'</b><small>'+esc(it.x.product)+' · '+esc(it.x.date)+'</small></button><button class="ck" data-promo="'+it.p.id+'" aria-label="Already offered"><i>'+ic('check',14)+'</i></button></div>'}
+ if(it.k==='lm')return lmRow(it.l,it.m);
  if(it.k==='r')return rowHtml(it.p);
  if(it.k==='l')return '<div class="letter" id="L'+it.l+'">'+it.l+'</div>';
  if(it.k==='n')return '<p class="note" style="margin:4px 0 10px">'+esc(it.txt)+'</p>';
@@ -1139,21 +1198,23 @@ function pdetail(p){
 function pdetailReal(p){
  var r=p.raw,fm=function(x){var d=dn(x);return d==null?'':dueTxt(d-TD)+' ('+x+')'};
  var h='<div class="card" style="margin-top:0"><div style="display:flex;gap:12px;align-items:center"><span class="av" style="background:'+avc(p)+';width:52px;height:52px;font-size:22px">'+esc(p.n[0])+'</span><div style="min-width:0"><h2 style="font-size:21px">'+esc(p.n)+'</h2><div class="meta">'+esc(p.st)+(r.market?' · '+esc(r.market):'')+'</div></div></div>';
- h+='<div style="display:flex;gap:7px;margin-top:12px;flex-wrap:wrap"><button class="btn sm main" data-msg="'+p.id+'">Message</button><button class="btn sm alt" data-log="'+p.id+'">Talked</button><button class="btn sm alt" data-next="'+p.id+'">Next: '+(p.next===null?'none yet':dueTxt(p.next))+'</button><button class="btn sm alt" data-pstage="'+p.id+'">Stage: '+esc(p.st)+'</button><button class="btn sm alt" data-edit="'+p.id+'">Edit contact</button></div></div>';
- var rows=[['Next step',r.nextAction],['Follow-up',fm(r.nextDate)],['Last contact',fm(r.lastContact)],['Last order',fm(r.lastOrder)],['Tag',r.tags],['Phone',r.phone],['Email',r.email],['Sponsor',r.sponsor],['Birthday',r.birthday],['TRME start',r.trmeStart]].filter(function(x){return x[1]});
+ h+='<div style="display:flex;gap:7px;margin-top:12px;flex-wrap:wrap"><button class="btn sm main" data-msg="'+p.id+'">Message</button><button class="btn sm alt" data-log="'+p.id+'">Log</button><button class="btn sm alt" data-next="'+p.id+'">Next: '+(p.next===null?'none yet':dueTxt(p.next))+'</button><button class="btn sm alt" data-pstage="'+p.id+'">Stage: '+esc(p.st)+'</button><button class="btn sm alt" data-edit="'+p.id+'">Edit contact</button></div></div>';
+ var rows=[['Next step',r.nextAction],['Follow-up',fm(r.nextDate)],['Last contact',fm(r.lastContact)],['Last order',fm(r.lastOrder)],['Tag',r.tags],['Phone',r.phone],['Email',r.email],['Sponsor',r.sponsor],['Birthday',r.birthday],['TRME start',r.trmeStart],['Sent',isWait(p)?sentAgo(p)+', waiting for a reply':''],['Interest',r.interest?r.interest+' of 10':''],['Exposures',r.exposures]].filter(function(x){return x[1]});
  if(rows.length)h+='<div class="card">'+rows.map(function(x,i){return '<div class="tline"><small>'+x[0]+'</small><b>'+esc(x[1])+'</b></div>'}).join('')+'</div>';
+ var ro=reo(p);if(ro)h+='<div class="flag" style="margin-top:10px">Reorder: '+dueTxt(ro.rel)+'</div>';
+ var t0=dn(r.trmeStart);if(p.st==='TRME Active'&&t0!=null){var age=TD-t0;h+='<div class="card"><h2>90 days</h2><p>Day '+Math.min(age,90)+' of 90</p><div class="trk"><b style="width:'+Math.min(100,age/90*100)+'%"></b></div>'+CHKD.map(function(d){var rs=resOf(pid(p),d),due=t0+d-TD;return '<div class="tline"><small>Day '+d+' · '+esc(dueTxt(due))+'</small>'+(rs?'<b>Logged'+(rs.weight?' · '+esc(rs.weight)+' kg':'')+'</b>':'<button class="btn sm alt" data-chkin="'+p.id+'|'+d+'">Log results</button>')+'</div>'}).join('')+'</div>'}
  var pu=PUR.filter(function(x){return x.pid===pid(p)}).sort(function(a,b){return a.date<b.date?1:-1});
- h+='<div class="card"><h2>Purchases</h2>'+(pu.length?pu.map(function(x){return '<div class="tline"><small>'+esc(x.date)+'</small><b>'+esc(x.product)+'</b></div>'}).join(''):'<p class="meta" style="margin:6px 0">Nothing logged yet.</p>')+'<button class="btn sm alt" data-buy="'+p.id+'">Log purchase</button></div>';
+ h+='<div class="card"><h2>Purchases</h2>'+(pu.length?pu.map(function(x){return '<div class="tline"><small>'+esc(x.date)+'</small><b>'+esc(x.product)+(x.gv?' · '+esc(x.gv)+' GV':'')+'</b></div>'}).join(''):'<p class="meta" style="margin:6px 0">Nothing logged yet.</p>')+'<button class="btn sm alt" data-buy="'+p.id+'">Log purchase</button></div>';
  var ls=LM.filter(function(m){return m.pid===pid(p)}).map(function(m){var l=lById(m.lid);return l?'<div class="tline"><small>'+esc(l.kind)+(l.status==='archived'?' · archived':'')+'</small><b>'+esc(l.name)+(m.status?' · '+esc(m.status):'')+(m.product?' · '+esc(m.product):'')+'</b></div>':''}).join('');
  if(ls)h+='<div class="card"><h2>On lists</h2>'+ls+'</div>';
  if(r.notes)h+='<div class="card"><h2>Notes</h2><div class="note" style="white-space:pre-wrap;margin-top:6px">'+esc(r.notes)+'</div></div>';
  if(r.verify)h+='<div class="flag" style="margin-top:10px">This comes from old notes and you have not checked it yet.</div>';
  return h}
 function people_(){
- var c=counts(),views=['Follow-up','No next step','TRME','Pipeline','Customers','Promo','All'];
- var h='<div class="top"><div class="stats"><span style="color:var(--mute)">'+c.All+' people</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button><button data-addp="1" aria-label="Add person">'+ic('plus',22)+'</button></div></div>';
- h+='<div class="hrow"><h1>People</h1></div>'+(CFG.url?'':'<span class="sample">Sample data, 420 people</span>')+'';
- var left='<div class="search"><label>'+ic('search',18)+'<input id="pq" type="search" placeholder="Search name or notes" autocomplete="off" value="'+esc(pq)+'"></label></div><div class="chips" id="pchips">'+views.map(function(v){return '<button class="chip" data-pv="'+v+'" aria-pressed="'+(pview===v&&!pq)+'">'+v+' <em>'+c[v]+'</em></button>'}).join('')+'</div><div id="plist" style="margin-top:4px"></div>';
+ var c=counts(),views=['Follow-up','Waiting','No next step','TRME','Pipeline','Customers','Promo','All'];
+ var h='<div class="top"><div class="stats"><span style="color:var(--mute)">'+c.All+' in your group</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button><button data-addp="1" aria-label="Add person">'+ic('plus',22)+'</button></div></div>';
+ h+='<div class="hrow"><h1>My Group</h1></div>'+(CFG.url?'<p class="note" style="margin:0 4px 8px">Group GV this month <b>'+gvMonth().toLocaleString('en-US')+'</b></p>':'<span class="sample">Sample data, 420 people</span>')+'';
+ var left='<div class="search"><label>'+ic('search',18)+'<input id="pq" type="search" placeholder="Search name or notes" autocomplete="off" value="'+esc(pq)+'"></label></div><div class="chips" id="pchips">'+views.map(function(v){return '<button class="chip" data-pv="'+v+'" aria-pressed="'+(pview===v&&!pq)+'">'+v+' <em>'+c[v]+'</em></button>'}).join('')+LISTS.filter(function(l){return l.status!=='archived'}).map(function(l){return '<button class="chip" data-pv="L:'+esc(l.id)+'" aria-pressed="'+(pview==='L:'+l.id&&!pq)+'">'+esc(l.name)+' <em>'+LM.filter(function(m){return m.lid===l.id}).length+'</em></button>'}).join('')+'</div><div id="plist" style="margin-top:4px"></div>';
  if(wide())return h+'<div class="pwide"><div>'+left+'</div><div class="pdetail" id="pdetail"></div></div>';
  return h+left}
 
@@ -1609,8 +1670,8 @@ document.addEventListener('click',function(e){
   if(wide()){selPid=id;document.querySelectorAll('.prow').forEach(function(r){r.classList.toggle('sel',+r.dataset.pid===id)});$('#pdetail').innerHTML=pdetail(people[id]);return}
   var row=el.closest('.prow'),pa=row.querySelector('.pact'),was=!pa.hidden;document.querySelectorAll('.pact').forEach(function(x){x.hidden=true});pa.hidden=was;return}
  if(d.pdet){sheet(pdetail(people[d.pdet])+'<button class="btn alt" data-close="1">Close</button>');return}
- if(d.msg){var p=people[d.msg];var b=sheet('<h3>Send to '+esc(p.n)+'</h3><div class="bubble">'+esc(msgFor(p))+'</div><button class="btn" id="go" style="margin-top:0">Open WhatsApp</button><button class="btn alt" data-close="1" style="margin-top:0">Edit text first</button><p class="meta" style="margin:0">Come back to HQ after sending and HQ asks "Did you send it?" and logs it.</p>');b.querySelector('#go').onclick=function(){var t=msgFor(p);if(p.phone){if(openWA(p,{text:t,type:'Follow-up'})){b.remove();render(true)}}else{copy(t,'No number yet. Message copied, pick the contact in WhatsApp.');var a2=document.createElement('a');a2.href='https://wa.me/?text='+encodeURIComponent(t);a2.target='_blank';a2.rel='noopener';document.body.appendChild(a2);a2.click();a2.remove();b.remove()}};return}
- if(d.log){var lp=people[d.log];if(!lp)return;var lu=contactDone(lp,{type:'Talked'});if(!lu)return;haptic();document.querySelectorAll('.sheet-bg').forEach(function(x){x.remove()});render(true);toastU(lp.n+' logged. Next '+dueTxt(lu.next),function(){undoContact(lu);render(true)});return}
+ if(d.msg){var p=people[d.msg];var b=sheet('<h3>Send to '+esc(p.n)+'</h3><div class="bubble">'+esc(msgFor(p))+'</div><button class="btn" id="go" style="margin-top:0">Open WhatsApp</button><button class="btn alt" data-close="1" style="margin-top:0">Edit text first</button><p class="meta" style="margin:0">HQ marks them as sent and keeps them in Waiting until you log a reply.</p>');b.querySelector('#go').onclick=function(){var t=msgFor(p);if(p.phone){if(openWA(p,{text:t,type:'Follow-up'})){b.remove();render(true)}}else{copy(t,'No number yet. Message copied, pick the contact in WhatsApp.');var a2=document.createElement('a');a2.href='https://wa.me/?text='+encodeURIComponent(t);a2.target='_blank';a2.rel='noopener';document.body.appendChild(a2);a2.click();a2.remove();b.remove()}};return}
+ if(d.log){var lp=people[d.log];if(!lp)return;document.querySelectorAll('.sheet-bg').forEach(function(x){x.remove()});openLog(lp);return}
  if(d.fudone){doFollow(el);return}
  if(d.fwa){var fp=people[d.fwa];if(fp)openWA(fp,{type:el.dataset.ft||'Follow-up',text:msgFor(fp,el.dataset.fk)});return}
  if(d.score){scoreSheet();return}
@@ -1670,11 +1731,11 @@ document.addEventListener('click',function(e){
    else toast(pt.n+' ticked on this list')},REDUCE?0:560);return}
  if(d.buy){var bp=people[d.buy];if(!bp)return;if(!bp.raw){toast('Connect the Sheet first so the purchase is saved');return}
   document.querySelectorAll('.sheet-bg').forEach(function(x){x.remove()});
-  var bprod='TRME',bb=sheet('<h3>Purchase: '+esc(bp.n)+'</h3><div class="lbl">Product</div><div class="chips" style="flex-wrap:wrap">'+['TRME','Duo','RESET','Other'].map(function(k){return '<button class="chip" data-bp="'+k+'">'+k+'</button>'}).join('')+'</div><input id="bo" type="text" placeholder="Product name" autocomplete="off" style="display:none"><div class="lbl">Date</div><input id="bd" type="date" value="'+isoOf(TD)+'"><input id="bq" type="number" inputmode="numeric" placeholder="Quantity (empty = 1)" autocomplete="off"><input id="bdy" type="number" inputmode="numeric" placeholder="Days of supply (empty = auto: TRME 90, Duo/RESET 180, other 30)" autocomplete="off"><button class="btn" id="bs" style="margin-top:0">Save</button>');
+  var bprod='TRME',bb=sheet('<h3>Purchase: '+esc(bp.n)+'</h3><div class="lbl">Product</div><div class="chips" style="flex-wrap:wrap">'+['TRME','Duo','RESET','Other'].map(function(k){return '<button class="chip" data-bp="'+k+'">'+k+'</button>'}).join('')+'</div><input id="bo" type="text" placeholder="Product name" autocomplete="off" style="display:none"><div class="lbl">Date</div><input id="bd" type="date" value="'+isoOf(TD)+'"><input id="bq" type="number" inputmode="numeric" placeholder="Quantity (empty = 1)" autocomplete="off"><input id="bgv" type="number" inputmode="decimal" placeholder="GV of this purchase" autocomplete="off"><input id="bdy" type="number" inputmode="numeric" placeholder="Days of supply (empty = auto: TRME 90, Duo/RESET 180, other 30)" autocomplete="off"><button class="btn" id="bs" style="margin-top:0">Save</button>');
   var sb3=function(){bb.querySelectorAll('[data-bp]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.bp===bprod)});bb.querySelector('#bo').style.display=bprod==='Other'?'block':'none'};sb3();
   bb.addEventListener('click',function(e){var c=e.target.closest('[data-bp]');if(c){bprod=c.dataset.bp;sb3()}});
   bb.querySelector('#bs').onclick=function(){var nm=bprod==='Other'?bb.querySelector('#bo').value.trim():bprod,dv=bb.querySelector('#bd').value;if(!nm){toast('Enter the product name first');return}if(!dv){toast('Pick a date first');return}
-   PUR.push({id:'p'+Date.now().toString(36),pid:pid(bp),date:dv,product:nm,qty:bb.querySelector('#bq').value.trim(),days:bb.querySelector('#bdy').value.trim()});if(!bp.raw.lastOrder||dv>bp.raw.lastOrder)bp.raw.lastOrder=dv;savePeople();saveX('purchases');bb.remove();render(true);toast('Purchase logged');haptic()};return}
+   PUR.push({id:'p'+Date.now().toString(36),pid:pid(bp),date:dv,product:nm,qty:bb.querySelector('#bq').value.trim(),days:bb.querySelector('#bdy').value.trim(),gv:bb.querySelector('#bgv').value.trim()});if(!bp.raw.lastOrder||dv>bp.raw.lastOrder)bp.raw.lastOrder=dv;savePeople();saveX('purchases');bb.remove();render(true);toast('Purchase logged');haptic()};return}
  if(d.pstage){var sp=people[d.pstage];if(!sp||!sp.raw){toast('Connect the Sheet first so the stage is saved');return}document.querySelectorAll('.sheet-bg').forEach(function(x){x.remove()});
   var sb=sheet('<h3>Stage: '+esc(sp.n)+'</h3><div class="chips" style="flex-wrap:wrap">'+STAGES.map(function(g){return '<button class="chip" data-sg="'+g+'" aria-pressed="'+(g===sp.st)+'">'+g+'</button>'}).join('')+'</div><button class="btn alt" data-close="1" style="margin-top:0">Close</button>');
   sb.addEventListener('click',function(e){var c=e.target.closest('[data-sg]');if(!c)return;var ns=c.dataset.sg,old=sp.raw.stage;if(ns===old){sb.remove();return}sp.raw.stage=ns;savePeople();sb.remove();render(true);haptic();toastU(sp.n+' moved to '+ns,function(){sp.raw.stage=old;savePeople();render(true)})});return}

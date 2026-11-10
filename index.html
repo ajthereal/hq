@@ -144,6 +144,26 @@ h1{font-family:var(--display);font-weight:500;font-size:31px;line-height:1.05;ma
 .pdetail{position:sticky;top:12px;margin-top:10px}
 .prow{border-radius:18px;background:var(--card);border:1px solid var(--line);margin-bottom:6px;overflow:hidden}
 .prow.sel{border-color:var(--ink)}
+.tabs4{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:4px;margin:6px 0 10px}
+.tabs4 .chip{height:34px;padding:0 4px;border-radius:12px;border:0;background:transparent;justify-content:center;gap:5px;font-size:12.5px}
+.tabs4 .chip[aria-pressed="true"]{background:var(--btn);color:var(--btn-ink)}
+.qrow{display:flex;align-items:center;gap:6px;padding:7px 8px 7px 7px;border-radius:18px;background:var(--card);border:1px solid var(--line);margin-bottom:6px}
+.qrow.sel{border-color:var(--ink)}
+.qm{flex:1;min-width:0;display:flex;align-items:center;gap:10px;text-align:left;background:none;border:0;color:inherit;font:inherit;padding:0}
+.qm .pn{min-width:0}
+.qm .pn b{font-size:14.5px}
+.qm .pn small{display:block;color:var(--mute);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qm em{font-style:normal;color:var(--mute);font-size:11px;font-weight:500;margin-left:6px}
+.qb{height:34px;padding:0 13px;border-radius:99px;background:var(--btn);color:var(--btn-ink);font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:6px;flex:none;margin-left:12px;border:0}
+.qb.alt{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+.qghost{display:flex;align-items:center;gap:10px;padding:8px 8px 8px 14px;border-radius:18px;border:1px dashed var(--line);margin-bottom:6px;font-size:13px;color:var(--mute)}
+.qghost span{flex:1;min-width:0}
+.qstrips{display:flex;gap:8px;margin:4px 0 8px;flex-wrap:wrap}
+.qs{flex:1;min-width:150px;padding:10px 13px;border-radius:14px;background:var(--card);border:1px solid var(--line);font-size:12.5px;font-weight:600;text-align:left;color:var(--ink)}
+.qs.warn{background:var(--late-bg);color:var(--late-ink);border-color:transparent}
+.selrow{display:flex;gap:8px;align-items:center;margin:2px 0 10px}
+.psel{height:40px;border-radius:99px;background:var(--card);border:1px solid var(--line);color:var(--ink);font:inherit;font-size:14px;padding:0 14px;max-width:100%;min-width:0}
+.qlog .chip{height:30px;padding:0 11px;font-size:12px}
 .phead{display:flex;align-items:center;gap:11px;width:100%;padding:6px 12px 6px 8px;min-height:52px;text-align:left}
 .av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-size:15px;color:#1E2430;flex:none}
 .pn{flex:1;min-width:0}.pn b{display:block;font-weight:600;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -156,6 +176,7 @@ h1{font-family:var(--display);font-weight:500;font-size:31px;line-height:1.05;ma
 .pact button{flex:1;height:40px;border-radius:99px;background:var(--card2);font-weight:600;font-size:13px}
 .pact button.main,.btn.main{background:var(--btn);color:var(--btn-ink)}
 .wide .pact{display:none}
+.rail[hidden]{display:none}
 .rail{position:absolute;right:2px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;z-index:8}
 .rail button{width:20px;height:14px;font-size:9.5px;font-weight:700;color:var(--mute);line-height:14px}
 .letter{font-family:var(--display);font-size:17px;color:var(--mute);margin:14px 0 6px 4px}
@@ -340,7 +361,7 @@ function burst(host,big){if(REDUCE||!host)return;var n=big?18:10,r0=document.cre
 
 /* ---------- state ---------- */
 var TD=Math.floor((Date.now()+7*36e5)/864e5);
-var tab='today',sel=TD,collapsed={},teamTab='Pulse',pview='Follow-up',pq='',pprod='',selPid=0,ctSel=1,ctView='Board',mode='auto',theme='auto';
+var tab='today',sel=TD,collapsed={},teamTab='Pulse',pview='Queue',pq='',pprod='',selPid=-1,ctSel=1,ctView='Board',mode='auto',theme='auto';
 var tasks=[
  {id:1,t:'Follow up Rina, Prysm result',day:30,part:'morning',dur:'10m',ic:'chat',c:'sky',done:false},
  {id:2,t:'PPh 21 payment proof',day:29,part:'afternoon',dur:'15m',ic:'tasks',c:'sand',done:false},
@@ -725,7 +746,7 @@ function contactDone(p,o){o=o||{};var r=p.raw;if(!r){toast('Connect the Sheet fi
 function undoContact(u){u.r.lastContact=u.prev.lc;u.r.nextDate=u.prev.nd;TLOG=TLOG.filter(function(x){return x.id!==u.e.id});savePeople();saveX('touchlog')}
 /* ---------- Waiting + log step ----------
    Tap Message = person is marked Sent and goes to Waiting (follow-up date in WAIT_DAYS). When they reply, Log asks what happened. */
-var WAIT_DAYS=2,OUTC=['Replied','No reply','Meeting set','Closed','Not now'],METH=['Message','Call','Met in person'];
+var WAIT_DAYS=2,OUTC=['Replied','No reply','Meeting set','Said yes','Not now'],METH=['Message','Call','Met in person'];
 function isWait(p){return !!(p.raw&&String(p.raw.waiting)==='1')}
 function sentAgo(p){var d=dn(p.raw&&p.raw.sentDate);if(d==null)return '';var n=TD-d;return n<=0?'today':n===1?'yesterday':n+' days ago'}
 function grpOK(p){return p.st!=='Partner'}
@@ -738,39 +759,77 @@ function markSent(p){var r=p.raw;if(!r)return null;
  var e={id:Date.now()+'-'+Math.floor(Math.random()*999),pid:pid(p),date:isoOf(TD),type:'Sent',result:'',note:'',method:'Message'};
  TLOG.push(e);savePeople();saveX('touchlog');return {r:r,prev:prev,e:e}}
 function undoSent(u){u.r.lastContact=u.prev.lc;u.r.nextDate=u.prev.nd;u.r.waiting=u.prev.w;u.r.sentDate=u.prev.sa;TLOG=TLOG.filter(function(x){return x.id!==u.e.id});savePeople();saveX('touchlog')}
-function openLog(p){var r=p.raw;if(!r){toast('Connect the Sheet first so the log is saved');return}
- var S={out:'',meth:isWait(p)?'Message':'Message',intr:'',nx:String(cad(p.st))};
- var grp=function(k,L){return '<div class="chips" style="flex-wrap:wrap">'+L.map(function(x){return '<button class="chip" data-lg="'+k+'" data-v="'+esc(x[0])+'" aria-pressed="'+(S[k]===x[0])+'">'+esc(x[1])+'</button>'}).join('')+'</div>'};
- var ints=[];for(var i=1;i<=10;i++)ints.push([String(i),String(i)]);
- var nxs=[['1','Tomorrow'],['3','In 3 days'],['7','Next week'],[String(cad(p.st)),'Usual ('+cad(p.st)+'d)']];
- var b=sheet('<h3>'+esc(p.n)+'</h3>'+(isWait(p)?'<p class="meta" style="margin:0">Sent '+esc(sentAgo(p))+', waiting for a reply</p>':'')+
-  '<div class="lbl">What happened</div>'+grp('out',OUTC.map(function(x){return [x,x]}))+
-  '<div class="lbl">How</div>'+grp('meth',METH.map(function(x){return [x,x]}))+
-  '<div class="lbl">Interest, 1 to 10 (optional)</div>'+grp('intr',ints)+
-  '<div class="lbl">Next follow-up</div>'+grp('nx',nxs)+'<input id="lgd" type="date" aria-label="Pick a date" value="'+isoOf(TD+cad(p.st))+'">'+
-  '<input id="lgn" type="text" placeholder="What did they like best? (optional)" autocomplete="off">'+
-  '<button class="btn" id="lgs" style="margin-top:0">Save</button><button class="btn alt" data-close="1" style="margin-top:0">Close</button>');
- b.addEventListener('click',function(e){var c=e.target.closest('[data-lg]');if(!c)return;var k=c.dataset.lg,v=c.dataset.v;
-  if(S[k]===v&&k==='intr'){S[k]=''}else S[k]=v;
-  b.querySelectorAll('[data-lg="'+k+'"]').forEach(function(x){x.setAttribute('aria-pressed',S[k]!==''&&x.dataset.v===S[k])});
-  if(k==='nx'){b.querySelector('#lgd').value=isoOf(TD+Number(v))}});
- b.querySelector('#lgd').addEventListener('change',function(){S.nx='';b.querySelectorAll('[data-lg="nx"]').forEach(function(x){x.setAttribute('aria-pressed','false')})});
- b.querySelector('#lgs').onclick=function(){
-  if(!S.out){toast('Pick what happened first');return}
-  var nd=b.querySelector('#lgd').value;if(!nd){toast('Pick a next follow-up date first');return}
-  var note=b.querySelector('#lgn').value.trim();
-  var prev={lc:r.lastContact||'',nd:r.nextDate||'',w:r.waiting||'',sa:r.sentDate||'',st:r.stage||'',ex:r.exposures||'',it:r.interest||'',ts:r.trmeStart||''};
-  r.waiting='';r.lastContact=isoOf(TD);r.nextDate=nd;
-  if(S.out!=='Not now')r.exposures=String((Number(r.exposures)||0)+1);
-  if(S.intr)r.interest=S.intr;
-  var msg=p.n+' logged. Next '+dueTxt(dn(nd)-TD);
-  if(S.out==='Not now'){r.stage='Not Now'}
-  else if(S.out==='Closed'){
-   if(r.stage==='Warming Partner'){r.stage='Partner';msg=p.n+' is now a Partner and moves to your Team'}
-   else if(['Namelist','Relationship','Prospect','Closing'].indexOf(r.stage)>-1){r.stage='TRME Active';if(!r.trmeStart)r.trmeStart=isoOf(TD);msg=p.n+' started the 90 days'}}
-  var e={id:Date.now()+'-'+Math.floor(Math.random()*999),pid:pid(p),date:isoOf(TD),type:S.meth,result:S.out,interest:S.intr,note:note};
-  TLOG.push(e);savePeople();saveX('touchlog');b.remove();haptic();render(true);
-  toastU(msg,function(){r.lastContact=prev.lc;r.nextDate=prev.nd;r.waiting=prev.w;r.sentDate=prev.sa;r.stage=prev.st;r.exposures=prev.ex;r.interest=prev.it;r.trmeStart=prev.ts;TLOG=TLOG.filter(function(x){return x.id!==e.id});savePeople();saveX('touchlog');render(true)})}}
+var PFIL='All',PLST='',QORD=null,SENT={},SENTU={},QL={},FIX={ids:[],i:0},PILE_DAYS=14,CONTACT_GOAL=3,NAME_GOAL=2;
+var PRE={'Replied':3,'No reply':2,'Meeting set':1,'Said yes':7,'Not now':30};
+function legacyView(v){var m={'Follow-up':['Queue'],'No next step':['Everyone','No next step'],'TRME':['Everyone','TRME Active'],'Pipeline':['Everyone','Prospect'],'Customers':['Everyone','Customer'],'Promo':['Everyone','Buyers'],'All':['Everyone','All']}[v]||[v];pview=m[0];if(m[1])PFIL=m[1];QORD=null;SENT={};SENTU={}}
+function byname(a,b){return a.n<b.n?-1:1}
+function contactedToday(){var s={},d=isoOf(TD);TLOG.forEach(function(x){if(x.date===d)s[x.pid]=1});return Object.keys(s).length}
+function newNamesToday(){var d=isoOf(TD);return RAW.filter(function(r){return r.added===d}).length}
+function isPile(p){return p.next!==null&&p.next<-PILE_DAYS&&['Namelist','Relationship','Prospect'].indexOf(p.st)>-1&&!isWait(p)}
+function dueQ(p){return grpOK(p)&&!isWait(p)&&p.st!=='Not Now'&&p.next!==null&&p.next<=0&&!isPile(p)}
+function computeQueue(){var seen={},chk=[],fu=[];
+ chkList().forEach(function(o){var k=pid(o.p);if(!grpOK(o.p)||seen[k])return;seen[k]=1;chk.push({id:k,k:'chk',day:o.c.day})});
+ reorderList().forEach(function(o){var k=pid(o.p);if(!grpOK(o.p)||seen[k]||isWait(o.p))return;seen[k]=1;chk.push({id:k,k:'reo'})});
+ grpP().filter(dueQ).sort(function(a,b){return a.next-b.next||b.last-a.last}).forEach(function(p){var k=pid(p);if(!seen[k])fu.push(k)});
+ return {chk:chk,fu:fu}}
+function pcounts(){var q=computeQueue();return {Queue:q.chk.length+q.fu.length,Waiting:grpP().filter(isWait).length,Lists:LISTS.filter(function(l){return l.status!=='archived'}).length,Everyone:grpP().length.toLocaleString('en-US')}}
+function qrow(p,m){var r=p.raw||{},ex=Number(r.exposures)||0,d=dueTxt(p.next),late=p.next!==null&&p.next<0,sub=esc(p.st||'');
+ if(m==='chk'){var cd=chkDue(p);sub+=' · Day '+(cd?cd.day:'')+' check-in due'}
+ else if(m==='reo'){sub+=' · reorder '+dueTxt(reoRel(p)).toLowerCase()}
+ else if(isWait(p))sub+=' · sent '+sentAgo(p);
+ else if(r.nextAction)sub+=' · '+esc(r.nextAction);
+ var act='';
+ if(m==='chk'){var cdd=chkDue(p);act=cdd?'<button class="qb" data-chkin="'+p.id+'|'+cdd.day+'">Log results</button>':''}
+ else if(m==='wait'){act='<button class="qb" data-reply="'+p.id+'">Log reply</button>'+(p.phone?'<button class="qb alt" data-qmsg="'+p.id+'" aria-label="Chase" style="margin-left:6px;padding:0 11px">'+ic('chat',15)+'</button>':'')}
+ else act=p.phone?'<button class="qb" data-qmsg="'+p.id+'">'+ic('chat',15)+' Message</button>':'<button class="qb alt" data-edit="'+p.id+'">Add number</button>';
+ var due=(d&&m!=='chk'&&m!=='wait')?'<span class="due'+(late?' late':p.next===0?' today':'')+'" style="flex:none">'+d+'</span>':(m==='wait'&&d?'<span class="due'+(late?' late':p.next===0?' today':'')+'" style="flex:none">'+(p.next<=0?'Chase now':'Chase '+d)+'</span>':'');
+ return '<div class="qrow'+(wide()&&selPid===p.id?' sel':'')+'" data-pid="'+p.id+'"><button class="qm" data-qopen="'+p.id+'"><span class="av" style="background:'+avc(p)+'">'+esc(String(p.n||'?').charAt(0))+'</span><span class="pn"><b>'+esc(p.n)+'</b>'+(ex?'<em>'+ex+' of 5</em>':'')+'<small>'+sub+'</small></span></button>'+due+act+'</div>'}
+function ghostHtml(p){return '<div class="qghost">'+ic('check',15)+'<span><b>'+esc(p.n)+'</b> sent. Chase '+esc(dueTxt(p.next).toLowerCase())+'</span><button class="qb alt" data-unsent="'+p.id+'" style="margin-left:0">Not sent, undo</button></div>'}
+function qlSt(p){if(QL.pid!==pid(p))QL={pid:pid(p),out:'',nd:'',ndM:0,meth:'Message',intr:'',note:'',more:false,path:''};return QL}
+function qlogHtml(p){if(!p.raw)return '';var q=qlSt(p);
+ var h='<div class="card qlog" data-qlp="'+p.id+'"><h2>Log what happened</h2><div class="chips" style="flex-wrap:wrap">'+OUTC.map(function(o){return '<button class="chip" data-qo="'+o+'" aria-pressed="'+(q.out===o)+'">'+o+'</button>'}).join('')+'</div>';
+ if(q.out==='Said yes')h+='<div class="lbl" style="margin-top:10px">They start as</div><div class="chips" style="flex-wrap:wrap"><button class="chip" data-qpath="customer" aria-pressed="'+(q.path==='customer')+'">Customer, start 90 days</button><button class="chip" data-qpath="partner" aria-pressed="'+(q.path==='partner')+'">Partner, moves to Team</button></div>';
+ h+='<div class="lbl" style="margin-top:10px">Next follow-up'+(q.nd?' · '+esc(dueTxt(dn(q.nd)-TD)):'')+'</div><div class="chips" style="flex-wrap:wrap">'+[['1','Tomorrow'],['3','3 days'],['7','Next week'],['30','Month']].map(function(x){return '<button class="chip" data-qn="'+x[0]+'" aria-pressed="'+(q.nd===isoOf(TD+Number(x[0])))+'">'+x[1]+'</button>'}).join('')+'<input type="date" data-qd="1" aria-label="Pick a date" value="'+esc(q.nd||'')+'" style="height:30px;width:auto"></div>';
+ if(q.more){h+='<div class="lbl" style="margin-top:10px">How</div><div class="chips" style="flex-wrap:wrap">'+METH.map(function(m){return '<button class="chip" data-qm="'+m+'" aria-pressed="'+(q.meth===m)+'">'+m+'</button>'}).join('')+'</div><div class="lbl" style="margin-top:10px">Interest, 1 to 10</div><div class="chips" style="flex-wrap:wrap">'+[1,2,3,4,5,6,7,8,9,10].map(function(i){return '<button class="chip" data-qi="'+i+'" aria-pressed="'+(q.intr===String(i))+'">'+i+'</button>'}).join('')+'</div><input type="text" data-qnote="1" placeholder="What did they like best?" autocomplete="off" value="'+esc(q.note)+'" style="margin-top:10px">'}
+ h+='<div style="display:flex;gap:8px;margin-top:12px;align-items:center"><button class="chip" data-qmore="1">'+(q.more?'Less':'More: how, interest, note')+'</button><button class="btn" data-qsave="'+p.id+'" style="margin:0 0 0 auto;width:auto;padding:0 26px">Save</button></div></div>';
+ return h}
+function qlSave(p){var r=p.raw,q=qlSt(p);if(!r)return;
+ if(!q.out){toast('Pick what happened first');return}
+ if(q.out==='Said yes'&&!q.path){toast('Pick Customer or Partner first');return}
+ var nd=q.nd||isoOf(TD+(PRE[q.out]||3));
+ var prev={lc:r.lastContact||'',nd:r.nextDate||'',w:r.waiting||'',sa:r.sentDate||'',st:r.stage||'',ex:r.exposures||'',it:r.interest||'',ts:r.trmeStart||''};
+ r.waiting='';r.lastContact=isoOf(TD);r.nextDate=nd;
+ if(q.out!=='Not now')r.exposures=String((Number(r.exposures)||0)+1);
+ if(q.intr)r.interest=q.intr;
+ var msg=p.n+' logged. Next '+dueTxt(dn(nd)-TD).toLowerCase();
+ if(q.out==='Not now')r.stage='Not Now';
+ else if(q.out==='Said yes'){
+  if(q.path==='partner'){r.stage='Partner';msg=p.n+' is now a Partner and moves to your Team'}
+  else{r.stage='TRME Active';if(!r.trmeStart)r.trmeStart=isoOf(TD);msg=p.n+' started the 90 days'}}
+ var e={id:Date.now()+'-'+Math.floor(Math.random()*999),pid:pid(p),date:isoOf(TD),type:q.meth,result:q.out,interest:q.intr,note:q.note};
+ TLOG.push(e);QL={};savePeople();saveX('touchlog');
+ document.querySelectorAll('.sheet-bg').forEach(function(x){x.remove()});haptic();render(true);
+ toastU(msg,function(){r.lastContact=prev.lc;r.nextDate=prev.nd;r.waiting=prev.w;r.sentDate=prev.sa;r.stage=prev.st;r.exposures=prev.ex;r.interest=prev.it;r.trmeStart=prev.ts;TLOG=TLOG.filter(function(x){return x.id!==e.id});savePeople();saveX('touchlog');render(true)})}
+function openLog(p,out){if(!p||!p.raw){toast('Connect the Sheet first so the log is saved');return}
+ var q=qlSt(p);if(out&&!q.out){q.out=out;q.nd=isoOf(TD+(PRE[out]||3))}
+ sheet('<h3>'+esc(p.n)+'</h3>'+(isWait(p)?'<p class="meta" style="margin:0">Sent '+esc(sentAgo(p))+', waiting for a reply</p>':'')+qlogHtml(p)+'<button class="btn alt" data-close="1" style="margin-top:0">Close</button>')}
+function openFix(){var L=grpP().filter(noNext).map(pid);if(!L.length){toast('Everyone has a next step');return}FIX={ids:L,i:0};sheet('<div id="fxb"></div>');fixDraw()}
+function fixDraw(){var b=document.querySelector('#fxb');if(!b)return;
+ if(FIX.i>=FIX.ids.length){document.querySelectorAll('.sheet-bg').forEach(function(x){x.remove()});render(true);toast('All set. Everyone has a next step');haptic(true);return}
+ var p=byPid(FIX.ids[FIX.i]);if(!p){FIX.i++;fixDraw();return}
+ b.innerHTML='<h3>'+esc(p.n)+'</h3><p class="meta" style="margin:0">'+esc(p.st)+' · '+(FIX.i+1)+' of '+FIX.ids.length+'</p>'+(p.note?'<p class="note" style="margin:6px 0 10px">'+esc(p.note)+'</p>':'')+'<div class="chips" style="flex-wrap:wrap">'+[['1','Tomorrow'],['3','3 days'],['7','Next week'],[String(cad(p.st)),'Usual ('+cad(p.st)+'d)'],['30','Month']].map(function(x){return '<button class="chip" data-fx="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div><div style="display:flex;gap:8px;margin-top:10px"><button class="btn alt" data-fx="skip" style="margin:0">Skip</button><button class="btn alt" data-fx="notnow" style="margin:0">Not now</button><button class="btn alt" data-close="1" style="margin:0">Close</button></div>'}
+function openFresh(){var L=grpP().filter(isPile).sort(function(a,b){return a.next-b.next});if(!L.length){toast('No overdue pile');return}
+ var by={};L.forEach(function(p){by[p.st]=(by[p.st]||0)+1});
+ var b=sheet('<h3>Fresh start</h3><p class="meta" style="margin:0">'+L.length+' people are more than '+PILE_DAYS+' days overdue ('+Object.keys(by).map(function(k){return by[k]+' '+k}).join(', ')+'). They get spread over the next 14 days, a few each day. Check-ins, reorders and anyone in Closing stay as they are.</p><button class="btn" id="frs">Spread '+L.length+' people</button><button class="btn alt" data-close="1" style="margin-top:0">Cancel</button>');
+ b.querySelector('#frs').onclick=function(){var prev=L.map(function(p){return {r:p.raw,nd:p.raw.nextDate||''}});
+  L.forEach(function(p,i){p.raw.nextDate=isoOf(TD+1+Math.floor(i*14/L.length))});savePeople();b.remove();QORD=null;render(true);
+  toastU(L.length+' people spread over 14 days',function(){prev.forEach(function(x){x.r.nextDate=x.nd});savePeople();QORD=null;render(true)})}}
+function openGV(){var m=isoOf(TD).slice(0,7),out={};people.forEach(function(p){if(!grpOK(p))out[pid(p)]=1});
+ var L=PUR.filter(function(x){return String(x.date||'').slice(0,7)===m&&!out[x.pid]&&(Number(x.gv)||0)>0}).sort(function(a,b){return a.date<b.date?1:-1});
+ var h='<h3>Group GV this month</h3><p style="margin:0 0 8px;font-size:28px;font-weight:700">'+gvMonth().toLocaleString('en-US')+'</p>';
+ if(!L.length)h+='<p class="meta">No purchases with GV yet this month. Log one from a person\'s details.</p>';
+ else h+=L.map(function(x){var p=byPid(x.pid);return '<div class="tline"><small>'+esc(x.date)+' · '+esc(p?p.n:'Unknown')+'</small><b>'+esc(x.product)+' · '+esc(x.gv)+' GV</b></div>'}).join('');
+ sheet(h+'<button class="btn alt" data-close="1">Close</button>')}
 function doFollow(el){var p=people[el.dataset.fudone],row=el.closest('.task');if(!p)return;
  var u=contactDone(p,{type:el.dataset.ftype||'Follow-up'});if(!u)return;
  row.classList.add('done','pop');burst(row.querySelector('.ck i'),false);haptic(false);
@@ -785,7 +844,7 @@ function openWA(p,o){o=o||{};
  if(p.phone.length<9){toast('Number for '+p.n+' looks incomplete. Fix it with Edit contact in the details');return false}
  var a=document.createElement('a');a.href='https://wa.me/'+p.phone+'?text='+encodeURIComponent(o.text||msgFor(p));a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
  if(o.lid){PENDWA={pid:pid(p),type:o.type||'Follow-up',lid:o.lid||'',day:o.day||'',ts:Date.now()};try{localStorage.setItem('hq-pendwa',JSON.stringify(PENDWA))}catch(e){}}
- var su=markSent(p);if(su)toastU(p.n+' marked as sent. Waiting for a reply',function(){undoSent(su);render(true)});
+ var su=markSent(p);if(su){if(o.q){SENT[pid(p)]=1;SENTU[pid(p)]=su}else toastU(p.n+' marked as sent. Waiting for a reply',function(){undoSent(su);render(true)})}
  return true}
 function listDone(lt,mt,pt){if(!pt.raw){toast('Connect the Sheet first so it is saved');return null}
  mt.done='1';mt.doneDate=isoOf(TD);mt.tid='';mt.plc='';mt.pnd='';var u=null;
@@ -1142,27 +1201,51 @@ function counts(){var c={};c['Follow-up']=grpP().filter(function(p){return p.nex
  c.Customers=people.filter(function(p){return p.st==='Customer'||p.st==='TRME Active'}).length;c.Waiting=grpP().filter(isWait).length;c.All=grpP().length;c.Promo=PUR.length;return c}
 var PITEMS=[],PSHOWN=0,PIO=null;
 function buildItems(){
- if(pview==='Promo'&&!pq.trim())return promoItems();
- var r=filterPeople(),L=r.list,out=[];
- if(r.mode==='search'){out.push({k:'n',txt:L.length+' results for "'+pq.trim()+'"'});L.forEach(function(p){out.push({k:'r',p:p})});return out}
- if(pview.indexOf('L:')===0){var lx=lById(pview.slice(2));if(!lx){out.push({k:'n',txt:'This list is not available'});return out}
-  var lms=LM.filter(function(m){return m.lid===lx.id});out.push({k:'n',txt:lx.kind+' list, '+lms.filter(function(m){return mDone(m)}).length+' of '+lms.length+' done'});
-  lms.forEach(function(m){out.push({k:'lm',l:lx,m:m})});if(!lms.length)out.push({k:'n',txt:'Empty. Add names from the Lists tab.'});return out}
- if(r.mode==='Waiting'){
-  [['Follow up now','late','alert',function(p){return p.next<=0}],['Waiting for a reply','eve','clock',function(p){return p.next>0}]].forEach(function(g){
-   var s=L.filter(g[3]);if(!s.length)return;out.push({k:'g',cls:g[1],icon:g[2],label:g[0],n:s.length});s.forEach(function(p){out.push({k:'r',p:p})})});
+ var out=[],q=pq.trim();
+ if(q){var ql=q.toLowerCase(),L=people.filter(function(p){return (p.n+' '+p.note+' '+(p.st||'')+' '+(p.tags||'')).toLowerCase().indexOf(ql)>-1}).sort(byname);
+  out.push({k:'n',txt:L.length+' results for "'+q+'"'});L.forEach(function(p){out.push({k:'qr',p:p,m:isWait(p)?'wait':'fu'})});return out}
+ if(pview==='Queue'){if(!QORD)QORD=computeQueue();
+  var nn=grpP().filter(noNext).length,pile=grpP().filter(isPile).length;
+  if(nn||pile)out.push({k:'strips',nn:nn,pile:pile});
+  var ch=[],fu=[];
+  QORD.chk.forEach(function(e){var p=byPid(e.id);if(!p)return;if(SENT[e.id]){ch.push({k:'ghost',p:p});return}if(e.k==='chk'&&!chkDue(p))return;if(e.k==='reo'&&!reo(p))return;ch.push({k:'qr',p:p,m:e.k})});
+  QORD.fu.forEach(function(id){var p=byPid(id);if(!p)return;if(SENT[id]){fu.push({k:'ghost',p:p});return}if(!dueQ(p))return;fu.push({k:'qr',p:p,m:'fu'})});
+  if(ch.length){out.push({k:'g',cls:'eve',icon:'spark',label:'Check-ins and reorders',n:ch.length});out=out.concat(ch)}
+  if(fu.length){out.push({k:'g',cls:'morning',icon:'sun',label:'Follow up',n:fu.length});out=out.concat(fu)}
+  if(!ch.length&&!fu.length)out.push({k:'n',txt:'Nothing due. Add names with + or open Everyone.'});
+  return out}
+ if(pview==='Waiting'){var W=grpP().filter(isWait).sort(byNext);
+  [['Chase now','late','alert',function(p){return p.next<=0}],['Waiting for a reply','eve','clock',function(p){return p.next>0}]].forEach(function(g){var x=W.filter(g[3]);if(!x.length)return;out.push({k:'g',cls:g[1],icon:g[2],label:g[0],n:x.length});x.forEach(function(p){out.push({k:'qr',p:p,m:'wait'})})});
   if(!out.length)out.push({k:'n',txt:'Nobody is waiting. Tap Message on someone and they show up here.'});return out}
- if(r.mode==='Follow-up'){
-  [['Overdue','late','alert',function(p){return p.next<0}],['Today','morning','sun',function(p){return p.next===0}],['This week','eve','clock',function(p){return p.next>0}]].forEach(function(g){
-   var s=L.filter(g[3]);if(!s.length)return;out.push({k:'g',cls:g[1],icon:g[2],label:g[0],n:s.length});s.forEach(function(p){out.push({k:'r',p:p})})});return out}
- if(r.mode==='All'){var cur='';L.forEach(function(p){var l=p.n[0].toUpperCase();if(l!==cur){cur=l;out.push({k:'l',l:l})}out.push({k:'r',p:p})});return out}
- L.forEach(function(p){out.push({k:'r',p:p})});return out}
+ if(pview==='Lists'){var act=LISTS.filter(function(l){return l.status!=='archived'}),arc=LISTS.filter(function(l){return l.status==='archived'});
+  if(!LISTS.length){out.push({k:'lsel',act:act,arc:arc,l:null});out.push({k:'n',txt:'No lists yet. Tap New list to make an OPP, Convention or Meeting list. One person can be on many lists.'});return out}
+  var cur=lById(PLST)||act[0]||arc[0];PLST=cur.id;out.push({k:'lsel',act:act,arc:arc,l:cur});
+  var ms=LM.filter(function(m){return m.lid===cur.id});
+  out.push({k:'n',txt:cur.kind+' · '+ms.filter(function(m){return byPid(m.pid)&&mDone(m)}).length+' of '+ms.length+' done'});
+  ms.forEach(function(m){out.push({k:'lm',l:cur,m:m})});if(!ms.length)out.push({k:'n',txt:'Empty. Tap + above to add a name.'});return out}
+ var f=PFIL,L;out.push({k:'fsel'});
+ if(f==='Buyers')return out.concat(promoItems());
+ if(f==='All')L=grpP().sort(byname);
+ else if(f==='Reorder due')L=grpP().filter(function(p){var r=reoRel(p);return r!==null&&r<=7}).sort(function(a,b){return reoRel(a)-reoRel(b)});
+ else if(f==='No next step')L=grpP().filter(noNext).sort(function(a,b){return b.last-a.last});
+ else L=grpP().filter(function(p){return p.st===f}).sort(byNext);
+ if(f==='No next step'&&L.length)out.push({k:'fixb',n:L.length});
+ if(!L.length)out.push({k:'n',txt:'Nobody here.'});
+ var cur2='';L.forEach(function(p){if(f==='All'){var l=p.n[0].toUpperCase();if(l!==cur2){cur2=l;out.push({k:'l',l:l})}}out.push({k:'qr',p:p,m:isWait(p)?'wait':'fu'})});
+ return out}
 function rowHtml(p){
  var d=dueTxt(p.next),cls=p.next!==null&&p.next<0?' late':p.next===0?' today':'',last=p.last>=9999?'not logged':p.last===0?'today':p.last+'d ago';
  return '<div class="prow'+(wide()&&selPid===p.id?' sel':'')+'" data-pid="'+p.id+'"><button class="phead" data-ptoggle="'+p.id+'"><span class="av" style="background:'+avc(p)+'">'+esc(String(p.n||'?').charAt(0))+'</span><span class="pn"><b>'+esc(p.n)+'</b><small>'+esc(p.st||'')+' · '+last+'</small>'+(isWait(p)?'<small class="na">Sent '+sentAgo(p)+', waiting for a reply</small>':'')+(p.raw?(p.raw.nextAction?'<small class="na">'+esc(p.raw.nextAction)+'</small>':p.st==='Not Now'?'':'<small class="nn" data-next="'+p.id+'">No next step yet</small>'):'')+'</span>'+(d?'<span class="due'+cls+'">'+d+'</span>':'')+'</button><div class="pact" hidden><button class="main" data-msg="'+p.id+'">Message</button><button data-log="'+p.id+'">Log</button><button data-pdet="'+p.id+'">Open</button><button data-next="'+p.id+'">Next</button></div></div>'}
 function itemHtml(it){
  if(it.k==='pp')return '<div class="chips" style="margin:6px 0 10px;flex-wrap:wrap">'+it.prods.map(function(x){return '<button class="chip" data-pprod="'+esc(x)+'" aria-pressed="'+(pprod===x)+'">'+esc(x)+'</button>'}).join('')+'</div>';
  if(it.k==='pr'){var dn2=it.p.raw&&it.p.last===0;return '<div class="task'+(dn2?' done':'')+'" style="margin-bottom:6px"><span class="av" style="background:'+avc(it.p)+'">'+esc(it.p.n[0])+'</span><button class="tb" data-pdet="'+it.p.id+'"><b>'+esc(it.p.n)+'</b><small>'+esc(it.x.product)+' · '+esc(it.x.date)+'</small></button><button class="ck" data-promo="'+it.p.id+'" aria-label="Already offered"><i>'+ic('check',14)+'</i></button></div>'}
+ if(it.k==='qr')return qrow(it.p,it.m);
+ if(it.k==='ghost')return ghostHtml(it.p);
+ if(it.k==='strips')return '<div class="qstrips">'+(it.nn?'<button class="qs warn" data-fix="1">'+it.nn+' have no next step · Fix</button>':'')+(it.pile?'<button class="qs" data-fresh="1">Overdue pile '+it.pile+' · Fresh start</button>':'')+'</div>';
+ if(it.k==='fixb')return '<div class="qstrips"><button class="qs warn" data-fix="1">'+it.n+' have no next step · Fix them one by one</button></div>';
+ if(it.k==='fsel'){var fo=['All'].concat(STAGES.filter(function(x){return x!=='Partner'})).concat(['Reorder due','No next step','Buyers']);return '<div class="selrow"><select class="psel" id="pfil" aria-label="Filter">'+fo.map(function(x){return '<option value="'+esc(x)+'"'+(x===PFIL?' selected':'')+'>'+esc(x==='Buyers'?'Product buyers':x)+'</option>'}).join('')+'</select></div>'}
+ if(it.k==='lsel'){var lo=function(l){return '<option value="'+esc(l.id)+'"'+(it.l&&l.id===it.l.id?' selected':'')+'>'+esc(l.name)+' ('+LM.filter(function(m){return m.lid===l.id}).length+')</option>'};
+  return '<div class="selrow">'+(it.l?'<select class="psel" id="plst" aria-label="List">'+it.act.map(lo).join('')+(it.arc.length?'<optgroup label="Archived">'+it.arc.map(lo).join('')+'</optgroup>':'')+'</select>':'')+'<span style="display:flex;gap:6px;margin-left:auto;align-items:center">'+(it.l?'<button class="rb" data-bulk="'+esc(it.l.id)+'" aria-label="Paste many names">'+ic('list',16)+'</button><button class="rb" data-laddm="'+esc(it.l.id)+'" aria-label="Add a name">'+ic('plus',16)+'</button><button class="rb" data-lmenu="'+esc(it.l.id)+'" aria-label="List menu">'+ic('dots',16)+'</button>':'')+'<button class="chip" data-newlist="1">New list</button></span></div>'}
  if(it.k==='lm')return lmRow(it.l,it.m);
  if(it.k==='r')return rowHtml(it.p);
  if(it.k==='l')return '<div class="letter" id="L'+it.l+'">'+it.l+'</div>';
@@ -1180,9 +1263,9 @@ function renderPeopleBody(){
  appendChunk();
  if(PIO)PIO.disconnect();
  if('IntersectionObserver' in window){PIO=new IntersectionObserver(function(e){if(e[0].isIntersecting)appendChunk()},{root:SC,rootMargin:'600px'});PIO.observe($('#psent'))}
- var rail=$('#rail');var show=tab==='people'&&filterPeople().mode==='All'&&!pq.trim();rail.hidden=!show;
+ var rail=$('#rail');var show=tab==='people'&&pview==='Everyone'&&PFIL==='All'&&!pq.trim();rail.hidden=!show;
  if(show){var letters={};people.forEach(function(p){letters[p.n[0].toUpperCase()]=1});rail.innerHTML=Object.keys(letters).sort().map(function(l){return '<button data-jump="'+l+'" aria-label="Jump to '+l+'">'+l+'</button>'}).join('')}
- if(wide()&&$('#pdetail')){var p=people[selPid];$('#pdetail').innerHTML=p?pdetail(p):''}}
+ if(wide()&&$('#pdetail')){var p=people[selPid];$('#pdetail').innerHTML=p?pdetail(p):'<p class="note">Pick someone to see their details and log what happened.</p>'}}
 var FACTS=['Has 2 kids, the youngest is in kindergarten','Office job, irregular lunch hours','Likes running on weekend mornings','Partner is skeptical about supplements','Just moved to BSD','Tried keto, stopped at week 3','Birthday in December'];
 var TPT=['WhatsApp','Call','Met up','Zoom'],TPR=['Replies fast','Has not replied','Interested','Asked for a little time','Send a plate photo'];
 function pdetail(p){
@@ -1198,7 +1281,8 @@ function pdetail(p){
 function pdetailReal(p){
  var r=p.raw,fm=function(x){var d=dn(x);return d==null?'':dueTxt(d-TD)+' ('+x+')'};
  var h='<div class="card" style="margin-top:0"><div style="display:flex;gap:12px;align-items:center"><span class="av" style="background:'+avc(p)+';width:52px;height:52px;font-size:22px">'+esc(p.n[0])+'</span><div style="min-width:0"><h2 style="font-size:21px">'+esc(p.n)+'</h2><div class="meta">'+esc(p.st)+(r.market?' · '+esc(r.market):'')+'</div></div></div>';
- h+='<div style="display:flex;gap:7px;margin-top:12px;flex-wrap:wrap"><button class="btn sm main" data-msg="'+p.id+'">Message</button><button class="btn sm alt" data-log="'+p.id+'">Log</button><button class="btn sm alt" data-next="'+p.id+'">Next: '+(p.next===null?'none yet':dueTxt(p.next))+'</button><button class="btn sm alt" data-pstage="'+p.id+'">Stage: '+esc(p.st)+'</button><button class="btn sm alt" data-edit="'+p.id+'">Edit contact</button></div></div>';
+ h+='<div style="display:flex;gap:7px;margin-top:12px;flex-wrap:wrap"><button class="btn sm main" data-msg="'+p.id+'">Message</button><button class="btn sm alt" data-next="'+p.id+'">Next: '+(p.next===null?'none yet':dueTxt(p.next))+'</button><button class="btn sm alt" data-pstage="'+p.id+'">Stage: '+esc(p.st)+'</button><button class="btn sm alt" data-edit="'+p.id+'">Edit contact</button></div></div>';
+ h+=qlogHtml(p);
  var rows=[['Next step',r.nextAction],['Follow-up',fm(r.nextDate)],['Last contact',fm(r.lastContact)],['Last order',fm(r.lastOrder)],['Tag',r.tags],['Phone',r.phone],['Email',r.email],['Sponsor',r.sponsor],['Birthday',r.birthday],['TRME start',r.trmeStart],['Sent',isWait(p)?sentAgo(p)+', waiting for a reply':''],['Interest',r.interest?r.interest+' of 10':''],['Exposures',r.exposures]].filter(function(x){return x[1]});
  if(rows.length)h+='<div class="card">'+rows.map(function(x,i){return '<div class="tline"><small>'+x[0]+'</small><b>'+esc(x[1])+'</b></div>'}).join('')+'</div>';
  var ro=reo(p);if(ro)h+='<div class="flag" style="margin-top:10px">Reorder: '+dueTxt(ro.rel)+'</div>';
@@ -1211,10 +1295,10 @@ function pdetailReal(p){
  if(r.verify)h+='<div class="flag" style="margin-top:10px">This comes from old notes and you have not checked it yet.</div>';
  return h}
 function people_(){
- var c=counts(),views=['Follow-up','Waiting','No next step','TRME','Pipeline','Customers','Promo','All'];
- var h='<div class="top"><div class="stats"><span style="color:var(--mute)">'+c.All+' in your group</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button><button data-addp="1" aria-label="Add person">'+ic('plus',22)+'</button></div></div>';
- h+='<div class="hrow"><h1>My Group</h1></div>'+(CFG.url?'<p class="note" style="margin:0 4px 8px">Group GV this month <b>'+gvMonth().toLocaleString('en-US')+'</b></p>':'<span class="sample">Sample data, 420 people</span>')+'';
- var left='<div class="search"><label>'+ic('search',18)+'<input id="pq" type="search" placeholder="Search name or notes" autocomplete="off" value="'+esc(pq)+'"></label></div><div class="chips" id="pchips">'+views.map(function(v){return '<button class="chip" data-pv="'+v+'" aria-pressed="'+(pview===v&&!pq)+'">'+v+' <em>'+c[v]+'</em></button>'}).join('')+LISTS.filter(function(l){return l.status!=='archived'}).map(function(l){return '<button class="chip" data-pv="L:'+esc(l.id)+'" aria-pressed="'+(pview==='L:'+l.id&&!pq)+'">'+esc(l.name)+' <em>'+LM.filter(function(m){return m.lid===l.id}).length+'</em></button>'}).join('')+'</div><div id="plist" style="margin-top:4px"></div>';
+ var c=pcounts();
+ var h='<div class="top"><div class="stats"><span style="color:var(--mute)">Contacted '+contactedToday()+'/'+CONTACT_GOAL+' · New names '+newNamesToday()+'/'+NAME_GOAL+'</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button><button data-addp="1" aria-label="Add person">'+ic('plus',22)+'</button></div></div>';
+ h+='<div class="hrow"><h1>My Group</h1>'+(CFG.url?'<button class="chip" data-gv="1" style="margin-left:auto">GV '+gvMonth().toLocaleString('en-US')+'</button>':'')+'</div>'+(CFG.url?'':'<span class="sample">Sample data, 420 people</span>');
+ var left='<div class="search"><label>'+ic('search',18)+'<input id="pq" type="search" placeholder="Search anyone in your group" autocomplete="off" value="'+esc(pq)+'"></label></div><div class="tabs4" id="pchips">'+['Queue','Waiting','Lists','Everyone'].map(function(v){return '<button class="chip" data-pv="'+v+'" aria-pressed="'+(pview===v&&!pq)+'">'+v+' <em>'+c[v]+'</em></button>'}).join('')+'</div><div id="plist" style="margin-top:4px"></div>';
  if(wide())return h+'<div class="pwide"><div>'+left+'</div><div class="pdetail" id="pdetail"></div></div>';
  return h+left}
 
@@ -1512,6 +1596,7 @@ function renderNav(){
   n.innerHTML='<div class="side"><div class="brand">HQ</div>'+NAV.map(function(x){return '<button class="it" data-tab="'+x[0]+'"'+(tab===x[0]?' aria-current="page"':'')+'>'+ic(x[1],20)+x[2]+(x[0]==='today'&&late?'<span class="bd">'+late+'</span>':'')+'</button>'}).join('')+'<div class="foot meta">Tap + to add something fast. Everything is saved in your own database.</div></div>';return}
  n.innerHTML='<div class="in"><div class="pillnav">'+NAV.slice(0,4).map(function(x){return '<button data-tab="'+x[0]+'" aria-label="'+x[2]+'"'+(tab===x[0]?' aria-current="page"':'')+'>'+ic(x[1],22)+(x[0]==='today'&&late?'<span class="bd">'+late+'</span>':'')+'</button>'}).join('')+'</div><button class="more" data-tab="more" aria-label="More"'+(tab==='more'?' aria-current="page"':'')+'>'+ic('grid',22)+'</button></div>'}
 function render(keep){
+ if(tab!=='people'){QORD=null;SENT={};SENTU={}}
  FR.classList.toggle('wide',wide());
  renderNav();
  var y=SC.scrollTop;
@@ -1606,6 +1691,11 @@ function setTheme(t){theme=t;var r=document.documentElement;if(t==='auto')r.remo
  document.querySelectorAll('[data-theme-set]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.themeSet===t)});try{localStorage.setItem('hq-theme',t)}catch(e){}}
 
 /* ---------- events ---------- */
+document.addEventListener('change',function(e){var t=e.target;
+ if(t.id==='plst'){PLST=t.value;renderPeopleBody();return}
+ if(t.id==='pfil'){PFIL=t.value;renderPeopleBody();var rl=$('#rail');return}
+ if(t.dataset&&t.dataset.qd){QL.nd=t.value;QL.ndM=1;var qc=t.closest('.qlog');if(qc){var qp=people[+qc.dataset.qlp];if(qp)qc.outerHTML=qlogHtml(qp)}}});
+document.addEventListener('input',function(e){var t=e.target;if(t.dataset&&t.dataset.qnote)QL.note=t.value});
 document.addEventListener('input',function(e){if(e.target.id==='pq'){pq=e.target.value;renderPeopleBody();var ch=$('#pchips');if(ch)ch.querySelectorAll('[data-pv]').forEach(function(b){b.setAttribute('aria-pressed',!pq&&b.dataset.pv===pview)})}});
 function completeTask(el){
  var t=tasks.filter(function(x){return x.id==el.dataset.done})[0],row=el.closest('.task'),wasLate=lateTasks().length;
@@ -1618,8 +1708,26 @@ function completeTask(el){
   setTimeout(function(){render(true);if(wasLate>0&&lateTasks().length===0){haptic(true);toast('Nothing overdue. Nothing missed.');var f=$('#spk');f&&burst(f,true)}},REDUCE?0:760);
  }else{row.classList.remove('done','pop');haptic(false);setTimeout(function(){render(true)},120)}}
 document.addEventListener('click',function(e){
- var el=e.target.closest('[data-today],[data-tab],[data-done],[data-fold],[data-day],[data-add],[data-open],[data-act],[data-pv],[data-ptoggle],[data-msg],[data-log],[data-next],[data-pdet],[data-jump],[data-tt],[data-copy],[data-wa],[data-addp],[data-goto],[data-ct],[data-cmove],[data-cv],[data-idea],[data-mode],[data-theme-set],[data-gotab],[data-sync],[data-impor],[data-hab],[data-trips],[data-hx],[data-tback],[data-ttick],[data-tcopy],[data-fudone],[data-evdone],[data-pprod],[data-promo],[data-newlist],[data-laddm],[data-lmenu],[data-lmst],[data-lmprod],[data-lmtick],[data-buy],[data-edit],[data-hs],[data-fwa],[data-lwa],[data-score],[data-rwa],[data-bdwa],[data-chkin],[data-chkwa],[data-bulk],[data-tmove],[data-nbwa],[data-pstage]');if(!el)return;
+ var el=e.target.closest('[data-today],[data-tab],[data-done],[data-fold],[data-day],[data-add],[data-open],[data-act],[data-pv],[data-ptoggle],[data-msg],[data-log],[data-next],[data-pdet],[data-jump],[data-tt],[data-copy],[data-wa],[data-addp],[data-goto],[data-ct],[data-cmove],[data-cv],[data-idea],[data-mode],[data-theme-set],[data-gotab],[data-sync],[data-impor],[data-hab],[data-trips],[data-hx],[data-tback],[data-ttick],[data-tcopy],[data-fudone],[data-evdone],[data-pprod],[data-promo],[data-newlist],[data-laddm],[data-lmenu],[data-lmst],[data-lmprod],[data-lmtick],[data-buy],[data-edit],[data-hs],[data-fwa],[data-lwa],[data-score],[data-rwa],[data-bdwa],[data-chkin],[data-chkwa],[data-bulk],[data-tmove],[data-nbwa],[data-pstage],[data-qopen],[data-qmsg],[data-reply],[data-unsent],[data-fix],[data-fresh],[data-gv],[data-qo],[data-qpath],[data-qn],[data-qmore],[data-qm],[data-qi],[data-qsave],[data-fx]');if(!el)return;
  var d=el.dataset;
+ if(d.qopen){var qid=+d.qopen;if(wide()){selPid=qid;document.querySelectorAll('.qrow').forEach(function(r){r.classList.toggle('sel',+r.dataset.pid===qid)});$('#pdetail').innerHTML=pdetail(people[qid]);return}
+  sheet(pdetail(people[qid])+'<button class="btn alt" data-close="1">Close</button>');return}
+ if(d.qmsg){var mp=people[d.qmsg];if(!mp)return;if(openWA(mp,{text:msgFor(mp),type:'Follow-up',q:1}))render(true);return}
+ if(d.reply){var rp=people[d.reply];if(rp)openLog(rp,'Replied');return}
+ if(d.unsent){var up=people[d.unsent];if(!up)return;var us=SENTU[pid(up)];if(us)undoSent(us);delete SENT[pid(up)];delete SENTU[pid(up)];render(true);toast(up.n+' is back in your queue');return}
+ if(d.fix){openFix();return}
+ if(d.fresh){openFresh();return}
+ if(d.gv){openGV();return}
+ if(d.fx){var fp=byPid(FIX.ids[FIX.i]);if(fp&&fp.raw){if(d.fx==='notnow'){fp.raw.stage='Not Now';savePeople()}else if(d.fx!=='skip'){fp.raw.nextDate=isoOf(TD+Number(d.fx));savePeople()}}FIX.i++;fixDraw();render(true);return}
+ if(d.qo||d.qpath||d.qn||d.qmore||d.qm||d.qi){var qc=el.closest('.qlog');if(!qc)return;var qp=people[+qc.dataset.qlp],q=qlSt(qp);
+  if(d.qo){q.out=d.qo;if(!q.ndM)q.nd=isoOf(TD+PRE[d.qo]);if(d.qo!=='Said yes')q.path=''}
+  if(d.qpath)q.path=d.qpath;
+  if(d.qn){q.nd=isoOf(TD+Number(d.qn));q.ndM=1}
+  if(d.qmore)q.more=!q.more;
+  if(d.qm)q.meth=d.qm;
+  if(d.qi)q.intr=q.intr===d.qi?'':d.qi;
+  qc.outerHTML=qlogHtml(qp);return}
+ if(d.qsave){var sp2=people[+d.qsave];if(sp2)qlSave(sp2);return}
  if(d.impor){if(!CFG.url){toast('Connect the Sheet first in Sync');return}var ib=sheet('<h3>Impor kontak</h3><p class="meta" style="margin:0">Paste the result of Copy from the import page. This replaces the contact list in your Sheet.</p><textarea id="it" rows="5" style="width:100%;border-radius:16px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:10px;font:12px ui-monospace,monospace" aria-label="Contact data"></textarea><button class="btn" id="ig" style="margin-top:0">Import</button>');ib.querySelector('#ig').onclick=function(){try{var a=JSON.parse(ib.querySelector('#it').value);if(!Array.isArray(a)||!a.length||!a[0].name)throw 0;RAW=a.map(function(r){var o={};Object.keys(r).forEach(function(k){o[k]=r[k]==null?'':String(r[k])});return o});savePeople();ib.remove();tab='people';render();toast(RAW.length+' people added to People');haptic(true)}catch(e){toast('The text does not match. Copy it again from the import page.')}};return}
  if(d.sync){var sb=sheet('<h3>Connect Google Sheet</h3><p class="meta" style="margin:0">Paste your Apps Script address and the secret code you made. Both are stored only on this device.</p><input id="su" type="url" placeholder="Apps Script address (https://script.google.com/...)" value="'+esc(CFG.url)+'" autocomplete="off"><input id="st" type="text" placeholder="Secret code" value="'+esc(CFG.token)+'" autocomplete="off"><button class="btn" id="sg" style="margin-top:0">Connect</button>'+(CFG.url?'<button class="btn alt" id="sx" style="margin-top:0">Disconnect</button>':''));
   sb.querySelector('#sg').onclick=function(){var u=sb.querySelector('#su').value.trim(),k=sb.querySelector('#st').value.trim();if(!/^https?:\/\//.test(u)||!k){toast('Enter the address and code first');return}
@@ -1658,14 +1766,14 @@ document.addEventListener('click',function(e){
   bt.addEventListener('input',prev);
   ab.addEventListener('click',function(e){var c=e.target.closest('[data-al]');if(!c)return;pickL=pickL===c.dataset.al?'':c.dataset.al;ab.querySelectorAll('[data-al]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.al===pickL)});prev()});
   bgo.onclick=function(){prev();if(bgo.disabled)return;var ids=[],i=0,BL=pickL&&lById(pickL);
-   PR.nw.forEach(function(x){var id=x.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+Date.now().toString(36)+(i++);RAW.push({id:id,name:x.name,stage:'Namelist',tags:'',market:'',phone:x.phone,email:'',lastContact:'',lastOrder:'',nextDate:'',nextAction:'',hot:'',notes:x.note,verify:'',trmeStart:'',sponsor:'',birthday:'',created:isoOf(TD)});ids.push(id)});
+   PR.nw.forEach(function(x){var id=x.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+Date.now().toString(36)+(i++);RAW.push({added:isoOf(TD),id:id,name:x.name,stage:'Namelist',tags:'',market:'',phone:x.phone,email:'',lastContact:'',lastOrder:'',nextDate:'',nextAction:'',hot:'',notes:x.note,verify:'',trmeStart:'',sponsor:'',birthday:'',created:isoOf(TD)});ids.push(id)});
    if(BL){PR.ex.forEach(function(e){if(e.r.id)ids.push(e.r.id)});var ad=0;ids.forEach(function(id){if(!mOf(BL.id,id)){LM.push({lid:BL.id,pid:id,status:isEv(BL)?'Not yet':'',product:'',added:isoOf(TD),done:'',doneDate:'',tid:'',plc:'',pnd:''});ad++}});if(ad)saveX('listmembers')}
    var nw=PR.nw.length,ex=PR.ex.length;if(nw)savePeople();ab.remove();render(true);toast((nw?nw+' added to Namelist':'')+(nw&&ex?', ':'')+(ex?ex+' already in HQ':'')+(BL?' · list '+BL.name:''));haptic(true)};
   bt.focus();return}
- if(d.goto){var g=d.goto.split(':');tab=g[0];if(g[0]==='people'){pview=g[1];pq=''}else teamTab=g[1];render();return}
+ if(d.goto){var g=d.goto.split(':');tab=g[0];if(g[0]==='people'){legacyView(g[1]);pq=''}else teamTab=g[1];render();return}
  if(d.open){var tk=tasks.filter(function(x){return x.id==d.open})[0];sheet('<h3>'+esc(tk.t)+'</h3><p class="meta" style="margin:0">'+(tk.ev?esc(tk.ev)+' · 2 hours on the AJ Jonathan calendar':((tk.at?esc(tk.at)+' · ':'')+esc(tk.dur||'')))+'</p>'+(tk.go==='team'?'<button class="btn" data-close="1" data-gotab="team" style="margin-top:0">Open Team</button>':'')+'<div class="lbl">Move date</div><div class="chips" style="flex-wrap:wrap"><button class="chip" data-tmove="'+tk.id+'|1">Tomorrow</button><button class="chip" data-tmove="'+tk.id+'|2">Lusa</button><button class="chip" data-tmove="'+tk.id+'|7">Next week</button></div>');return}
  if(d.tmove){var tm2=d.tmove.split('|'),tt=tasks.filter(function(x){return String(x.id)===tm2[0]})[0];if(!tt)return;tt.day=TD+Number(tm2[1]);saveTasks();document.querySelectorAll('.sheet-bg').forEach(function(x){x.remove()});render(true);toast('Moved to '+dueTxt(tt.day-TD));haptic();return}
- if(d.pv){pview=d.pv;pq='';render();return}
+ if(d.pv){pview=d.pv;QORD=null;SENT={};SENTU={};pq='';render();return}
  if(d.ptoggle){var id=+d.ptoggle;
   if(wide()){selPid=id;document.querySelectorAll('.prow').forEach(function(r){r.classList.toggle('sel',+r.dataset.pid===id)});$('#pdetail').innerHTML=pdetail(people[id]);return}
   var row=el.closest('.prow'),pa=row.querySelector('.pact'),was=!pa.hidden;document.querySelectorAll('.pact').forEach(function(x){x.hidden=true});pa.hidden=was;return}
@@ -1685,7 +1793,7 @@ document.addEventListener('click',function(e){
   bk.querySelector('#bgo').onclick=function(){var seen={},names=bk.querySelector('#bt').value.split(/\n/).map(function(x){return x.replace(/^[\s\-*\u2022\d.)]+/,'').trim()}).filter(function(x){if(!x)return false;var k=x.toLowerCase();if(seen[k])return false;seen[k]=1;return true});
    if(!names.length){toast('No names yet');return}
    var nw=0,ad=0,i=0;names.forEach(function(nm){var ex=people.filter(function(p){return p.n.toLowerCase()===nm.toLowerCase()})[0];
-    if(!ex){RAW.push({id:nm.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+Date.now().toString(36)+(i++),name:nm,stage:'Namelist',tags:'',market:'',phone:'',email:'',lastContact:'',lastOrder:'',nextDate:'',nextAction:'',hot:'',notes:'',verify:'',trmeStart:'',sponsor:'',birthday:'',created:isoOf(TD)});buildPeople();ex=people[people.length-1];nw++}
+    if(!ex){RAW.push({added:isoOf(TD),id:nm.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+Date.now().toString(36)+(i++),name:nm,stage:'Namelist',tags:'',market:'',phone:'',email:'',lastContact:'',lastOrder:'',nextDate:'',nextAction:'',hot:'',notes:'',verify:'',trmeStart:'',sponsor:'',birthday:'',created:isoOf(TD)});buildPeople();ex=people[people.length-1];nw++}
     if(!mOf(BL.id,pid(ex))){LM.push({lid:BL.id,pid:pid(ex),status:isEv(BL)?'Not yet':'',product:'',added:isoOf(TD),done:'',doneDate:'',tid:'',plc:'',pnd:''});ad++}});
    savePeople();saveX('listmembers');bk.remove();render(true);toast(nw+' new people, '+ad+' added to '+BL.name);haptic()};return}
  if(d.lwa){var lk=d.lwa.split('|'),lw=lById(lk[0]),pw=byPid(lk[1]);if(lw&&pw)openWA(pw,{type:'List: '+lw.name,lid:lw.id});return}
@@ -1704,7 +1812,7 @@ document.addEventListener('click',function(e){
   show();inp.addEventListener('input',show);
   ab2.addEventListener('click',function(e){var c=e.target.closest('[data-amp],[data-amnew]');if(!c)return;var p;
    if(c.dataset.amp!==undefined){p=people[+c.dataset.amp]}else{var nm=inp.value.trim();if(!nm)return;if(!CFG.url){toast('Connect the Sheet first so the new person is saved');return}
-    RAW.push({id:nm.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+Date.now().toString(36),name:nm,stage:'Namelist',tags:'',market:'',phone:'',email:'',lastContact:'',lastOrder:'',nextDate:'',nextAction:'',hot:'',notes:'',verify:'',trmeStart:'',sponsor:'',birthday:'',created:isoOf(TD)});savePeople();p=people[people.length-1]}
+    RAW.push({added:isoOf(TD),id:nm.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+Date.now().toString(36),name:nm,stage:'Namelist',tags:'',market:'',phone:'',email:'',lastContact:'',lastOrder:'',nextDate:'',nextAction:'',hot:'',notes:'',verify:'',trmeStart:'',sponsor:'',birthday:'',created:isoOf(TD)});savePeople();p=people[people.length-1]}
    if(!p)return;
    if(mOf(L0.id,pid(p))){toast(p.n+' is already on this list');return}
    LM.push({lid:L0.id,pid:pid(p),status:isEv(L0)?'Not yet':'',product:'',added:isoOf(TD),done:'',doneDate:'',tid:'',plc:'',pnd:''});saveX('listmembers');inp.value='';show();render(true);toast(p.n+' added to '+L0.name);haptic()});

@@ -1053,7 +1053,7 @@ function scoreSheet(){var a=dayAct(isoOf(TD)),T={names:tgt('target_names',5),fu:
  sheet('<h3>Today\'s activity</h3><p class="meta" style="margin:0">Streak: '+streakN()+' days in a row with a logged contact</p>'+row('New names',a.names,T.names)+row('Follow-up',a.fu,T.fu)+row('Invite',a.inv,T.inv)+'<div class="lbl">Funnel now</div>'+funnel()+'<div class="lbl">Last 7 days</div><div style="display:flex;align-items:flex-end;gap:6px;height:90px">'+wk+'</div><p class="meta" style="margin:10px 0 0">You can change the targets in the Sheet, teamdata tab: rows with type cfg and scope target_names, target_follow, target_invite.</p><button class="btn alt" data-close="1">Close</button>')}
 function noNext(p){return p.next===null&&['Prospect','Closing','Warming Partner','TRME Active','Partner'].indexOf(p.st)>-1}
 function blindspots(){
- var nNo=people.filter(noNext).length,reoN=reorderList().length,out=[];
+ var nNo=grpP().filter(noNext).length,reoN=reorderList().length,out=[];
  if(CFG.url){var PVb=null;try{PVb=pvData()}catch(e){}
   if(PVb){var ab=dn(PVb.hi),ag=ab==null?0:TD-ab;if(ag>=2)out.push({t:'Team data is '+ag+' days old',d:'Send the latest genealogy PDF to Claude',go:'team:Pulse',c:'sand',i:'chart'});
    var rk=leadRisk(PVb);if(rk.length)out.push({t:rk.length+' leader'+(rk.length>1?'s':'')+' behind pace',d:rk.slice(0,3).map(function(m){return m.n}).join(', ')+(rk.length>3?'...':''),go:'team:Pulse',c:'peach',i:'users'});

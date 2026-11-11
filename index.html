@@ -1864,7 +1864,7 @@ function lbChips(){
  var c=[['All',LB.books.length],['Reading',rd],['On device',saved]].concat(lbShelves().map(function(s){return [s,LB.books.filter(function(b){return b.shelf===s}).length]}));
  return c.map(function(x){return '<button class="chip" data-lb-shelf="'+esc(x[0])+'" aria-pressed="'+(LB.shelf===x[0])+'">'+esc(x[0])+' <em>'+x[1]+'</em></button>'}).join('')}
 function libraryPage(){
- var top='<div class="top"><div class="stats"><span style="color:var(--mute)">'+(LB.books.length?LB.books.length+' books':'')+'</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button></div></div><div class="hrow"><h1>Library</h1></div>';
+ var top='<div class="top"><div class="stats"><span style="color:var(--mute)">'+(LB.books.length?LB.books.length+' books':'')+'</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button></div></div><div class="hrow"><h1>Library</h1><span class="meta" style="align-self:end">Reader build 7</span></div>';
  if(!LB.books.length){
   if(!CFG.url)return top+'<p class="note">Connect the Sheet first in Sync. The book list lives there.</p>';
   return top+'<div class="missed"><b>No books yet</b><p class="meta" style="margin:6px 0 0">Tell Claude: "update my library". Claude reads your Drive eBooks folder and fills the books tab in the Sheet.</p></div>'}
@@ -1959,7 +1959,10 @@ function lbCssDyn(){
  'table{display:block;overflow:hidden}pre{white-space:pre-wrap}body pre,body code,body kbd,body samp,body tt{font-family:ui-monospace,Menlo,monospace!important}blockquote{margin-left:1.2em;margin-right:.6em}'+
  '::selection{background:rgba(255,190,0,.38)}'+
  '::highlight(hly){background-color:rgba(255,214,10,.5)}::highlight(hlg){background-color:rgba(52,199,89,.42)}::highlight(hlb){background-color:rgba(10,132,255,.36)}::highlight(hlp){background-color:rgba(255,55,95,.36)}::highlight(hlv){background-color:rgba(175,82,222,.36)}::highlight(hlu){text-decoration:underline;text-decoration-color:#ff3b30;text-decoration-thickness:2px}::highlight(hlf){background-color:rgba(255,149,0,.55)}'}
-function lbCount(){var R=LBR,doc=R.doc,w=Math.max(doc.documentElement.scrollWidth,doc.body.scrollWidth);R.pages=Math.max(1,Math.ceil((w-1)/R.d.W))}
+function lbCount(){
+ var R=LBR,doc=R.doc,w=Math.max(doc.documentElement.scrollWidth,doc.body.scrollWidth),r=0;
+ try{var rg=doc.createRange();rg.selectNodeContents(doc.body);var bb=rg.getBoundingClientRect();r=bb.right+(bb.left<0?0:0)}catch(e){}
+ R.pages=Math.max(1,Math.ceil((Math.max(w,r)-1)/R.d.W))}
 function lbApply(){
  var R=LBR;if(!R||!R.doc||!R.ok)return;
  if(lbLand())return;
@@ -2126,20 +2129,28 @@ function lbWire(doc){
   if(G.dx<-W*.18||(v<-.5&&G.dx<-24))lbNext();
   else if(G.dx>W*.18||(v>.5&&G.dx>24))lbPrev();
   else lbSetPage(R.page,false)}
- doc.addEventListener('touchend',function(e){end(e,0)},{passive:true});
+ doc.addEventListener('touchend',function(e){
+  R.lastTouch=Date.now();
+  var G=g,t=e.changedTouches&&e.changedTouches[0];
+  if(G&&!G.drag&&t&&Math.hypot(t.clientX-G.x,t.clientY-G.y)<12&&Date.now()-G.t<600&&(e.touches&&e.touches.length===0)){
+   g=null;tap(t.clientX,t.clientY,doc.elementFromPoint(t.clientX,t.clientY));return}
+  end(e,0)},{passive:true});
  doc.addEventListener('touchcancel',function(e){end(e,1)},{passive:true});
- doc.addEventListener('click',function(e){
-  e.preventDefault();
-  if(Date.now()-(R.dragT||0)<400)return;
+ function tap(x,y,target){
   if(R.panel){lbPanelClose();return}
   if(R.hadSel){R.hadSel=0;return}
-  var a=e.target&&e.target.closest?e.target.closest('a'):null;
+  var a=target&&target.closest?target.closest('a'):null;
   if(a){lbLink(a);return}
-  var hl=lbHlAt(e.clientX,e.clientY);if(hl){lbHlSheet(hl);return}
-  var x=e.clientX/R.d.W;
-  if(x<.3){R.node.classList.add('hide');lbPrev()}
-  else if(x>.7){R.node.classList.add('hide');lbNext()}
-  else R.node.classList.toggle('hide')});
+  var hl=lbHlAt(x,y);if(hl){lbHlSheet(hl);return}
+  var f=x/R.d.W;
+  if(f<.3){R.node.classList.add('hide');lbPrev()}
+  else if(f>.7){R.node.classList.add('hide');lbNext()}
+  else R.node.classList.toggle('hide')}
+ doc.addEventListener('click',function(e){
+  e.preventDefault();
+  if(Date.now()-(R.lastTouch||0)<900)return;
+  if(Date.now()-(R.dragT||0)<400)return;
+  tap(e.clientX,e.clientY,e.target)});
  doc.addEventListener('keydown',lbKey)}
 function lbKey(e){
  var R=LBR;if(!R||document.querySelector('.sheet-bg'))return;

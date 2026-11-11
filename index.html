@@ -751,7 +751,7 @@ function contactDone(p,o){o=o||{};var r=p.raw;if(!r){toast('Connect the Sheet fi
 function undoContact(u){u.r.lastContact=u.prev.lc;u.r.nextDate=u.prev.nd;TLOG=TLOG.filter(function(x){return x.id!==u.e.id});savePeople();saveX('touchlog')}
 /* ---------- Waiting + log step ----------
    Tap Message = person is marked Sent and goes to Waiting (follow-up date in WAIT_DAYS). When they reply, Log asks what happened. */
-var WAIT_DAYS=2,OUTC=['Replied','No reply','Meeting set','Said yes','Not now'],METH=['Message','Call','Met in person'];
+var WAIT_DAYS=2,OUTC=['Replied','Ordered','No reply','Meeting set','Said yes','Not now'],METH=['Message','Call','Met in person'];
 function isWait(p){return !!(p.raw&&String(p.raw.waiting)==='1')}
 function sentAgo(p){var d=dn(p.raw&&p.raw.sentDate);if(d==null)return '';var n=TD-d;return n<=0?'today':n===1?'yesterday':n+' days ago'}
 function grpOK(p){return p.st!=='Partner'}
@@ -765,7 +765,7 @@ function markSent(p){var r=p.raw;if(!r)return null;
  TLOG.push(e);savePeople();saveX('touchlog');return {r:r,prev:prev,e:e}}
 function undoSent(u){u.r.lastContact=u.prev.lc;u.r.nextDate=u.prev.nd;u.r.waiting=u.prev.w;u.r.sentDate=u.prev.sa;TLOG=TLOG.filter(function(x){return x.id!==u.e.id});savePeople();saveX('touchlog')}
 var PFIL='All',PLST='',QORD=null,SENT={},SENTU={},QL={},FIX={ids:[],i:0},PILE_DAYS=14,CONTACT_GOAL=3,NAME_GOAL=2;
-var PRE={'Replied':3,'No reply':2,'Meeting set':1,'Said yes':7,'Not now':30};
+var PRE={'Ordered':7,'Replied':3,'No reply':2,'Meeting set':1,'Said yes':7,'Not now':30};
 function legacyView(v){var m={'Follow-up':['Queue'],'No next step':['Everyone','No next step'],'TRME':['Everyone','TRME Active'],'Pipeline':['Everyone','Prospect'],'Customers':['Everyone','Customer'],'Promo':['Everyone','Buyers'],'All':['Everyone','All']}[v]||[v];pview=m[0];if(m[1])PFIL=m[1];QORD=null;SENT={};SENTU={}}
 function byname(a,b){return a.n<b.n?-1:1}
 function contactedToday(){var s={},d=isoOf(TD);TLOG.forEach(function(x){if(x.date===d)s[x.pid]=1});return Object.keys(s).length}
@@ -804,7 +804,7 @@ function qlSave(p){var r=p.raw,q=qlSt(p);if(!r)return;
  var nd=q.nd||isoOf(TD+(PRE[q.out]||3));
  var prev={lc:r.lastContact||'',nd:r.nextDate||'',w:r.waiting||'',sa:r.sentDate||'',st:r.stage||'',ex:r.exposures||'',it:r.interest||'',ts:r.trmeStart||''};
  r.waiting='';r.lastContact=isoOf(TD);r.nextDate=nd;
- if(q.out!=='Not now')r.exposures=String((Number(r.exposures)||0)+1);
+ if(q.out!=='Not now'&&q.out!=='Ordered')r.exposures=String((Number(r.exposures)||0)+1);
  if(q.intr)r.interest=q.intr;
  var msg=p.n+' logged. Next '+dueTxt(dn(nd)-TD).toLowerCase();
  if(q.out==='Not now')r.stage='Not Now';
@@ -812,8 +812,9 @@ function qlSave(p){var r=p.raw,q=qlSt(p);if(!r)return;
   if(q.path==='partner'){r.stage='Partner';msg=p.n+' is now a Partner and moves to your Team'}
   else{r.stage='TRME Active';if(!r.trmeStart)r.trmeStart=isoOf(TD);msg=p.n+' started the 90 days'}}
  var e={id:Date.now()+'-'+Math.floor(Math.random()*999),pid:pid(p),date:isoOf(TD),type:q.meth,result:q.out,interest:q.intr,note:q.note};
- TLOG.push(e);QL={};savePeople();saveX('touchlog');
+ TLOG.push(e);var wasOrd=q.out==='Ordered';QL={};savePeople();saveX('touchlog');
  document.querySelectorAll('.sheet-bg').forEach(function(x){x.remove()});haptic();render(true);
+ if(wasOrd){var ob=document.createElement('button');ob.dataset.buy=String(p.id);ob.style.display='none';document.body.appendChild(ob);ob.click();ob.remove()}
  toastU(msg,function(){r.lastContact=prev.lc;r.nextDate=prev.nd;r.waiting=prev.w;r.sentDate=prev.sa;r.stage=prev.st;r.exposures=prev.ex;r.interest=prev.it;r.trmeStart=prev.ts;TLOG=TLOG.filter(function(x){return x.id!==e.id});savePeople();saveX('touchlog');render(true)})}
 function openLog(p,out){if(!p||!p.raw){toast('Connect the Sheet first so the log is saved');return}
  var q=qlSt(p);if(out&&!q.out){q.out=out;q.nd=isoOf(TD+(PRE[out]||3))}

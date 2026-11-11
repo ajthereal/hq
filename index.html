@@ -1097,7 +1097,8 @@ function dayBody(D){
  }
  if(D!==TD)h+=schedule(D);
  if(D===TD){var tm=tasks.filter(function(t){return t.day===TD+1});
-  h+=gp('tom','nod','clock','Tomorrow',tm.length)+(collapsed.tom?'':'<div class="list">'+tm.map(taskRow).join('')+'</div>');}
+  h+=gp('tom','nod','clock','Tomorrow',tm.length)+(collapsed.tom?'':'<div class="list">'+tm.map(taskRow).join('')+'</div>');
+  h+='<div class="missed"><b>Anything missed?</b><div class="chips" style="margin-top:10px"><button class="chip" data-act="m1">'+late.length+' overdue</button><button class="chip" data-act="m2">'+nod.length+' without a date</button><button class="chip" data-act="m3">'+tm.length+' for tomorrow</button></div><p class="meta" style="margin:8px 0 0">At 20:30 I send a reminder if anything is still overdue or has no date.</p></div>';}
 
  return h}
 function work_(){
@@ -1107,7 +1108,6 @@ function work_(){
  var h='<div class="top"><div class="stats"></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button><button data-add="today" aria-label="Add">'+ic('plus',22)+'</button></div></div><div class="hrow"><h1>Work</h1></div>'+(CFG.url?'':'<span class="sample">Sample data</span>');
  h+=numStrip()+topCard()+h2+reorderCard();
  if(bs.length)h+=gp('bs','eve','eye','Blind spots',bs.length)+(collapsed.bs?'':'<div class="list">'+bs.map(bsRow).join('')+'</div>');
- h+='<div class="missed"><b>Anything missed?</b><div class="chips" style="margin-top:10px"><button class="chip" data-act="m1">'+late.length+' overdue</button><button class="chip" data-act="m2">'+nod.length+' without a date</button><button class="chip" data-act="m3">'+tm.length+' for tomorrow</button></div><p class="meta" style="margin:8px 0 0">At 20:30 I send a reminder if anything is still overdue or has no date.</p></div>';
  if(!CFG.url)h+='<p class="note">Connect your Sheet to see numbers, people and follow-ups here.</p>';
  return h}
 function todayList(){return dayHead()+dayBody(sel)}

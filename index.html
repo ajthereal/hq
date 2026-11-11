@@ -143,6 +143,9 @@ h1{font-family:var(--display);font-weight:500;font-size:31px;line-height:1.05;ma
 .pwide{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:24px;align-items:start}
 .pdetail{position:sticky;top:12px;margin-top:10px}
 .task.sel{border-color:var(--ink)}
+.task .qb,.qrow .qb{white-space:nowrap}
+.pwide>div{min-width:0}
+.list{grid-template-columns:minmax(0,1fr)}
 .task.grow{max-height:none}
 .prow{border-radius:18px;background:var(--card);border:1px solid var(--line);margin-bottom:6px;overflow:hidden}
 .prow.sel{border-color:var(--ink)}
@@ -1011,7 +1014,8 @@ function scoreP(p){if(p.st==='Not Now'||p.last===0)return null;var W={'Closing':
  if(!why.length)return null;return {p:p,sc:sc,why:why,kind:kind,ft:ft}}
 function topThree(){return people.map(scoreP).filter(Boolean).sort(function(a,b){return b.sc-a.sc}).slice(0,5)}
 function avIc(p){return ['sky','pink','lav','mint','peach','sand'][p.id%6]}
-function actRow(p,sub,kind,ft,keep){return '<div class="task"'+(keep?' data-keep="1"':'')+'><div class="ic '+avIc(p)+'">'+ic('chat',17)+'</div><button class="tb" data-pdet="'+p.id+'"><b>'+esc(p.n)+'</b><small>'+esc(sub)+'</small></button><button class="rb" data-fwa="'+p.id+'" data-fk="'+esc(kind||'')+'" data-ft="'+esc(ft||'Follow-up')+'" aria-label="Open WhatsApp">'+ic('chat',16)+'</button><button class="ck" data-fudone="'+p.id+'" data-ftype="'+esc(ft||'Follow-up')+'" aria-label="Mark as contacted"><i>'+ic('check',14)+'</i></button></div>'}
+function actRow(p,sub,kind,ft,keep){var act=p.phone?'<button class="qb" data-fwa="'+p.id+'" data-fk="'+esc(kind||'')+'" data-ft="'+esc(ft||'Follow-up')+'">'+ic('chat',15)+' Message</button>':'<button class="qb alt" data-edit="'+p.id+'">Add number</button>';
+ return '<div class="qrow"><button class="qm" data-pdet="'+p.id+'"><span class="av" style="background:'+avc(p)+'">'+esc(String(p.n||'?').charAt(0))+'</span><span class="pn"><b>'+esc(p.n)+'</b><small>'+esc(sub)+'</small></span></button>'+act+'</div>'}
 function top3Today(){var k=isoOf(TD),rows=T3.filter(function(r){return r.date===k});
  /* lock today's picks only after the Sheet and the people list are loaded, so another device's picks are never overwritten */
  if(CFG.url&&SYNCOK.top3&&PPULLED&&people.length&&rows.length<5){var have={};rows.forEach(function(r){have[r.pid]=1});
@@ -1106,7 +1110,7 @@ function dayBody(D){
 function work_(){
  var h2='',late=lateTasks(),nod=tasks.filter(function(t){return t.day===null&&!t.done}),tm=tasks.filter(function(t){return t.day===TD+1}),bs=blindspots();
  var fu=people.filter(function(p){return p.next!==null&&p.next<=0&&p.st!=='Not Now'}).sort(function(a,b){return a.next-b.next});
-  if(fu.length)h2+=gp('fu','late','alert','Follow up',fu.length)+(collapsed.fu?'':'<div class="list">'+fu.slice(0,30).map(function(p){return '<div class="task"><div class="ic '+['sky','pink','lav','mint','peach','sand'][p.id%6]+'">'+ic('chat',17)+'</div><button class="tb" data-pdet="'+p.id+'"><b>'+esc(p.n)+'</b><small>'+(p.next<0?'Overdue '+(-p.next)+'d':'Today')+(p.note?' · '+esc(p.note.slice(0,60)):'')+'</small></button><button class="rb" data-fwa="'+p.id+'" aria-label="Open WhatsApp">'+ic('chat',16)+'</button><button class="ck" data-fudone="'+p.id+'" aria-label="Mark as contacted"><i>'+ic('check',14)+'</i></button></div>'}).join('')+(fu.length>30?'<p class="meta" style="margin:6px 4px">+'+(fu.length-30)+' more in People</p>':'')+'</div>');
+  if(fu.length)h2+=gp('fu','late','alert','Follow up',fu.length)+(collapsed.fu?'':'<div class="list">'+fu.slice(0,30).map(function(p){return actRow(p,(p.next<0?'Overdue '+(-p.next)+'d':'Today')+(p.note?' · '+p.note.slice(0,60):''),'','Follow-up')}).join('')+(fu.length>30?'<p class="meta" style="margin:6px 4px">+'+(fu.length-30)+' more in People</p>':'')+'</div>');
  var h='<div class="top"><div class="stats"></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button><button data-add="today" aria-label="Add">'+ic('plus',22)+'</button></div></div><div class="hrow"><h1>Work</h1></div>'+(CFG.url?'':'<span class="sample">Sample data</span>');
  var hd=h;h='';
  h+=numStrip()+topCard()+h2+reorderCard();
@@ -1115,7 +1119,7 @@ function work_(){
  if(wide())return hd+'<div class="pwide" style="margin-top:16px"><div>'+h+'</div><div class="pdetail" id="pdetail" style="margin-top:0"><p class="note">Pick someone to see their details here.</p></div></div>';
  return hd+'<div style="margin-top:16px">'+h+'</div>'}
 var WSEL=-1;
-function workPane(){var el=$('#pdetail');if(!el||tab!=='work'||!wide())return;var p=WSEL>=0?people[WSEL]:null;if(p)el.innerHTML=pdetail(p);document.querySelectorAll('#app .task').forEach(function(r){var b=r.querySelector('[data-pdet]');r.classList.toggle('sel',!!b&&+b.dataset.pdet===WSEL)})}
+function workPane(){var el=$('#pdetail');if(!el||tab!=='work'||!wide())return;var p=WSEL>=0?people[WSEL]:null;if(p)el.innerHTML=pdetail(p);document.querySelectorAll('#app .task,#app .qrow').forEach(function(r){var b=r.querySelector('[data-pdet]');r.classList.toggle('sel',!!b&&+b.dataset.pdet===WSEL)})}
 function todayList(){return dayHead()+dayBody(sel)}
 function statsHTML(){var doneN=tasks.filter(function(t){return t.done}).length;
  return '<div class="stats"><span class="f" data-score="1">'+ic('flame',18)+streakN()+'</span><span id="sdot" class="sdot" data-s="'+syncState+'" title=""></span><span class="s" id="spk" data-score="1">'+ic('spark',18)+'<b style="font-weight:600">'+sparkN()+'</b></span></div>'}
@@ -1801,7 +1805,7 @@ document.addEventListener('click',function(e){
  if(d.msg){var p=people[d.msg];if(p&&openWA(p,{type:'Follow-up'}))render(true);return}
  if(d.log){var lp=people[d.log];if(!lp)return;document.querySelectorAll('.sheet-bg').forEach(function(x){x.remove()});openLog(lp);return}
  if(d.fudone){doFollow(el);return}
- if(d.fwa){var fp=people[d.fwa];if(fp)openWA(fp,{type:el.dataset.ft||'Follow-up'});return}
+ if(d.fwa){var fp=people[d.fwa];if(fp&&openWA(fp,{type:el.dataset.ft||'Follow-up'}))render(true);return}
  if(d.score){scoreSheet();return}
  if(d.chkin){var ck=d.chkin.split('|'),cp=people[ck[0]],cd=+ck[1];if(!cp)return;var old=resOf(pid(cp),cd)||{};
   var cb=sheet('<h3>'+esc(cp.n)+' · day '+cd+'</h3><input id="cw" type="text" inputmode="decimal" placeholder="Weight (kg)" autocomplete="off" value="'+esc(old.weight||'')+'"><input id="cb" type="text" inputmode="numeric" placeholder="Body age" autocomplete="off"><input id="cl" type="text" inputmode="decimal" placeholder="Lean mass (kg)" autocomplete="off"><input id="cn" type="text" placeholder="Short note" autocomplete="off"><button class="btn" id="cs" style="margin-top:0">Save</button><button class="btn alt" data-close="1" style="margin-top:0">Close</button>');

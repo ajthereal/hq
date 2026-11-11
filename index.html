@@ -1007,20 +1007,20 @@ function scoreP(p){if(p.st==='Not Now'||p.last===0)return null;var W={'Closing':
  var r=reo(p);if(r){sc+=25;why.push(r.rel<=0?'time to reorder':'reorder '+dueTxt(r.rel).toLowerCase());if(!kind){kind='reo';ft='Reorder'}}
  if(p.raw&&/^(1|true|yes|ya|y|hot)$/i.test(String(p.raw.hot||'').trim())){sc+=25;why.push('hot')}
  if(!why.length)return null;return {p:p,sc:sc,why:why,kind:kind,ft:ft}}
-function topThree(){return people.map(scoreP).filter(Boolean).sort(function(a,b){return b.sc-a.sc}).slice(0,3)}
+function topThree(){return people.map(scoreP).filter(Boolean).sort(function(a,b){return b.sc-a.sc}).slice(0,5)}
 function avIc(p){return ['sky','pink','lav','mint','peach','sand'][p.id%6]}
 function actRow(p,sub,kind,ft,keep){return '<div class="task"'+(keep?' data-keep="1"':'')+'><div class="ic '+avIc(p)+'">'+ic('chat',17)+'</div><button class="tb" data-pdet="'+p.id+'"><b>'+esc(p.n)+'</b><small>'+esc(sub)+'</small></button><button class="rb" data-fwa="'+p.id+'" data-fk="'+esc(kind||'')+'" data-ft="'+esc(ft||'Follow-up')+'" aria-label="Open WhatsApp">'+ic('chat',16)+'</button><button class="ck" data-fudone="'+p.id+'" data-ftype="'+esc(ft||'Follow-up')+'" aria-label="Mark as contacted"><i>'+ic('check',14)+'</i></button></div>'}
 function top3Today(){var k=isoOf(TD),rows=T3.filter(function(r){return r.date===k});
  /* lock today's picks only after the Sheet and the people list are loaded, so another device's picks are never overwritten */
- if(CFG.url&&SYNCOK.top3&&PPULLED&&people.length&&rows.length<3){var have={};rows.forEach(function(r){have[r.pid]=1});
-  var add=topThree().filter(function(x){return !have[pid(x.p)]}).slice(0,3-rows.length);
+ if(CFG.url&&SYNCOK.top3&&PPULLED&&people.length&&rows.length<5){var have={};rows.forEach(function(r){have[r.pid]=1});
+  var add=topThree().filter(function(x){return !have[pid(x.p)]}).slice(0,5-rows.length);
   if(add.length){add.forEach(function(x){var r={date:k,pid:pid(x.p),why:x.p.st+' · '+x.why.join(' · '),kind:x.kind,ft:x.ft};T3.push(r);rows.push(r)});saveTop3()}}
  if(!rows.length)return SYNCOK.top3?[]:topThree().map(function(x){return {p:x.p,sub:x.p.st+' · '+x.why.join(' · '),kind:x.kind,ft:x.ft,done:false}});
  var out=[];rows.forEach(function(r){var p=people.filter(function(x){return pid(x)===r.pid})[0];if(p)out.push({p:p,sub:r.why||p.st,kind:r.kind,ft:r.ft,done:p.last===0})});return out}
 function t3Row(x){if(!x.done)return actRow(x.p,x.sub,x.kind,x.ft,1);var p=x.p;
  return '<div class="task done"><div class="ic '+avIc(p)+'">'+ic('chat',17)+'</div><button class="tb" data-pdet="'+p.id+'"><b>'+esc(p.n)+'</b><small>'+esc(x.sub)+'</small></button><button class="ck" tabindex="-1" aria-label="Contacted today"><i>'+ic('check',14)+'</i></button></div>'}
 function topCard(){if(!CFG.url)return '';var t=top3Today();if(!t.length)return '';var n=t.filter(function(x){return x.done}).length;
- return gp('top3','late','spark','Top 3 people today',n+'/'+t.length)+(collapsed.top3?'':'<div class="list">'+t.map(t3Row).join('')+'</div>')}
+ return gp('top3','late','spark','Top 5 people today',n+'/'+t.length)+(collapsed.top3?'':'<div class="list">'+t.map(t3Row).join('')+'</div>')}
 function reorderCard(){if(!CFG.url)return '';var L=reorderList();if(!L.length)return '';
  return gp('reo','nod','chat','Reorder',L.length)+(collapsed.reo?'':'<div class="list">'+L.slice(0,10).map(function(o){return actRow(o.p,(o.r.rel<0?(-o.r.rel)+' days past reorder date':'Reorder '+dueTxt(o.r.rel).toLowerCase())+(o.p.ord!=null?' · last order '+o.p.ord+' days ago':''),'reo','Reorder')}).join('')+(L.length>10?'<p class="meta" style="margin:6px 4px">+'+(L.length-10)+' more in People, Customers</p>':'')+'</div>')}
 function bdCard(){if(!CFG.url)return '';var L=birthdayList();if(!L.length)return '';
@@ -1087,22 +1087,28 @@ function schedule(D){
 function dayBody(D){
  var late=lateTasks(),nod=tasks.filter(function(t){return t.day===null&&!t.done}),h='';
  if(D===TD){
-  h+=schedule(D)+numStrip()+topCard()+chkCard();
+  h+=schedule(D)+chkCard();
   if(late.length)h+=gp('late','late','alert','Overdue',late.length)+(collapsed.late?'':'<div class="list">'+late.map(taskRow).join('')+'</div>');
-  var fu=people.filter(function(p){return p.next!==null&&p.next<=0&&p.st!=='Not Now'}).sort(function(a,b){return a.next-b.next});
-  if(fu.length)h+=gp('fu','late','alert','Follow up',fu.length)+(collapsed.fu?'':'<div class="list">'+fu.slice(0,30).map(function(p){return '<div class="task"><div class="ic '+['sky','pink','lav','mint','peach','sand'][p.id%6]+'">'+ic('chat',17)+'</div><button class="tb" data-pdet="'+p.id+'"><b>'+esc(p.n)+'</b><small>'+(p.next<0?'Overdue '+(-p.next)+'d':'Today')+(p.note?' · '+esc(p.note.slice(0,60)):'')+'</small></button><button class="rb" data-fwa="'+p.id+'" aria-label="Open WhatsApp">'+ic('chat',16)+'</button><button class="ck" data-fudone="'+p.id+'" aria-label="Mark as contacted"><i>'+ic('check',14)+'</i></button></div>'}).join('')+(fu.length>30?'<p class="meta" style="margin:6px 4px">+'+(fu.length-30)+' more in People</p>':'')+'</div>');
-  h+=reorderCard()+bdCard();
+  h+=bdCard();
   var tp=[];upTrips().forEach(function(t){(t.prep||[]).forEach(function(p){if(TK.indexOf(t.id+':'+p.id)>-1)return;var du=pDue(p);if(du.n<=3&&du.n>=-30&&!(p.opens&&dUntil(p.opens.slice(0,10))>0))tp.push({id:t.id+':'+p.id,t:p.label,w:t.name+' · '+du.t})})});
   if(tp.length)h+=gp('trp','nod','clock','Trip',tp.length)+(collapsed.trp?'':'<div class="list">'+tp.map(function(x){return '<div class="task"><div class="ic sky">'+ic('clock',17)+'</div><div class="tb"><b>'+esc(x.t)+'</b><small>'+esc(x.w)+'</small></div><button class="ck" data-ttick="'+esc(x.id)+'" aria-label="Done"><i>'+ic('check',14)+'</i></button></div>'}).join('')+'</div>');
-  var bs=blindspots();
   if(CFG.url&&!tasks.length&&!evOn(D).length)h+='<div class="missed"><b>Still empty</b><p class="meta" style="margin:6px 0 0">Tap + to add the first one. Anything without a date goes to No date, so nothing gets lost.</p></div>';
-  if(bs.length)h+=gp('bs','eve','eye','Blind spots',bs.length)+(collapsed.bs?'':'<div class="list">'+bs.map(bsRow).join('')+'</div>');
   h+=gp('nod','nod','inbox','No date',nod.length,'nod')+(collapsed.nod?'':'<div class="nodate">'+(nod.length?nod.map(taskRow).join(''):'<div class="empty">Empty. Everything has a date.</div>')+'</div>');
  }
  if(D!==TD)h+=schedule(D);
  if(D===TD){var tm=tasks.filter(function(t){return t.day===TD+1});
-  h+=gp('tom','nod','clock','Tomorrow',tm.length)+(collapsed.tom?'':'<div class="list">'+tm.map(taskRow).join('')+'</div>');
-  h+='<div class="missed"><b>Anything missed?</b><div class="chips" style="margin-top:10px"><button class="chip" data-act="m1">'+late.length+' overdue</button><button class="chip" data-act="m2">'+nod.length+' without a date</button><button class="chip" data-act="m3">'+tm.length+' for tomorrow</button></div><p class="meta" style="margin:8px 0 0">At 20:30 I send a reminder if anything is still overdue or has no date.</p></div>'}
+  h+=gp('tom','nod','clock','Tomorrow',tm.length)+(collapsed.tom?'':'<div class="list">'+tm.map(taskRow).join('')+'</div>');}
+
+ return h}
+function work_(){
+ var h2='',late=lateTasks(),nod=tasks.filter(function(t){return t.day===null&&!t.done}),tm=tasks.filter(function(t){return t.day===TD+1}),bs=blindspots();
+ var fu=people.filter(function(p){return p.next!==null&&p.next<=0&&p.st!=='Not Now'}).sort(function(a,b){return a.next-b.next});
+  if(fu.length)h2+=gp('fu','late','alert','Follow up',fu.length)+(collapsed.fu?'':'<div class="list">'+fu.slice(0,30).map(function(p){return '<div class="task"><div class="ic '+['sky','pink','lav','mint','peach','sand'][p.id%6]+'">'+ic('chat',17)+'</div><button class="tb" data-pdet="'+p.id+'"><b>'+esc(p.n)+'</b><small>'+(p.next<0?'Overdue '+(-p.next)+'d':'Today')+(p.note?' · '+esc(p.note.slice(0,60)):'')+'</small></button><button class="rb" data-fwa="'+p.id+'" aria-label="Open WhatsApp">'+ic('chat',16)+'</button><button class="ck" data-fudone="'+p.id+'" aria-label="Mark as contacted"><i>'+ic('check',14)+'</i></button></div>'}).join('')+(fu.length>30?'<p class="meta" style="margin:6px 4px">+'+(fu.length-30)+' more in People</p>':'')+'</div>');
+ var h='<div class="top"><div class="stats"></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button><button data-add="today" aria-label="Add">'+ic('plus',22)+'</button></div></div><div class="hrow"><h1>Work</h1></div>'+(CFG.url?'':'<span class="sample">Sample data</span>');
+ h+=numStrip()+topCard()+h2+reorderCard();
+ if(bs.length)h+=gp('bs','eve','eye','Blind spots',bs.length)+(collapsed.bs?'':'<div class="list">'+bs.map(bsRow).join('')+'</div>');
+ h+='<div class="missed"><b>Anything missed?</b><div class="chips" style="margin-top:10px"><button class="chip" data-act="m1">'+late.length+' overdue</button><button class="chip" data-act="m2">'+nod.length+' without a date</button><button class="chip" data-act="m3">'+tm.length+' for tomorrow</button></div><p class="meta" style="margin:8px 0 0">At 20:30 I send a reminder if anything is still overdue or has no date.</p></div>';
+ if(!CFG.url)h+='<p class="note">Connect your Sheet to see numbers, people and follow-ups here.</p>';
  return h}
 function todayList(){return dayHead()+dayBody(sel)}
 function statsHTML(){var doneN=tasks.filter(function(t){return t.done}).length;
@@ -1596,7 +1602,7 @@ function more(){
  return '<div class="top"><div class="stats"></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button></div></div><div class="hrow"><h1>More</h1></div>'+(CFG.url?'':'<span class="sample">Sample data</span>')+'<div class="tiles2">'+t.map(function(x,i){return '<button class="tile2'+(x[2]!=='link'&&!x[3]&&i>2?' soon':'')+'" '+(i===0?'data-sync="1"':i===1?'data-impor="1"':i===2?'data-tab="content"':x[3]?'data-tab="'+x[3]+'"':'data-act="item"')+'><span class="ic sky">'+ic(x[2],17)+'</span><span><b>'+x[0]+'</b><small>'+x[1]+'</small></span></button>'}).join('')+'</div>'}
 
 /* ---------- shell ---------- */
-var NAV=[['today','tasks','Today'],['people','users','People'],['team','chart','Team'],['lists','list','Lists'],['trips','plane','Trips'],['content','video','Content'],['health','heart','Health'],['more','grid','More']];
+var NAV=[['today','tasks','Today'],['work','spark','Work'],['people','users','People'],['team','chart','Team'],['lists','list','Lists'],['trips','plane','Trips'],['content','video','Content'],['health','heart','Health'],['more','grid','More']];
 function renderNav(){
  var late=lateTasks().length,n=$('#nav');
  if(wide()){
@@ -1607,7 +1613,7 @@ function render(keep){
  FR.classList.toggle('wide',wide());
  renderNav();
  var y=SC.scrollTop;
- $('#app').innerHTML={today:today,people:people_,team:team,trips:tripsPage,health:healthPage,lists:listsPage,content:content,more:more}[tab]();
+ $('#app').innerHTML={today:today,work:work_,people:people_,team:team,trips:tripsPage,health:healthPage,lists:listsPage,content:content,more:more}[tab]();
  $('#rail').hidden=true;
  if(tab==='people')renderPeopleBody();
  SC.scrollTop=keep?y:0}
@@ -1870,9 +1876,8 @@ document.addEventListener('click',function(e){
  if(d.cv){ctView=d.cv;render();return}
  if(d.idea){var v=$('#idea').value.trim();if(!v){toast('Write the idea first');return}if(CFG.url){CT.push({id:Date.now(),t:v,type:'Reel',pillar:'',st:'Idea'});saveCt();render(true);toast('Idea saved')}else{toast('Not connected to the Sheet, idea not saved');return}haptic();if($('#idea'))$('#idea').value='';return}
  if(d.gotab){tab=d.gotab;render();return}
- if(d.act==='m1'){var l=document.querySelector('.gpb.late');l&&l.scrollIntoView({behavior:'smooth',block:'center'});return}
- if(d.act==='m2'){var n=document.querySelector('.nodate');n&&n.scrollIntoView({behavior:'smooth',block:'center'});return}
- if(d.act==='m3'){toast('Tomorrow has '+tasks.filter(function(x){return x.day===TD+1}).length+' items');return}
+ if(d.act==='m1'||d.act==='m2'){var q=d.act==='m1'?'.gpb.late':'.nodate';var go=function(){var l=document.querySelector(q);l&&l.scrollIntoView({behavior:'smooth',block:'center'})};if(tab!=='today'){tab='today';render();setTimeout(go,150)}else go();return}
+  if(d.act==='m3'){toast('Tomorrow has '+tasks.filter(function(x){return x.day===TD+1}).length+' items');return}
  if(d.act==='menu'){var sm=sheet('<h3>Settings</h3><div class="lbl">Appearance</div><div class="chips"><button class="chip" data-theme-set="auto">Auto</button><button class="chip" data-theme-set="light">Light</button><button class="chip" data-theme-set="dark">Dark</button></div><div class="lbl">Sync</div><p class="meta" style="margin:0">'+(CFG.url?'Connected to your Sheet.':'Not connected.')+'</p><button class="btn alt" data-close="1" data-sync="1" style="margin-top:10px">'+(CFG.url?'Set up sync':'Connect Google Sheet')+'</button>');sm.querySelectorAll('[data-theme-set]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.themeSet===theme)});return}
 });
 if(window.ResizeObserver){new ResizeObserver(function(){fit()}).observe($('#stage'))}

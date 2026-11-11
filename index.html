@@ -1753,7 +1753,7 @@ document.addEventListener('click',function(e){
  if(d.hx){hxAct(d.hx);return}
  if(d.trips){tab='trips';pullTrips();render();return}
  if(d.tback){moreView='';render();return}
- if(d.ttick){tickTrip(d.ttick);return}
+ if(d.ttick){var trw=el.closest('.task'),tid=d.ttick;if(trw&&TK.indexOf(tid)<0){if(trw.classList.contains('pop'))return;trw.classList.add('done','pop');var tci=trw.querySelector('.ck i');tci&&burst(tci,false);haptic(false);if(tab==='today')setTimeout(function(){trw.classList.add('leave')},REDUCE?0:380);setTimeout(function(){tickTrip(tid)},REDUCE?0:(tab==='today'?760:300))}else tickTrip(tid);return}
  if(d.tcopy){try{navigator.clipboard.writeText(d.tcopy);toast('Copied')}catch(e){toast(d.tcopy)}return}
  if(d.hab){toggleHab(el);return}
  if(d.done){completeTask(el);return}

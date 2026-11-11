@@ -486,6 +486,21 @@ XT.healthlog=['hq-hlog',function(){return HL},function(r){HL=r}];
 XT.healthvisits=['hq-hvisits',function(){return HV},function(r){HV=r}];
 var HN=[];try{HN=JSON.parse(localStorage.getItem('hq-hnotes')||'[]')}catch(e){}
 XT.healthnotes=['hq-hnotes',function(){return HN},function(r){HN=r}];
+var HX=[];try{HX=JSON.parse(localStorage.getItem('hq-hvax')||'[]')}catch(e){}
+XT.healthvax=['hq-hvax',function(){return HX},function(r){HX=r}];
+/* Vaccines are read-only here. The Sheet tab healthvax is the master, edited in the Sheet. */
+function hxVax(p){
+ var rows=HX.filter(function(r){return r.pid===p.id});if(!rows.length)return '';
+ var order=[],by={};rows.forEach(function(r){if(!by[r.vaccine]){by[r.vaccine]=[];order.push(r.vaccine)}by[r.vaccine].push(r)});
+ var given=rows.filter(function(r){return r.date}).length,chk=rows.filter(function(r){return String(r.check)==='1'}).length;
+ var s='<details class="card"><summary style="cursor:pointer"><h2 style="display:inline">Vaccines</h2> <span class="meta">'+given+' doses recorded'+(chk?', '+chk+' to check against the book':'')+'</span></summary>';
+ order.forEach(function(v){
+  s+='<div class="hx-visit"><b>'+esc(v)+'</b>';
+  by[v].forEach(function(r){
+   var flag=String(r.check)==='1',dt=r.date||(r.raw?'not clear':'none recorded');
+   s+='<p>'+(r.dose?'<small>'+esc(r.dose)+'</small> ':'')+esc(dt)+(flag?' '+hxChip('watch','Check book'):'')+(r.note?' <span class="meta">'+esc(r.note)+'</span>':'')+'</p>'});
+  s+='</div>'});
+ return s+'<p class="meta" style="margin:10px 0 0">Copied from the immunization book. Dates marked Check book were hard to read.</p></details>'}
 var HKINDS={m:['Voice change','Wet dream','Morning erection','Body hair','Growth spurt','Other'],f:['Breast development','Body hair','First period','Growth spurt','Other']};
 var HM={height:['Height','cm'],weight:['Weight','kg'],waist:['Waist','cm'],bodyfat:['Body fat','%'],muscle:['Skeletal muscle','%'],visceral:['Visceral fat','level'],rm:['Resting metabolism','kcal'],bodyage:['Body age','years'],bpsys:['Blood pressure, top','mmHg'],bpdia:['Blood pressure, bottom','mmHg'],pulse:['Pulse','bpm'],glucose:['Fasting glucose','mg/dL'],hba1c:['HbA1c','%'],tc:['Total cholesterol','mg/dL'],ldl:['LDL cholesterol','mg/dL'],hdl:['HDL cholesterol','mg/dL'],tg:['Triglycerides','mg/dL'],vitd:['Vitamin D','ng/mL'],testis:['Testicular volume','ml']};
 var HRANGE={height:[50,230],weight:[5,250],waist:[30,200],bodyfat:[3,60],muscle:[5,70],visceral:[0.5,59],rm:[300,4000],bodyage:[6,99],bpsys:[60,260],bpdia:[30,160],pulse:[30,220],glucose:[30,600],hba1c:[3,18],tc:[50,500],ldl:[20,400],hdl:[10,150],tg:[20,2000],vitd:[2,200],testis:[1,30]};
@@ -633,6 +648,7 @@ function hxProfile(p){
  var tr='';if(bmis.length)tr+='<div class="hx-tr"><b>BMI</b>'+hxSpark(bmis,'',1)+'</div>';
  T.forEach(function(x){var r=hxRows(p.id,x[0]);if(r.length)tr+='<div class="hx-tr"><b>'+x[1]+'</b>'+hxSpark(r,x[2],x[3])+'</div>'});
  if(tr)s+='<div class="card"><h2>Trends</h2>'+tr+'</div>';
+ s+=hxVax(p);
  var vs=HV.filter(function(v){return v.pid===p.id}).sort(function(x,y){return x.date<y.date?1:-1});
  s+='<div class="card"><h2>Doctor visits</h2>'+(vs.length?vs.map(function(v){return '<div class="hx-visit"><b>'+esc(v.date)+'</b> '+esc(v.doctor||'')+(v.spec?' <span class="meta">'+esc(v.spec)+'</span>':'')+(v.place?'<div class="meta">'+esc(v.place)+'</div>':'')+(v.reason?'<p><small>Reason</small> '+esc(v.reason)+'</p>':'')+(v.findings?'<p><small>Findings</small> '+esc(v.findings)+'</p>':'')+(v.fu?'<p><small>Follow-up</small> '+esc(v.fu)+(v.fudate?' ('+esc(v.fudate)+')':'')+(v.fudone==='1'?' '+hxChip('ok','Done'):(v.fudate&&v.fudate<=t?' <button class="chip" data-hx="fudone:'+esc(v.id)+'">Mark done</button>':''))+'</p>':'')+'</div>'}).join(''):'<p class="meta" style="margin:6px 0 0">No visits yet</p>')+'</div>';
  var lg=HL.filter(function(r){return r.pid===p.id}).sort(function(x,y){return x.date<y.date?1:x.date>y.date?-1:0}),lim=HMORE?lg.length:12;

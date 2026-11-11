@@ -143,6 +143,7 @@ h1{font-family:var(--display);font-weight:500;font-size:31px;line-height:1.05;ma
 .pwide{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:24px;align-items:start}
 .pdetail{position:sticky;top:12px;margin-top:10px}
 .task.sel{border-color:var(--ink)}
+.task.grow{max-height:none}
 .prow{border-radius:18px;background:var(--card);border:1px solid var(--line);margin-bottom:6px;overflow:hidden}
 .prow.sel{border-color:var(--ink)}
 .tabs4{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:4px;margin:6px 0 10px}
@@ -1673,7 +1674,7 @@ function pDue(p){var n=dUntil(p.due),on=p.opens?dUntil(p.opens.slice(0,10)):null
 function tripHead(t){var n=dUntil(t.start),nt=Math.round((tzDate(t.end)-tzDate(t.start))/864e5),fl=0,left=0;(t.days||[]).forEach(function(d){(d.items||[]).forEach(function(i){if(i.type==='flight')fl++})});(t.prep||[]).forEach(function(p){if(TK.indexOf(t.id+':'+p.id)<0)left++});
  return '<div class="card tp-hero"><small>'+esc(t.codes||'')+'</small><h2>'+esc(t.name)+'</h2><p>'+fmtShort(t.start)+' to '+fmtShort(t.end)+' · '+nt+' nights</p><div class="tp-pills"><span class="tp-pill ok">'+(n>0?'Departs '+relD(n):'In progress')+'</span><span class="tp-pill">'+fl+' flights</span><span class="tp-pill'+(left?' warn':' ok')+'">'+(left?left+' prep items open':'Ready to go')+'</span></div></div>'}
 function tripBlock(t){var h=tripHead(t);
- if((t.prep||[]).length){h+='<div class="list">'+t.prep.map(function(p){var done=TK.indexOf(t.id+':'+p.id)>-1,du=pDue(p);return '<div class="task'+(done?' done':'')+'"><div class="tb" style="padding:12px 4px 12px 14px"><b>'+esc(p.label)+'</b><small class="'+(du.soon&&!done?'tp-soon':'')+'">'+du.t+'</small><small style="display:block;margin-top:3px">'+(p.detail||'')+'</small></div><button class="ck" data-ttick="'+esc(t.id+':'+p.id)+'" aria-label="Done"><i>'+ic('check',14)+'</i></button></div>'}).join('')+'</div>'}
+ if((t.prep||[]).length){h+='<div class="list">'+t.prep.map(function(p){var done=TK.indexOf(t.id+':'+p.id)>-1,du=pDue(p);return '<div class="task grow'+(done?' done':'')+'"><div class="tb" style="padding:12px 4px 12px 14px"><b>'+esc(p.label)+'</b><small class="'+(du.soon&&!done?'tp-soon':'')+'">'+du.t+'</small><small style="display:block;margin-top:3px">'+(p.detail||'')+'</small></div><button class="ck" data-ttick="'+esc(t.id+':'+p.id)+'" aria-label="Done"><i>'+ic('check',14)+'</i></button></div>'}).join('')+'</div>'}
  (t.days||[]).forEach(function(d){var dt=new Date(d.date+'T12:00:00Z');h+='<div class="tp-day"><div class="tp-date"><small>'+WD[dt.getUTCDay()].slice(0,3)+'</small><b>'+dt.getUTCDate()+'</b><small>'+MON[dt.getUTCMonth()]+'</small></div><div style="min-width:0">'+(d.items||[]).map(tItem).join('')+'</div></div>'});
  return h}
 function tripsPage(){

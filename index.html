@@ -144,6 +144,9 @@ h1{font-family:var(--display);font-weight:500;font-size:31px;line-height:1.05;ma
 .pdetail{position:sticky;top:12px;margin-top:10px}
 .task.sel{border-color:var(--ink)}
 .task .qb,.qrow .qb{white-space:nowrap}
+.qrow.done .pn b{text-decoration:line-through;opacity:.55}
+.qrow .chip{flex:none;height:30px;padding:0 11px;font-size:12px;margin-left:8px}
+.qrow .ck{flex:none;margin-left:8px}
 .pwide>div{min-width:0}
 .list{grid-template-columns:minmax(0,1fr)}
 .task.grow{max-height:none}
@@ -892,18 +895,26 @@ function mOf(lid,pd){return LM.filter(function(m){return m.lid===lid&&m.pid===pd
 function mDone(m){return String(m.done)==='1'}
 function lastTxt(p){return p.last>=9999?'never contacted':p.last===0?'contacted today':p.last===1?'contacted yesterday':'contacted '+p.last+' days ago'}
 function lmRow(l,m){var p=byPid(m.pid);if(!p)return '';var done=mDone(m),k=esc(l.id)+'|'+esc(m.pid);
- var chip=isEv(l)?'<button class="chip" data-lmst="'+k+'" aria-label="Status">'+esc(m.status||'Not yet')+'</button>':'<button class="chip" data-lmprod="'+k+'" aria-label="Product">'+esc(m.product||'Produk')+'</button>';
- return '<div class="task'+(done?' done':'')+'"><span class="av" style="background:'+avc(p)+'">'+esc(p.n[0])+'</span><button class="tb" data-pdet="'+p.id+'"><b>'+esc(p.n)+'</b><small>'+esc(p.st)+(p.next!==null?' · next '+dueTxt(p.next):'')+'</small></button>'+chip+'<button class="rb" data-lwa="'+k+'" aria-label="Open WhatsApp">'+ic('chat',16)+'</button><button class="ck" data-lmtick="'+k+'" aria-label="Mark as contacted"><i>'+ic('check',14)+'</i></button></div>'}
+ var chip=isEv(l)?'<button class="chip" data-lmst="'+k+'" aria-label="Status">'+esc(m.status||'Not yet')+'</button>':'<button class="chip" data-lmprod="'+k+'" aria-label="Product">'+esc(m.product||'Product')+'</button>';
+ var act=p.phone?'<button class="qb" data-lwa="'+k+'">'+ic('chat',15)+' Message</button>':'<button class="qb alt" data-edit="'+p.id+'">Add number</button>';
+ return '<div class="qrow'+(done?' done':'')+(wide()&&WSEL===p.id&&(tab==='lists'||tab==='work')?' sel':'')+'"><button class="qm" data-pdet="'+p.id+'"><span class="av" style="background:'+avc(p)+'">'+esc(p.n[0])+'</span><span class="pn"><b>'+esc(p.n)+'</b><small>'+esc(p.st)+(p.next!==null?' · next '+dueTxt(p.next):'')+'</small></span></button>'+chip+act+'<button class="ck" data-lmtick="'+k+'" aria-label="Mark as done"><i>'+ic('check',14)+'</i></button></div>'}
+var LQ='';
 function listsPage(){
  var act=LISTS.filter(function(l){return l.status!=='archived'}),arc=LISTS.filter(function(l){return l.status==='archived'});
- if(collapsed.larc===undefined)collapsed.larc=true;
- var h='<div class="top"><div class="stats"><span style="color:var(--mute)">'+act.length+' active lists</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button><button data-newlist="1" aria-label="New list">'+ic('plus',22)+'</button></div></div><div class="hrow"><h1>Lists</h1></div>'+(CFG.url?'':'<span class="sample">Connect the Sheet first so lists are saved</span>');
- if(!act.length)h+='<div class="missed"><b>No lists yet</b><p class="meta" style="margin:6px 0 0">Tap + to make a list: OPP, Convention or Meeting. One person can be on many lists and still has one record.</p></div>';
- act.forEach(function(l){var ms=LM.filter(function(m){return m.lid===l.id}),key='L'+l.id,open=!collapsed[key],cn=ms.filter(function(m){var p=byPid(m.pid);return p&&mDone(m)}).length;
-  h+='<div class="gp"><button class="gpb nod" data-fold="'+key+'" aria-expanded="'+open+'">'+ic('list',16)+esc(l.name)+' ('+ms.length+')<svg class="ch" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button><span style="display:flex;gap:6px"><button class="rb" data-bulk="'+esc(l.id)+'" aria-label="Paste many names">'+ic('list',16)+'</button><button class="rb" data-laddm="'+esc(l.id)+'" aria-label="Add a name">'+ic('plus',16)+'</button><button class="rb" data-lmenu="'+esc(l.id)+'" aria-label="List menu">'+ic('dots',16)+'</button></span></div>';
-  if(open)h+='<p class="lsub" style="margin:-2px 4px 8px">'+esc(l.kind)+' · '+cn+' of '+ms.length+' contacted today</p><div class="list">'+(ms.length?ms.map(function(m){return lmRow(l,m)}).join(''):'<div class="empty">Empty. Tap + to add a name.</div>')+'</div>'});
- if(arc.length)h+=gp('larc','nod','inbox','Archive',arc.length)+(collapsed.larc?'':'<div class="list">'+arc.map(function(l){return '<div class="task"><div class="ic sky">'+ic('list',17)+'</div><button class="tb" data-lmenu="'+esc(l.id)+'"><b>'+esc(l.name)+'</b><small>'+esc(l.kind)+' · '+LM.filter(function(m){return m.lid===l.id}).length+' names'+(l.archived?' · archived '+esc(l.archived):'')+'</small></button></div>'}).join('')+'</div>');
- return h}
+ var hd='<div class="top"><div class="stats"><span style="color:var(--mute)">'+act.length+(act.length===1?' active list':' active lists')+'</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button><button data-newlist="1" aria-label="New list">'+ic('plus',22)+'</button></div></div><div class="hrow"><h1>Lists</h1></div>'+(CFG.url?'':'<span class="sample">Connect the Sheet first so lists are saved</span>');
+ var h='';
+ if(!LISTS.length){h+='<div class="selrow"><span style="margin-left:auto"><button class="chip" data-newlist="1">New list</button></span></div><div class="missed"><b>No lists yet</b><p class="meta" style="margin:6px 0 0">Tap New list to make an OPP, Convention or Meeting list. One person can be on many lists and still has one record.</p></div>'}
+ else{
+  var cur=lById(PLST)||act[0]||arc[0];PLST=cur.id;
+  h+=itemHtml({k:'lsel',act:act,arc:arc,l:cur});
+  var ms=LM.filter(function(m){return m.lid===cur.id&&byPid(m.pid)}),q=LQ.trim().toLowerCase();
+  h+='<div class="search"><label>'+ic('search',18)+'<input id="lq" type="search" placeholder="Search this list" autocomplete="off" value="'+esc(LQ)+'"></label></div>';
+  var done=ms.filter(mDone).length;
+  h+='<p class="lsub" style="margin:8px 4px">'+esc(cur.kind)+' · '+done+' of '+ms.length+' done'+(cur.status==='archived'?' · archived':'')+'</p>';
+  var shown=q?ms.filter(function(m){return byPid(m.pid).n.toLowerCase().indexOf(q)>-1}):ms;
+  h+='<div class="list" id="lmlist">'+(shown.length?shown.map(function(m){return lmRow(cur,m)}).join(''):'<div class="empty">'+(ms.length?'Nobody matches.':'Empty. Tap + above to add a name.')+'</div>')+'</div>'}
+ if(wide())return hd+'<div class="pwide" style="margin-top:16px;grid-template-columns:minmax(420px,480px) minmax(0,1fr)"><div>'+h+'</div><div class="pdetail" id="pdetail"><p class="note">Pick someone to see their details here.</p></div></div>';
+ return hd+'<div style="margin-top:12px">'+h+'</div>'}
 function promoItems(){var out=[],seen={},prods=[];PUR.forEach(function(x){if(x.product&&!seen[x.product]){seen[x.product]=1;prods.push(x.product)}});
  out.push({k:'pp',prods:prods});
  if(!pprod){out.push({k:'n',txt:prods.length?'Pick a product to see who has bought it.':'No purchases logged yet. Log one from a person\'s details, or send the data to Claude to merge.'});return out}
@@ -1136,7 +1147,7 @@ function work_(){
  if(wide())return hd+'<div class="pwide" style="margin-top:16px"><div>'+h+'</div><div class="pdetail" id="pdetail" style="margin-top:0"><p class="note">Pick someone to see their details here.</p></div></div>';
  return hd+'<div style="margin-top:16px">'+h+'</div>'}
 var WSEL=-1;
-function workPane(){var el=$('#pdetail');if(!el||tab!=='work'||!wide())return;var p=WSEL>=0?people[WSEL]:null;if(p)el.innerHTML=pdetail(p);document.querySelectorAll('#app .task,#app .qrow').forEach(function(r){var b=r.querySelector('[data-pdet]');r.classList.toggle('sel',!!b&&+b.dataset.pdet===WSEL)})}
+function workPane(){var el=$('#pdetail');if(!el||(tab!=='work'&&tab!=='lists')||!wide())return;var p=WSEL>=0?people[WSEL]:null;if(p)el.innerHTML=pdetail(p);document.querySelectorAll('#app .task,#app .qrow').forEach(function(r){var b=r.querySelector('[data-pdet]');r.classList.toggle('sel',!!b&&+b.dataset.pdet===WSEL)})}
 function todayList(){return dayHead()+dayBody(sel)}
 function statsHTML(){var doneN=tasks.filter(function(t){return t.done}).length;
  return '<div class="stats"><span class="f" data-score="1">'+ic('flame',18)+streakN()+'</span><span id="sdot" class="sdot" data-s="'+syncState+'" title=""></span><span class="s" id="spk" data-score="1">'+ic('spark',18)+'<b style="font-weight:600">'+sparkN()+'</b></span></div>'}
@@ -1643,7 +1654,7 @@ function render(keep){
  $('#app').innerHTML={today:today,work:work_,people:people_,team:team,trips:tripsPage,health:healthPage,lists:listsPage,content:content,more:more}[tab]();
  $('#rail').hidden=true;
  if(tab==='people')renderPeopleBody();
- if(tab==='work')workPane();
+ if(tab==='work'||tab==='lists')workPane();
  SC.scrollTop=keep?y:0}
 function addSheet(part){
  var mt=false,when=part==='nod'?'nod':'today',pt=(part==='afternoon'||part==='evening'||part==='morning')?part:'morning',du='15m';
@@ -1733,10 +1744,10 @@ function setTheme(t){theme=t;var r=document.documentElement;if(t==='auto')r.remo
 
 /* ---------- events ---------- */
 document.addEventListener('change',function(e){var t=e.target;
- if(t.id==='plst'){PLST=t.value;renderPeopleBody();return}
+ if(t.id==='plst'){PLST=t.value;LQ='';if(tab==='lists')render(true);else renderPeopleBody();return}
  if(t.id==='pfil'){PFIL=t.value;renderPeopleBody();var rl=$('#rail');return}
  if(t.dataset&&t.dataset.qd){QL.nd=t.value;QL.ndM=1;var qc=t.closest('.qlog');if(qc){var qp=people[+qc.dataset.qlp];if(qp)qc.outerHTML=qlogHtml(qp)}}});
-document.addEventListener('input',function(e){var t=e.target;if(t.dataset&&t.dataset.qnote)QL.note=t.value});
+document.addEventListener('input',function(e){var t=e.target;if(t.dataset&&t.dataset.qnote)QL.note=t.value;if(t.id==='lq'){LQ=t.value;var cur=lById(PLST),L=$('#lmlist');if(cur&&L){var q=LQ.trim().toLowerCase(),ms=LM.filter(function(m){return m.lid===cur.id&&byPid(m.pid)&&(!q||byPid(m.pid).n.toLowerCase().indexOf(q)>-1)});L.innerHTML=ms.length?ms.map(function(m){return lmRow(cur,m)}).join(''):'<div class="empty">Nobody matches.</div>'}}});
 document.addEventListener('input',function(e){if(e.target.id==='pq'){pq=e.target.value;renderPeopleBody();var ch=$('#pchips');if(ch)ch.querySelectorAll('[data-pv]').forEach(function(b){b.setAttribute('aria-pressed',!pq&&b.dataset.pv===pview)})}});
 function completeTask(el){
  var t=tasks.filter(function(x){return x.id==el.dataset.done})[0],row=el.closest('.task'),wasLate=lateTasks().length;
@@ -1818,7 +1829,7 @@ document.addEventListener('click',function(e){
  if(d.ptoggle){var id=+d.ptoggle;
   if(wide()){selPid=id;document.querySelectorAll('.prow').forEach(function(r){r.classList.toggle('sel',+r.dataset.pid===id)});$('#pdetail').innerHTML=pdetail(people[id]);return}
   var row=el.closest('.prow'),pa=row.querySelector('.pact'),was=!pa.hidden;document.querySelectorAll('.pact').forEach(function(x){x.hidden=true});pa.hidden=was;return}
- if(d.pdet){if(tab==='work'&&wide()){WSEL=+d.pdet;workPane();return}sheet(pdetail(people[d.pdet])+'<button class="btn alt" data-close="1">Close</button>');return}
+ if(d.pdet){if((tab==='work'||tab==='lists')&&wide()){WSEL=+d.pdet;workPane();return}sheet(pdetail(people[d.pdet])+'<button class="btn alt" data-close="1">Close</button>');return}
  if(d.msg){var p=people[d.msg];if(p&&openWA(p,{type:'Follow-up'}))render(true);return}
  if(d.log){var lp=people[d.log];if(!lp)return;document.querySelectorAll('.sheet-bg').forEach(function(x){x.remove()});openLog(lp);return}
  if(d.fudone){doFollow(el);return}
@@ -1837,7 +1848,7 @@ document.addEventListener('click',function(e){
     if(!ex){RAW.push({added:isoOf(TD),id:nm.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+Date.now().toString(36)+(i++),name:nm,stage:'Namelist',tags:'',market:'',phone:'',email:'',lastContact:'',lastOrder:'',nextDate:'',nextAction:'',hot:'',notes:'',verify:'',trmeStart:'',sponsor:'',birthday:'',created:isoOf(TD)});buildPeople();ex=people[people.length-1];nw++}
     if(!mOf(BL.id,pid(ex))){LM.push({lid:BL.id,pid:pid(ex),status:isEv(BL)?'Not yet':'',product:'',added:isoOf(TD),done:'',doneDate:'',tid:'',plc:'',pnd:''});ad++}});
    savePeople();saveX('listmembers');bk.remove();render(true);toast(nw+' new people, '+ad+' added to '+BL.name);haptic()};return}
- if(d.lwa){var lk=d.lwa.split('|'),lw=lById(lk[0]),pw=byPid(lk[1]);if(lw&&pw)openWA(pw,{type:'List: '+lw.name,lid:lw.id});return}
+ if(d.lwa){var lk=d.lwa.split('|'),lw=lById(lk[0]),pw=byPid(lk[1]);if(lw&&pw&&openWA(pw,{type:'List: '+lw.name,lid:lw.id})){var lmm=mOf(lk[0],lk[1]);if(lmm&&!mDone(lmm)){lmm.done='1';lmm.doneDate=isoOf(TD);if(isEv(lw)&&(!lmm.status||lmm.status==='Not yet'))lmm.status='Invited';saveX('listmembers')}render(true)}return}
  if(d.evdone){doEv(el);return}
  if(d.pprod){pprod=pprod===d.pprod?'':d.pprod;render(true);return}
  if(d.promo){var pr=people[d.promo];if(!pr)return;if(pr.raw&&pr.last===0){toast(pr.n+' already logged today');return}var prw=el.closest('.task'),pu2=contactDone(pr,{type:'Promo '+pprod});if(!pu2)return;prw.classList.add('done','pop');burst(prw.querySelector('.ck i'),false);haptic(false);setTimeout(function(){render(true);toastU(pr.n+' logged as promo '+pprod+'. Next '+dueTxt(pu2.next),function(){undoContact(pu2);render(true)})},REDUCE?0:560);return}
@@ -1863,11 +1874,11 @@ document.addEventListener('click',function(e){
   mb.querySelector('#lar').onclick=function(){L1.status=isA?'active':'archived';L1.archived=isA?'':isoOf(TD);saveX('lists');mb.remove();render(true);toastU(isA?'List is active again':'List diarsipkan',function(){L1.status=isA?'archived':'active';L1.archived=isA?isoOf(TD):'';saveX('lists');render(true)})};return}
  if(d.lmst||d.lmprod){var ky=(d.lmst||d.lmprod).split('|'),mm=mOf(ky[0],ky[1]);if(!mm)return;if(d.lmst)mm.status=STS[(STS.indexOf(mm.status||'Not yet')+1)%STS.length];else mm.product=PRODS[(PRODS.indexOf(mm.product||'')+1)%PRODS.length];saveX('listmembers');haptic(false);render(true);return}
  if(d.lmtick){var kt=d.lmtick.split('|'),lt=lById(kt[0]),mt=mOf(kt[0],kt[1]),pt=byPid(kt[1]);if(!lt||!mt||!pt)return;
-  var lrow=el.closest('.task');
+  var lrow=el.closest('.task,.qrow');
   if(mDone(mt)){
    var hadT=mt.tid&&pt.raw&&TLOG.some(function(x){return x.id===mt.tid&&x.date===isoOf(TD)});
    if(hadT)undoContact({r:pt.raw,prev:{lc:mt.plc||'',nd:mt.pnd||''},e:{id:mt.tid}});
-   mt.done='';mt.doneDate='';mt.tid='';mt.plc='';mt.pnd='';saveX('listmembers');haptic(false);render(true);toast('Centang '+pt.n+' dilepas');return}
+   mt.done='';mt.doneDate='';mt.tid='';mt.plc='';mt.pnd='';saveX('listmembers');haptic(false);render(true);toast('Unticked '+pt.n);return}
   var lu2=null;
   if(!pt.raw){toast('Connect the Sheet first so it is saved');return}
   mt.done='1';mt.doneDate=isoOf(TD);mt.tid='';mt.plc='';mt.pnd='';

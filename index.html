@@ -1108,7 +1108,7 @@ function work_(){
   if(fu.length)h2+=gp('fu','late','alert','Follow up',fu.length)+(collapsed.fu?'':'<div class="list">'+fu.slice(0,30).map(function(p){return '<div class="task"><div class="ic '+['sky','pink','lav','mint','peach','sand'][p.id%6]+'">'+ic('chat',17)+'</div><button class="tb" data-pdet="'+p.id+'"><b>'+esc(p.n)+'</b><small>'+(p.next<0?'Overdue '+(-p.next)+'d':'Today')+(p.note?' · '+esc(p.note.slice(0,60)):'')+'</small></button><button class="rb" data-fwa="'+p.id+'" aria-label="Open WhatsApp">'+ic('chat',16)+'</button><button class="ck" data-fudone="'+p.id+'" aria-label="Mark as contacted"><i>'+ic('check',14)+'</i></button></div>'}).join('')+(fu.length>30?'<p class="meta" style="margin:6px 4px">+'+(fu.length-30)+' more in People</p>':'')+'</div>');
  var h='<div class="top"><div class="stats"></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button><button data-add="today" aria-label="Add">'+ic('plus',22)+'</button></div></div><div class="hrow"><h1>Work</h1></div>'+(CFG.url?'':'<span class="sample">Sample data</span>');
  var hd=h;h='';
- h+=numStrip()+topCard()+h2+reorderCard();
+ h+=numStrip().replace('margin-top:0;','margin-top:16px;')+topCard()+h2+reorderCard();
  if(bs.length)h+=gp('bs','eve','eye','Blind spots',bs.length)+(collapsed.bs?'':'<div class="list">'+bs.map(bsRow).join('')+'</div>');
  if(!CFG.url)h+='<p class="note">Connect your Sheet to see numbers, people and follow-ups here.</p>';
  if(wide())return hd+'<div class="pwide"><div>'+h+'</div><div class="pdetail" id="pdetail"><p class="note">Pick someone to see their details here.</p></div></div>';

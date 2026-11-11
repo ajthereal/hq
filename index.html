@@ -844,7 +844,7 @@ var PENDWA=null;try{PENDWA=JSON.parse(localStorage.getItem('hq-pendwa')||'null')
 function openWA(p,o){o=o||{};
  if(!p.phone){toast('WhatsApp number for '+p.n+' is missing. Add it with Edit contact in the details');return false}
  if(p.phone.length<9){toast('Number for '+p.n+' looks incomplete. Fix it with Edit contact in the details');return false}
- var a=document.createElement('a');a.href='https://wa.me/'+p.phone+'?text='+encodeURIComponent(o.text||msgFor(p));a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
+ var a=document.createElement('a');a.href='https://wa.me/'+p.phone+(o.text?'?text='+encodeURIComponent(o.text):'');a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
  if(o.lid){PENDWA={pid:pid(p),type:o.type||'Follow-up',lid:o.lid||'',day:o.day||'',ts:Date.now()};try{localStorage.setItem('hq-pendwa',JSON.stringify(PENDWA))}catch(e){}}
  var su=markSent(p);if(su){if(o.q){SENT[pid(p)]=1;SENTU[pid(p)]=su}else toastU(p.n+' marked as sent. Waiting for a reply',function(){undoSent(su);render(true)})}
  return true}
@@ -1732,7 +1732,7 @@ document.addEventListener('click',function(e){
  var d=el.dataset;
  if(d.qopen){var qid=+d.qopen;if(wide()){selPid=qid;document.querySelectorAll('.qrow').forEach(function(r){r.classList.toggle('sel',+r.dataset.pid===qid)});$('#pdetail').innerHTML=pdetail(people[qid]);return}
   sheet(pdetail(people[qid])+'<button class="btn alt" data-close="1">Close</button>');return}
- if(d.qmsg){var mp=people[d.qmsg];if(!mp)return;if(openWA(mp,{text:msgFor(mp),type:'Follow-up',q:1}))render(true);return}
+ if(d.qmsg){var mp=people[d.qmsg];if(!mp)return;if(openWA(mp,{type:'Follow-up',q:1}))render(true);return}
  if(d.reply){var rp=people[d.reply];if(rp)openLog(rp,'Replied');return}
  if(d.unsent){var up=people[d.unsent];if(!up)return;var us=SENTU[pid(up)];if(us)undoSent(us);delete SENT[pid(up)];delete SENTU[pid(up)];render(true);toast(up.n+' is back in your queue');return}
  if(d.fix){openFix();return}
@@ -1798,10 +1798,10 @@ document.addEventListener('click',function(e){
   if(wide()){selPid=id;document.querySelectorAll('.prow').forEach(function(r){r.classList.toggle('sel',+r.dataset.pid===id)});$('#pdetail').innerHTML=pdetail(people[id]);return}
   var row=el.closest('.prow'),pa=row.querySelector('.pact'),was=!pa.hidden;document.querySelectorAll('.pact').forEach(function(x){x.hidden=true});pa.hidden=was;return}
  if(d.pdet){if(tab==='work'&&wide()){WSEL=+d.pdet;workPane();return}sheet(pdetail(people[d.pdet])+'<button class="btn alt" data-close="1">Close</button>');return}
- if(d.msg){var p=people[d.msg];var b=sheet('<h3>Send to '+esc(p.n)+'</h3><div class="bubble">'+esc(msgFor(p))+'</div><button class="btn" id="go" style="margin-top:0">Open WhatsApp</button><button class="btn alt" data-close="1" style="margin-top:0">Edit text first</button><p class="meta" style="margin:0">HQ marks them as sent and keeps them in Waiting until you log a reply.</p>');b.querySelector('#go').onclick=function(){var t=msgFor(p);if(p.phone){if(openWA(p,{text:t,type:'Follow-up'})){b.remove();render(true)}}else{copy(t,'No number yet. Message copied, pick the contact in WhatsApp.');var a2=document.createElement('a');a2.href='https://wa.me/?text='+encodeURIComponent(t);a2.target='_blank';a2.rel='noopener';document.body.appendChild(a2);a2.click();a2.remove();b.remove()}};return}
+ if(d.msg){var p=people[d.msg];if(p&&openWA(p,{type:'Follow-up'}))render(true);return}
  if(d.log){var lp=people[d.log];if(!lp)return;document.querySelectorAll('.sheet-bg').forEach(function(x){x.remove()});openLog(lp);return}
  if(d.fudone){doFollow(el);return}
- if(d.fwa){var fp=people[d.fwa];if(fp)openWA(fp,{type:el.dataset.ft||'Follow-up',text:msgFor(fp,el.dataset.fk)});return}
+ if(d.fwa){var fp=people[d.fwa];if(fp)openWA(fp,{type:el.dataset.ft||'Follow-up'});return}
  if(d.score){scoreSheet();return}
  if(d.chkin){var ck=d.chkin.split('|'),cp=people[ck[0]],cd=+ck[1];if(!cp)return;var old=resOf(pid(cp),cd)||{};
   var cb=sheet('<h3>'+esc(cp.n)+' · day '+cd+'</h3><input id="cw" type="text" inputmode="decimal" placeholder="Weight (kg)" autocomplete="off" value="'+esc(old.weight||'')+'"><input id="cb" type="text" inputmode="numeric" placeholder="Body age" autocomplete="off"><input id="cl" type="text" inputmode="decimal" placeholder="Lean mass (kg)" autocomplete="off"><input id="cn" type="text" placeholder="Short note" autocomplete="off"><button class="btn" id="cs" style="margin-top:0">Save</button><button class="btn alt" data-close="1" style="margin-top:0">Close</button>');

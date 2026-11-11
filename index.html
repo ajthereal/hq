@@ -142,6 +142,7 @@ h1{font-family:var(--display);font-weight:500;font-size:31px;line-height:1.05;ma
 .search input{flex:1;min-width:0;background:none;border:0;color:var(--ink);font:inherit;font-size:15px;outline:0}
 .pwide{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:24px;align-items:start}
 .pdetail{position:sticky;top:12px;margin-top:10px}
+.task.sel{border-color:var(--ink)}
 .prow{border-radius:18px;background:var(--card);border:1px solid var(--line);margin-bottom:6px;overflow:hidden}
 .prow.sel{border-color:var(--ink)}
 .tabs4{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:4px;margin:6px 0 10px}
@@ -1106,10 +1107,14 @@ function work_(){
  var fu=people.filter(function(p){return p.next!==null&&p.next<=0&&p.st!=='Not Now'}).sort(function(a,b){return a.next-b.next});
   if(fu.length)h2+=gp('fu','late','alert','Follow up',fu.length)+(collapsed.fu?'':'<div class="list">'+fu.slice(0,30).map(function(p){return '<div class="task"><div class="ic '+['sky','pink','lav','mint','peach','sand'][p.id%6]+'">'+ic('chat',17)+'</div><button class="tb" data-pdet="'+p.id+'"><b>'+esc(p.n)+'</b><small>'+(p.next<0?'Overdue '+(-p.next)+'d':'Today')+(p.note?' · '+esc(p.note.slice(0,60)):'')+'</small></button><button class="rb" data-fwa="'+p.id+'" aria-label="Open WhatsApp">'+ic('chat',16)+'</button><button class="ck" data-fudone="'+p.id+'" aria-label="Mark as contacted"><i>'+ic('check',14)+'</i></button></div>'}).join('')+(fu.length>30?'<p class="meta" style="margin:6px 4px">+'+(fu.length-30)+' more in People</p>':'')+'</div>');
  var h='<div class="top"><div class="stats"></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button><button data-add="today" aria-label="Add">'+ic('plus',22)+'</button></div></div><div class="hrow"><h1>Work</h1></div>'+(CFG.url?'':'<span class="sample">Sample data</span>');
+ var hd=h;h='';
  h+=numStrip()+topCard()+h2+reorderCard();
  if(bs.length)h+=gp('bs','eve','eye','Blind spots',bs.length)+(collapsed.bs?'':'<div class="list">'+bs.map(bsRow).join('')+'</div>');
  if(!CFG.url)h+='<p class="note">Connect your Sheet to see numbers, people and follow-ups here.</p>';
- return h}
+ if(wide())return hd+'<div class="pwide"><div>'+h+'</div><div class="pdetail" id="pdetail"><p class="note">Pick someone to see their details here.</p></div></div>';
+ return hd+h}
+var WSEL=-1;
+function workPane(){var el=$('#pdetail');if(!el||tab!=='work'||!wide())return;var p=WSEL>=0?people[WSEL]:null;if(p)el.innerHTML=pdetail(p);document.querySelectorAll('#app .task').forEach(function(r){var b=r.querySelector('[data-pdet]');r.classList.toggle('sel',!!b&&+b.dataset.pdet===WSEL)})}
 function todayList(){return dayHead()+dayBody(sel)}
 function statsHTML(){var doneN=tasks.filter(function(t){return t.done}).length;
  return '<div class="stats"><span class="f" data-score="1">'+ic('flame',18)+streakN()+'</span><span id="sdot" class="sdot" data-s="'+syncState+'" title=""></span><span class="s" id="spk" data-score="1">'+ic('spark',18)+'<b style="font-weight:600">'+sparkN()+'</b></span></div>'}
@@ -1616,6 +1621,7 @@ function render(keep){
  $('#app').innerHTML={today:today,work:work_,people:people_,team:team,trips:tripsPage,health:healthPage,lists:listsPage,content:content,more:more}[tab]();
  $('#rail').hidden=true;
  if(tab==='people')renderPeopleBody();
+ if(tab==='work')workPane();
  SC.scrollTop=keep?y:0}
 function addSheet(part){
  var mt=false,when=part==='nod'?'nod':'today',pt=(part==='afternoon'||part==='evening'||part==='morning')?part:'morning',du='15m';
@@ -1790,7 +1796,7 @@ document.addEventListener('click',function(e){
  if(d.ptoggle){var id=+d.ptoggle;
   if(wide()){selPid=id;document.querySelectorAll('.prow').forEach(function(r){r.classList.toggle('sel',+r.dataset.pid===id)});$('#pdetail').innerHTML=pdetail(people[id]);return}
   var row=el.closest('.prow'),pa=row.querySelector('.pact'),was=!pa.hidden;document.querySelectorAll('.pact').forEach(function(x){x.hidden=true});pa.hidden=was;return}
- if(d.pdet){sheet(pdetail(people[d.pdet])+'<button class="btn alt" data-close="1">Close</button>');return}
+ if(d.pdet){if(tab==='work'&&wide()){WSEL=+d.pdet;workPane();return}sheet(pdetail(people[d.pdet])+'<button class="btn alt" data-close="1">Close</button>');return}
  if(d.msg){var p=people[d.msg];var b=sheet('<h3>Send to '+esc(p.n)+'</h3><div class="bubble">'+esc(msgFor(p))+'</div><button class="btn" id="go" style="margin-top:0">Open WhatsApp</button><button class="btn alt" data-close="1" style="margin-top:0">Edit text first</button><p class="meta" style="margin:0">HQ marks them as sent and keeps them in Waiting until you log a reply.</p>');b.querySelector('#go').onclick=function(){var t=msgFor(p);if(p.phone){if(openWA(p,{text:t,type:'Follow-up'})){b.remove();render(true)}}else{copy(t,'No number yet. Message copied, pick the contact in WhatsApp.');var a2=document.createElement('a');a2.href='https://wa.me/?text='+encodeURIComponent(t);a2.target='_blank';a2.rel='noopener';document.body.appendChild(a2);a2.click();a2.remove();b.remove()}};return}
  if(d.log){var lp=people[d.log];if(!lp)return;document.querySelectorAll('.sheet-bg').forEach(function(x){x.remove()});openLog(lp);return}
  if(d.fudone){doFollow(el);return}

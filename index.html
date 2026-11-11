@@ -961,7 +961,7 @@ function pullContent(){if(!CFG.url)return;getTab('content').then(function(j){if(
 function ctById(id){return CT.filter(function(c){return c.id===id})[0]}
 
 /* ---------- Today ---------- */
-var PARTS=[['morning','Morning','sun'],['afternoon','Afternoon','noon'],['evening','Evening','moon']];
+var PARTS=[['morning','Morning','sun'],['afternoon','Noon','noon'],['evening','Evening','moon']];
 var PCLS={morning:'morning',afternoon:'aft',evening:'eve'};
 function taskRow(t){
  var icon=t.ev?'<div class="ic ev"></div>':'<div class="ic '+esc(t.c)+'">'+ic(t.ic,17)+'</div>';
@@ -1070,15 +1070,28 @@ function timeline(){
  h+='</div></div>';return h}
 function dayHead(){var dt=dateOf(sel);
  return '<div class="hrow"><h1>'+WD[wdOf(sel)]+'</h1><small>'+MON[dt.getUTCMonth()]+' '+dt.getUTCFullYear()+'</small></div>'+weekStrip()+(CFG.url?'':'<span class="sample">Sample data</span>')}
+function schedule(D){
+ var h='',day=tasks.filter(function(t){return t.day===D}),evs=evOn(D),ad=evs.filter(function(x){return x.a==='1'});
+ var due=D>TD?[]:HAB.filter(function(x){return habDue(x,D)});
+ if(ad.length)h+='<div class="list" style="margin-bottom:6px">'+ad.map(evRow).join('')+'</div>';
+ if(D<TD&&!day.length&&!evs.length&&!due.length)h+='<p class="note">No notes for today.</p>';
+ if(D>TD&&!day.length&&!evs.length)h+='<p class="note">Nothing scheduled today.</p>';
+ var hp={morning:'morning',afternoon:'noon',evening:'evening'};
+ PARTS.forEach(function(p){
+  var hb=due.filter(function(x){return habPart(x)===hp[p[0]]}),items=day.filter(function(t){return t.part===p[0]}),pe=evs.filter(function(x){return x.a!=='1'&&evPart(x)===p[0]});
+  if(!hb.length&&!items.length&&!pe.length&&D!==TD)return;
+  h+=gp(p[0],PCLS[p[0]],p[2],p[1],hb.length+items.length+pe.length,p[0])+(collapsed[p[0]]?'':'<div class="list">'+hb.map(function(x){return habRow(x,D)}).join('')+pe.map(evRow).join('')+items.map(taskRow).join('')+'</div>')});
+ var oh=due.filter(function(x){return !hp.morning||['morning','noon','evening'].indexOf(habPart(x))<0});
+ if(oh.length)h+=gp('habother','nod','flame','Other habits',oh.length)+(collapsed.habother?'':'<div class="list">'+oh.map(function(x){return habRow(x,D)}).join('')+'</div>');
+ return h}
 function dayBody(D){
  var late=lateTasks(),nod=tasks.filter(function(t){return t.day===null&&!t.done}),h='';
  if(D===TD){
-  h+=numStrip()+topCard()+chkCard();
+  h+=schedule(D)+numStrip()+topCard()+chkCard();
   if(late.length)h+=gp('late','late','alert','Overdue',late.length)+(collapsed.late?'':'<div class="list">'+late.map(taskRow).join('')+'</div>');
   var fu=people.filter(function(p){return p.next!==null&&p.next<=0&&p.st!=='Not Now'}).sort(function(a,b){return a.next-b.next});
   if(fu.length)h+=gp('fu','late','alert','Follow up',fu.length)+(collapsed.fu?'':'<div class="list">'+fu.slice(0,30).map(function(p){return '<div class="task"><div class="ic '+['sky','pink','lav','mint','peach','sand'][p.id%6]+'">'+ic('chat',17)+'</div><button class="tb" data-pdet="'+p.id+'"><b>'+esc(p.n)+'</b><small>'+(p.next<0?'Overdue '+(-p.next)+'d':'Today')+(p.note?' · '+esc(p.note.slice(0,60)):'')+'</small></button><button class="rb" data-fwa="'+p.id+'" aria-label="Open WhatsApp">'+ic('chat',16)+'</button><button class="ck" data-fudone="'+p.id+'" aria-label="Mark as contacted"><i>'+ic('check',14)+'</i></button></div>'}).join('')+(fu.length>30?'<p class="meta" style="margin:6px 4px">+'+(fu.length-30)+' more in People</p>':'')+'</div>');
   h+=reorderCard()+bdCard();
-  h+=habBlock(D);
   var tp=[];upTrips().forEach(function(t){(t.prep||[]).forEach(function(p){if(TK.indexOf(t.id+':'+p.id)>-1)return;var du=pDue(p);if(du.n<=3&&du.n>=-30&&!(p.opens&&dUntil(p.opens.slice(0,10))>0))tp.push({id:t.id+':'+p.id,t:p.label,w:t.name+' · '+du.t})})});
   if(tp.length)h+=gp('trp','nod','clock','Trip',tp.length)+(collapsed.trp?'':'<div class="list">'+tp.map(function(x){return '<div class="task"><div class="ic sky">'+ic('clock',17)+'</div><div class="tb"><b>'+esc(x.t)+'</b><small>'+esc(x.w)+'</small></div><button class="ck" data-ttick="'+esc(x.id)+'" aria-label="Done"><i>'+ic('check',14)+'</i></button></div>'}).join('')+'</div>');
   var bs=blindspots();
@@ -1086,13 +1099,7 @@ function dayBody(D){
   if(bs.length)h+=gp('bs','eve','eye','Blind spots',bs.length)+(collapsed.bs?'':'<div class="list">'+bs.map(bsRow).join('')+'</div>');
   h+=gp('nod','nod','inbox','No date',nod.length,'nod')+(collapsed.nod?'':'<div class="nodate">'+(nod.length?nod.map(taskRow).join(''):'<div class="empty">Empty. Everything has a date.</div>')+'</div>');
  }
- if(D!==TD)h+=habBlock(D);
- var day=tasks.filter(function(t){return t.day===D}),evs=evOn(D),ad=evs.filter(function(x){return x.a==='1'});
- if(ad.length)h+='<div class="list" style="margin-top:14px">'+ad.map(evRow).join('')+'</div>';
- if(D<TD&&!day.length&&!evs.length)h+='<p class="note">No notes for today.</p>';
- if(D>TD&&!day.length&&!evs.length)h+='<p class="note">Nothing scheduled today.</p>';
- PARTS.forEach(function(p){var items=day.filter(function(t){return t.part===p[0]}),pe=evs.filter(function(x){return x.a!=='1'&&evPart(x)===p[0]});if(!items.length&&!pe.length&&D!==TD)return;
-  h+=gp(p[0],PCLS[p[0]],p[2],p[1],items.length+pe.length,p[0])+(collapsed[p[0]]?'':'<div class="list">'+pe.map(evRow).join('')+items.map(taskRow).join('')+'</div>')});
+ if(D!==TD)h+=schedule(D);
  if(D===TD){var tm=tasks.filter(function(t){return t.day===TD+1});
   h+=gp('tom','nod','clock','Tomorrow',tm.length)+(collapsed.tom?'':'<div class="list">'+tm.map(taskRow).join('')+'</div>');
   h+='<div class="missed"><b>Anything missed?</b><div class="chips" style="margin-top:10px"><button class="chip" data-act="m1">'+late.length+' overdue</button><button class="chip" data-act="m2">'+nod.length+' without a date</button><button class="chip" data-act="m3">'+tm.length+' for tomorrow</button></div><p class="meta" style="margin:8px 0 0">At 20:30 I send a reminder if anything is still overdue or has no date.</p></div>'}

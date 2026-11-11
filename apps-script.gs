@@ -66,6 +66,7 @@ function doGet(e) {
   try {
     if (e.parameter.token !== TOKEN) return json_({ error: 'token' });
     if (e.parameter.name === '_info') return json_({ rows: [{ id: ss_().getId(), url: ss_().getUrl() }] });
+    if (e.parameter.name === '_file') return json_(file_(e.parameter.id, Number(e.parameter.part) || 0));
     if (e.parameter.name === 'events') return json_({ rows: events_(e.parameter.from, e.parameter.to) });
     // Wait for any write in progress, so a read never sees a half-written (empty) tab.
     ss_(); // make sure the sheet exists before taking the lock
@@ -138,3 +139,24 @@ function setup() {
   ScriptApp.newTrigger('syncHabits').timeBased().everyHours(1).create();
   syncHabits();
 }
+
+// ---- Library: sends one 3 MB piece of an eBook from the Drive folder "eBooks" ----
+const EBOOKS_FOLDER = '1gJu91UUigdbea4N9M51dfzsTYOVUMw0E';
+function file_(id, part) {
+  const f = DriveApp.getFileById(id);
+  const ps = f.getParents();
+  let ok = false;
+  while (ps.hasNext()) if (ps.next().getId() === EBOOKS_FOLDER) { ok = true; break; }
+  if (!ok) return { error: 'not-in-folder' };
+  const size = f.getSize(), CH = 3 * 1024 * 1024, n = Math.max(1, Math.ceil(size / CH));
+  if (part < 0 || part >= n) return { error: 'bad-request' };
+  const a = part * CH, b = Math.min(size, a + CH) - 1;
+  const r = UrlFetchApp.fetch('https://www.googleapis.com/drive/v3/files/' + id + '?alt=media',
+    { headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken(), Range: 'bytes=' + a + '-' + b }, muteHttpExceptions: true });
+  const c = r.getResponseCode();
+  if (c >= 300) return { error: 'server', message: 'Drive answered ' + c };
+  if (c === 200 && n > 1) return { error: 'server', message: 'Drive ignored the range' };
+  return { n: n, part: part, size: size, data: Utilities.base64Encode(r.getContent()) };
+}
+// Run this once in the Apps Script editor to give the script permission to read Drive.
+function authDrive() { DriveApp.getFolderById(EBOOKS_FOLDER).getName(); }

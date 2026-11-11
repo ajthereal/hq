@@ -2098,19 +2098,21 @@ function lbWire(doc){
    var s=R.doc&&R.doc.getSelection(),on=!!(s&&!s.isCollapsed&&String(s).trim()),e=document.getElementById('lbsel');
    if(e)e.classList.toggle('on',on);
    if(on)R.node.classList.add('hide')},120)});
- doc.addEventListener('pointerdown',function(e){
-  if(e.pointerType==='mouse'){g=null;R.hadSel=!!(doc.getSelection()&&!doc.getSelection().isCollapsed);return}
-  var s=doc.getSelection();R.hadSel=!!(s&&!s.isCollapsed&&String(s).trim());
-  g={x:e.clientX,y:e.clientY,t:Date.now(),dx:0,drag:0,s:[[e.clientX,Date.now()]]};
-  },{passive:true});
- doc.addEventListener('pointermove',function(e){
-  if(!g||R.hadSel)return;
-  var dx=e.clientX-g.x,dy=e.clientY-g.y;
+ doc.addEventListener('mousedown',function(){var s=doc.getSelection();R.hadSel=!!(s&&!s.isCollapsed&&String(s).trim())},{passive:true});
+ doc.addEventListener('touchstart',function(e){
+  if(!e.touches||e.touches.length!==1){g=null;return}
+  var t=e.touches[0],s=doc.getSelection();
+  R.hadSel=!!(s&&!s.isCollapsed&&String(s).trim());
+  g={x:t.clientX,y:t.clientY,t:Date.now(),dx:0,drag:0,s:[[t.clientX,Date.now()]]}},{passive:true});
+ doc.addEventListener('touchmove',function(e){
+  if(!g||R.hadSel||!e.touches||!e.touches[0])return;
+  var t=e.touches[0],dx=t.clientX-g.x,dy=t.clientY-g.y;
   if(!g.drag){if(Math.abs(dx)>10&&Math.abs(dx)>Math.abs(dy)*1.2){g.drag=1;R.drag=1;R.body.style.transition='none'}else return}
-  var now=Date.now();g.s.push([e.clientX,now]);if(g.s.length>8)g.s.shift();
+  if(e.cancelable)e.preventDefault();
+  var now=Date.now();g.s.push([t.clientX,now]);if(g.s.length>8)g.s.shift();
   g.dx=dx;
   var edge=(R.page===0&&R.i===0&&dx>0)||(R.page===R.pages-1&&R.i===R.bk.spine.length-1&&dx<0);
-  R.body.style.transform='translate3d('+(-R.page*R.d.W+dx*(edge?.3:1))+'px,0,0)'},{passive:true});
+  R.body.style.transform='translate3d('+(-R.page*R.d.W+dx*(edge?.3:1))+'px,0,0)'},{passive:false});
  function end(e,cancel){
   if(!g)return;
   var G=g;g=null;
@@ -2124,8 +2126,8 @@ function lbWire(doc){
   if(G.dx<-W*.18||(v<-.5&&G.dx<-24))lbNext();
   else if(G.dx>W*.18||(v>.5&&G.dx>24))lbPrev();
   else lbSetPage(R.page,false)}
- doc.addEventListener('pointerup',function(e){end(e,0)},{passive:true});
- doc.addEventListener('pointercancel',function(e){end(e,1)},{passive:true});
+ doc.addEventListener('touchend',function(e){end(e,0)},{passive:true});
+ doc.addEventListener('touchcancel',function(e){end(e,1)},{passive:true});
  doc.addEventListener('click',function(e){
   e.preventDefault();
   if(Date.now()-(R.dragT||0)<400)return;

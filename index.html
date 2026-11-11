@@ -1759,7 +1759,7 @@ function lbPrep(bk,item,xml){
   P=Promise.resolve('<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Page</title></head><body><img src="'+nm+'" alt=""/></body></html>')}
  else P=zipText(bk,path);
  return P.then(function(src){
-  src=src.replace(/<script\b[\s\S]*?<\/script>/gi,'').replace(/<\/?(iframe|object|embed)\b[^>]*>/gi,'');
+  src=src.replace(/<script\b[\s\S]*?<\/script>/gi,'').replace(/<script\b[^>]*\/>/gi,'').replace(/<\/?(iframe|object|embed|frame|frameset|base|form)\b[^>]*>/gi,'').replace(/<[a-z][^>]*>/gi,function(t){return t.replace(/\s(on[a-z]+)\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi,'').replace(/(href|src|xlink:href|action)\s*=\s*(["'])\s*javascript:[^"']*\2/gi,'$1=$2#$2')});
   var css={},res={},isExt=/^(https?:|data:|blob:|mailto:|#)/i;
   (src.match(/<(?:img|image|source|link)\b[^>]*>/gi)||[]).forEach(function(t){
    if(/^<link/i.test(t)){if(!/stylesheet/i.test(t))return;var h=lbAttr(t,'href');if(h&&!isExt.test(h))css[lbJoin(dir,h)]=1}
@@ -1864,7 +1864,7 @@ function lbChips(){
  var c=[['All',LB.books.length],['Reading',rd],['On device',saved]].concat(lbShelves().map(function(s){return [s,LB.books.filter(function(b){return b.shelf===s}).length]}));
  return c.map(function(x){return '<button class="chip" data-lb-shelf="'+esc(x[0])+'" aria-pressed="'+(LB.shelf===x[0])+'">'+esc(x[0])+' <em>'+x[1]+'</em></button>'}).join('')}
 function libraryPage(){
- var top='<div class="top"><div class="stats"><span style="color:var(--mute)">'+(LB.books.length?LB.books.length+' books':'')+'</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button></div></div><div class="hrow"><h1>Library</h1><span class="meta" style="align-self:end">Reader build 7</span></div>';
+ var top='<div class="top"><div class="stats"><span style="color:var(--mute)">'+(LB.books.length?LB.books.length+' books':'')+'</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button></div></div><div class="hrow"><h1>Library</h1><span class="meta" style="align-self:end">Reader build 8</span></div>';
  if(!LB.books.length){
   if(!CFG.url)return top+'<p class="note">Connect the Sheet first in Sync. The book list lives there.</p>';
   return top+'<div class="missed"><b>No books yet</b><p class="meta" style="margin:6px 0 0">Tell Claude: "update my library". Claude reads your Drive eBooks folder and fills the books tab in the Sheet.</p></div>'}
@@ -2173,7 +2173,7 @@ function lbReader(b,buf){
  return lbParse(buf).then(function(bk){
   bk.b=b;
   var n=document.createElement('div');n.className='lb-read hide';n.id='lbr';
-  n.innerHTML='<div class="lb-head"><span id="lbh"></span></div><iframe class="lb-frame" sandbox="allow-same-origin" title="Book"></iframe><div class="lb-foot"><span id="lbf"></span><span id="lbp"></span></div>'+
+  n.innerHTML='<div class="lb-head"><span id="lbh"></span></div><iframe class="lb-frame" sandbox="allow-same-origin allow-scripts" title="Book"></iframe><div class="lb-foot"><span id="lbf"></span><span id="lbp"></span></div>'+
   '<div class="lb-top"><button class="lb-ib" data-lb-close="1" aria-label="Back to library">'+ic('left',18)+'<span style="margin-left:2px">Library</span></button><span class="lb-grow"></span>'+
   '<button class="lb-ib" data-lb-search="1" aria-label="Search in book">'+ic('search',20)+'</button><button class="lb-ib" data-lb-aa="1" aria-label="Themes and settings"><b style="font-family:ui-serif,Georgia,serif">Aa</b></button><button class="lb-ib" data-lb-toc="1" aria-label="Contents">'+ic('list',20)+'</button><button class="lb-ib" data-lb-bm="1" id="lbbm" aria-label="Bookmark">'+lbIc('bm')+'</button></div>'+
   '<div class="lb-bot"><div class="lb-sl-l" id="lbsl"></div><input class="lb-sl" id="lbsr" type="range" min="0" max="1000" value="0" aria-label="Position in book"></div>'+
@@ -2195,7 +2195,7 @@ function lbShow(i,pend){
  R.drag=0;
  lbPage(true).catch(function(e){lbMsg(R.bk.b.title,'This page could not be shown: '+lbWhy(e))})}
 function lbInject(html){
- var st='<style id="lbdyn"></style>';
+ var st='<meta http-equiv="Content-Security-Policy" content="default-src blob: data:; script-src \'none\'; object-src \'none\'; style-src blob: data: \'unsafe-inline\'"/><style id="lbdyn"></style>';
  if(/<\/head>/i.test(html))return html.replace(/<\/head>/i,function(){return st+'</head>'});
  if(/<html\b[^>]*>/i.test(html))return html.replace(/<html\b[^>]*>/i,function(m){return m+'<head><meta charset="utf-8"/>'+st+'</head>'});
  return '<html xmlns="http://www.w3.org/1999/xhtml"><head><meta charset="utf-8"/>'+st+'</head><body>'+html+'</body></html>'}

@@ -1818,24 +1818,41 @@ function lbMergeNotes(rows){(rows||[]).forEach(function(r){
 function lbSaveAll(){lbSave();try{localStorage.setItem('hq-booknotes',JSON.stringify(LB.notes))}catch(e){}}
 function pullBooks(){
  if(!CFG.url)return;
- Promise.all([getTab('books'),getTab('bookprog'),getTab('booknotes').catch(function(){return {}})]).then(function(a){
-  if(a[0].error||!a[0].rows)return;
-  LB.books=a[0].rows.filter(function(r){return r.id&&r.title});
-  lbMergeProg(a[1].rows);lbMergeNotes(a[2].rows);
-  lbSaveAll();lbRefresh()}).catch(function(){})}
-/* pushing replaces a whole Sheet tab, so always pull and merge first; if the pull fails, push nothing */
+ /* one request at a time, after HQ's own startup syncs, so the Sheet lock is not crowded */
+ setTimeout(function(){
+  var got={};
+  getTab('books').then(function(j){got.b=j;return getTab('bookprog')}).then(function(j){got.p=j;return getTab('booknotes').catch(function(){return {}})}).then(function(j){
+   if(got.b.error||!got.b.rows)return;
+   LB.books=got.b.rows.filter(function(r){return r.id&&r.title});
+   if(!got.p.error)lbMergeProg(got.p.rows);
+   if(!j.error)lbMergeNotes(j.rows);
+   lbSaveAll();lbRefresh()}).catch(function(){})},2500)}
+/* pushing replaces a whole Sheet tab, so pull and merge first; if the pull fails, push nothing.
+   Requests go one after another, only for what changed, with one quiet retry when the Sheet is busy. */
+var LBQ={busy:0,again:0,prog:0,notes:0,tries:0};
 function lbPushAll(){
- if(!CFG.url)return;
- Promise.all([getTab('bookprog'),getTab('booknotes')]).then(function(a){
-  if(a[0].error||a[1].error)throw new Error('pull');
-  lbMergeProg(a[0].rows);lbMergeNotes(a[1].rows);lbSaveAll();
-  var pr=Object.keys(LB.prog).map(function(k){var p=LB.prog[k];return {id:k,ch:p.c,pos:p.p,pct:p.pct,ts:p.t}}),nr=[];
-  Object.keys(LB.notes).forEach(function(id){LB.notes[id].forEach(function(n){nr.push({id:id,uid:n.u,k:n.k,ch:n.ch,a:n.a,b:n.b,c:n.c,t:n.t,n:n.n,ts:n.ts,d:n.d?'1':'0'})})});
-  var jobs=[];
-  if(pr.length)jobs.push(postTab('bookprog',pr));
-  if(nr.length)jobs.push(postTab('booknotes',nr));
-  return Promise.all(jobs)}).then(function(r){if(r)setSync(r.every(function(j){return j.ok})?'ok':'err')}).catch(function(){setSync('err')})}
-function lbPush(){clearTimeout(LBT);LBT=setTimeout(lbPushAll,4000)}
+ if(!CFG.url||(!LBQ.prog&&!LBQ.notes))return;
+ if(LBQ.busy){LBQ.again=1;return}
+ LBQ.busy=1;
+ var doP=LBQ.prog,doN=LBQ.notes;LBQ.prog=0;LBQ.notes=0;
+ function fail(j){
+  LBQ.busy=0;LBQ.prog=LBQ.prog||doP;LBQ.notes=LBQ.notes||doN;
+  if(LBQ.tries<1){LBQ.tries++;clearTimeout(LBT);LBT=setTimeout(lbPushAll,8000);return}
+  LBQ.tries=0;setSync('err');
+  if(j&&j.message)toast('Reading progress not saved yet: the Sheet is busy. HQ will try again on your next page turn.')}
+ function step(name,rows,merge){
+  return getTab(name).then(function(j){
+   if(j.error)throw j;
+   merge(j.rows);lbSaveAll();
+   var r=rows();if(!r.length)return {ok:1};
+   return postTab(name,r)}).then(function(j){if(j&&j.error)throw j;return j})}
+ var P=Promise.resolve();
+ if(doP)P=P.then(function(){return step('bookprog',function(){return Object.keys(LB.prog).map(function(k){var p=LB.prog[k];return {id:k,ch:p.c,pos:p.p,pct:p.pct,ts:p.t}})},lbMergeProg)});
+ if(doN)P=P.then(function(){return step('booknotes',function(){var nr=[];Object.keys(LB.notes).forEach(function(id){LB.notes[id].forEach(function(n){nr.push({id:id,uid:n.u,k:n.k,ch:n.ch,a:n.a,b:n.b,c:n.c,t:n.t,n:n.n,ts:n.ts,d:n.d?'1':'0'})})});return nr},lbMergeNotes)});
+ P.then(function(){
+  LBQ.busy=0;LBQ.tries=0;setSync('ok');
+  if(LBQ.again){LBQ.again=0;lbPushAll()}}).catch(fail)}
+function lbPush(notes){LBQ.prog=1;if(notes)LBQ.notes=1;clearTimeout(LBT);LBT=setTimeout(lbPushAll,8000)}
 /* Library page */
 var LBCOL=['#A9D7EA','#F7D3E8','#D3D6F7','#BDE8D1','#FBD7B8','#EADFB5'];
 function lbShelves(){var s={};LB.books.forEach(function(b){if(b.shelf)s[b.shelf]=(s[b.shelf]||0)+1});return Object.keys(s).sort()}
@@ -1866,7 +1883,7 @@ function lbChips(){
  var c=[['All',LB.books.length],['Reading',rd],['On device',saved]].concat(lbShelves().map(function(s){return [s,LB.books.filter(function(b){return b.shelf===s}).length]}));
  return c.map(function(x){return '<button class="chip" data-lb-shelf="'+esc(x[0])+'" aria-pressed="'+(LB.shelf===x[0])+'">'+esc(x[0])+' <em>'+x[1]+'</em></button>'}).join('')}
 function libraryPage(){
- var top='<div class="top"><div class="stats"><span style="color:var(--mute)">'+(LB.books.length?LB.books.length+' books':'')+'</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button></div></div><div class="hrow"><h1>Library</h1><span class="meta" style="align-self:end">Reader build 9</span></div>';
+ var top='<div class="top"><div class="stats"><span style="color:var(--mute)">'+(LB.books.length?LB.books.length+' books':'')+'</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button></div></div><div class="hrow"><h1>Library</h1><span class="meta" style="align-self:end">Reader build 10</span></div>';
  if(!LB.books.length){
   if(!CFG.url)return top+'<p class="note">Connect the Sheet first in Sync. The book list lives there.</p>';
   return top+'<div class="missed"><b>No books yet</b><p class="meta" style="margin:6px 0 0">Tell Claude: "update my library". Claude reads your Drive eBooks folder and fills the books tab in the Sheet.</p></div>'}
@@ -1921,7 +1938,7 @@ var LBS={theme:'auto',font:'ny',fs:19,ls:1.5,mg:1,just:0};
 try{var _s=JSON.parse(localStorage.getItem('hq-lb-set')||'{}');for(var _k in _s)LBS[_k]=_s[_k]}catch(e){}
 LB.notes={};try{LB.notes=JSON.parse(localStorage.getItem('hq-booknotes')||'{}')}catch(e){}
 function lbSaveSet(){try{localStorage.setItem('hq-lb-set',JSON.stringify(LBS))}catch(e){}}
-function lbNSave(){try{localStorage.setItem('hq-booknotes',JSON.stringify(LB.notes))}catch(e){}lbPush()}
+function lbNSave(){try{localStorage.setItem('hq-booknotes',JSON.stringify(LB.notes))}catch(e){}lbPush(1)}
 function lbNotes(id,k){return (LB.notes[id]||[]).filter(function(n){return !n.d&&(!k||n.k===k)})}
 function lbUid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 var LBTH={orig:['Original','#ffffff','#1c1c1e','#2F6FD0'],paper:['Paper','#f3ead6','#3a3226','#8a5a1c'],quiet:['Quiet','#3b3b3e','#d9d9dc','#8ab4ff'],bold:['Bold','#ffffff','#000000','#0a4fb3'],calm:['Calm','#e9dcc0','#4b402e','#8a4b12'],focus:['Focus','#fdf8cf','#1d1d1d','#0a4fb3']};
@@ -2235,7 +2252,7 @@ function lbCloseR(){
  var R=LBR;if(!R)return;
  lbRec();clearTimeout(LBT);
  window.removeEventListener('resize',lbResize);document.removeEventListener('keydown',lbKey);
- lbPushAll();
+ clearTimeout(LBT);LBQ.prog=1;lbPushAll();
  try{URL.revokeObjectURL(R.url);Object.keys(R.bk.urls).forEach(function(k){URL.revokeObjectURL(R.bk.urls[k])})}catch(e){}
  clearTimeout(LBRT);clearTimeout(R.sct);R.sk++;
  var sh=document.querySelectorAll('.sheet-bg');Array.prototype.forEach.call(sh,function(x){x.remove()});

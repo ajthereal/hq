@@ -34,32 +34,33 @@ function read_(n) {
   const h = v[0];
   return v.slice(1).map(r => { const o = {}; h.forEach((k, i) => { if (k) o[k] = String(r[i]); }); return o; });
 }
-// Keeps two safety copies of a tab before it is overwritten: "_bak_<name>" (the state before the
-// last write) and "_day_<name>" (the state at the first write of each day).
+// Keeps two safety copies of a tab before it is overwritten: "_bak_<name>" (refreshed at most every
+// 10 minutes, so a bad save can be undone) and "_day_<name>" (the state at the first save of each day).
+// Copies are made inside Google Sheets (copyTo), which is far faster than reading and rewriting the data.
 function backup_(n) {
   if (n.indexOf('_bak_') === 0 || n.indexOf('_day_') === 0) return;
   const s = ss_().getSheetByName(n);
-  if (!s) return;
-  const v = s.getDataRange().getValues();
-  if (v.length < 2) return;
-  const put = (name) => {
-    const b = sh_(name); b.clear();
-    const r = b.getRange(1, 1, v.length, v[0].length);
-    r.setNumberFormat('@'); r.setValues(v.map(row => row.map(c => String(c))));
-  };
-  put('_bak_' + n);
-  const p = PropertiesService.getScriptProperties(), k = 'day_' + n;
-  const today = Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyyy-MM-dd');
-  if (p.getProperty(k) !== today) { put('_day_' + n); p.setProperty(k, today); }
+  if (!s || s.getLastRow() < 2) return;
+  const p = PropertiesService.getScriptProperties(), now = Date.now();
+  const copy = (name) => { const b = sh_(name); b.clear(); s.getDataRange().copyTo(b.getRange(1, 1), { contentsOnly: true }); };
+  const kb = 'bak_' + n;
+  if (now - Number(p.getProperty(kb) || 0) > 10 * 60000) { copy('_bak_' + n); p.setProperty(kb, String(now)); }
+  const kd = 'day_' + n, today = Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyyy-MM-dd');
+  if (p.getProperty(kd) !== today) { copy('_day_' + n); p.setProperty(kd, today); }
 }
+// Writes the new rows over the old ones, then clears whatever is left below or to the right.
+// The tab is never empty in between, so reads do not need to wait for a save to finish.
 function write_(n, rows) {
   backup_(n);
-  const s = sh_(n); s.clear();
-  if (!rows.length) return;
+  const s = sh_(n);
+  if (!rows.length) { s.clear(); return; }
   const h = [...new Set(rows.flatMap(r => Object.keys(r)))];
   const out = [h].concat(rows.map(r => h.map(k => r[k] == null ? '' : String(r[k]))));
   const g = s.getRange(1, 1, out.length, h.length);
   g.setNumberFormat('@'); g.setValues(out);
+  const lr = s.getLastRow(), lc = s.getLastColumn();
+  if (lr > out.length) s.getRange(out.length + 1, 1, lr - out.length, Math.max(lc, h.length)).clearContent();
+  if (lc > h.length) s.getRange(1, h.length + 1, out.length, lc - h.length).clearContent();
 }
 function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 function doGet(e) {
@@ -68,10 +69,8 @@ function doGet(e) {
     if (e.parameter.name === '_info') return json_({ rows: [{ id: ss_().getId(), url: ss_().getUrl() }] });
     if (e.parameter.name === '_file') return json_(file_(e.parameter.id, Number(e.parameter.part) || 0));
     if (e.parameter.name === 'events') return json_({ rows: events_(e.parameter.from, e.parameter.to) });
-    // Wait for any write in progress, so a read never sees a half-written (empty) tab.
-    ss_(); // make sure the sheet exists before taking the lock
-    const lock = LockService.getScriptLock(); lock.waitLock(15000);
-    try { return json_({ rows: read_(e.parameter.name) }); } finally { lock.releaseLock(); }
+    // Reads never wait for the lock: saves overwrite in place, so a tab is never empty mid-save.
+    return json_({ rows: read_(e.parameter.name) });
   } catch (err) { return json_({ error: 'server', message: String(err) }); }
 }
 function doPost(e) {
@@ -87,7 +86,7 @@ function doPost(e) {
   if (typeof b.name !== 'string' || !b.name || !Array.isArray(b.rows)) return json_({ error: 'bad-request' });
   try {
     ss_(); // make sure the sheet exists before taking the lock
-    const lock = LockService.getScriptLock(); lock.waitLock(15000);
+    const lock = LockService.getScriptLock(); lock.waitLock(30000);
     try {
       // Never let an empty write wipe a tab that still has data (a safety copy is kept either way).
       const cur = ss_().getSheetByName(b.name);

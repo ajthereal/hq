@@ -447,10 +447,18 @@ var syncState=CFG.url?'idle':'off',pushT=null;
 var SYNCOK={},PEND={},SERR={};
 var GUARDKEY={tasks:'hq-tasks2',people:'hq-people',habitlog:'hq-hlog',content:'hq-content',tripticks:'hq-tticks',top3:'hq-top3'};
 var HASCACHE={};Object.keys(GUARDKEY).forEach(function(n){try{HASCACHE[n]=localStorage.getItem(GUARDKEY[n])!==null}catch(e){HASCACHE[n]=false}});
-function syncBanner(){var m='';Object.keys(SERR).forEach(function(k){if(!m&&SERR[k])m=SERR[k]});var b=document.getElementById('syncbar');
- if(!m){if(b)b.remove();return}
- if(!b){b=document.createElement('button');b.id='syncbar';b.type='button';b.setAttribute('style','position:absolute;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:45;padding:10px 14px;border:0;border-radius:14px;background:var(--btn);color:var(--btn-ink);font:600 13px/1.35 inherit;text-align:center');b.onclick=function(){pullTasks()};(typeof FR!=='undefined'&&FR?FR:document.body).appendChild(b)}
- b.textContent=m+' Tap to try again.'}
+/* the sync message shows once (5 s, tap to retry), then steps aside; the small sync dot and the reader footer keep a quiet Offline mark */
+var SBSEEN='',SBT=null;
+function syncMsg(){var m='';Object.keys(SERR).forEach(function(k){if(!m&&SERR[k])m=SERR[k]});return m}
+function syncMark(){var m=syncMsg(),o=document.getElementById('lboff');if(o)o.textContent=m?(/^Offline/.test(m)?'Offline':'Not synced'):''}
+function syncBanner(){var m=syncMsg(),b=document.getElementById('syncbar');syncMark();
+ if(!m){if(b)b.remove();SBSEEN='';return}
+ if(m===SBSEEN)return;
+ SBSEEN=m;
+ if(!b){b=document.createElement('button');b.id='syncbar';b.type='button';b.setAttribute('style','position:absolute;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:45;padding:10px 14px;border:0;border-radius:14px;background:var(--btn);color:var(--btn-ink);font:600 13px/1.35 inherit;text-align:center');b.onclick=function(){clearTimeout(SBT);b.remove();pullTasks()};(typeof FR!=='undefined'&&FR?FR:document.body).appendChild(b)}
+ b.textContent=m+' Tap to try again.';
+ clearTimeout(SBT);SBT=setTimeout(function(){var x=document.getElementById('syncbar');if(x)x.remove()},5000)}
+window.addEventListener('online',function(){if(CFG.url)pullTasks()});
 function syncReason(j){if(!j||!j.error)return '';if(j.error==='token')return 'Secret code does not match, data is not synced.';if(j.error==='empty-refused')return 'The Sheet refused an empty save, your data in the Sheet is safe.';if(j.error==='bad-request')return 'Apps Script menolak data. Update Apps Script-nya.';if(j.error==='not-loaded')return 'Data has not loaded from the Sheet, so saving is on hold.';return 'Sheet error'+(j.message?(': '+String(j.message).slice(0,60)):'')+'.'}
 var FLUSH={tasks:function(){pushTasks()},people:function(){savePeople()},habitlog:function(){saveHlog()},content:function(){saveCt()},top3:function(){saveTop3()},tripticks:function(){postTab('tripticks',TK.map(function(x){return {id:x}})).then(function(j){setSync(j.ok?'ok':'err')}).catch(function(){setSync('err')})}};
 var _fetch=window.fetch.bind(window);
@@ -1839,7 +1847,7 @@ function lbPushAll(){
   LBQ.busy=0;LBQ.prog=LBQ.prog||doP;LBQ.notes=LBQ.notes||doN;
   if(LBQ.tries<1){LBQ.tries++;clearTimeout(LBT);LBT=setTimeout(lbPushAll,8000);return}
   LBQ.tries=0;setSync('err');
-  if(j&&j.message)toast('Reading progress not saved yet: the Sheet is busy. HQ will try again on your next page turn.')}
+  if(j&&j.error&&!LBQ.told){LBQ.told=1;toast('Reading progress not saved yet: the Sheet is busy. HQ will try again on your next page turn.')}}
  function step(name,rows,merge){
   return getTab(name).then(function(j){
    if(j.error)throw j;
@@ -1850,7 +1858,7 @@ function lbPushAll(){
  if(doP)P=P.then(function(){return step('bookprog',function(){return Object.keys(LB.prog).map(function(k){var p=LB.prog[k];return {id:k,ch:p.c,pos:p.p,pct:p.pct,ts:p.t}})},lbMergeProg)});
  if(doN)P=P.then(function(){return step('booknotes',function(){var nr=[];Object.keys(LB.notes).forEach(function(id){LB.notes[id].forEach(function(n){nr.push({id:id,uid:n.u,k:n.k,ch:n.ch,a:n.a,b:n.b,c:n.c,t:n.t,n:n.n,ts:n.ts,d:n.d?'1':'0'})})});return nr},lbMergeNotes)});
  P.then(function(){
-  LBQ.busy=0;LBQ.tries=0;setSync('ok');
+  LBQ.busy=0;LBQ.tries=0;LBQ.told=0;setSync('ok');
   if(LBQ.again){LBQ.again=0;lbPushAll()}}).catch(fail)}
 function lbPush(notes){LBQ.prog=1;if(notes)LBQ.notes=1;clearTimeout(LBT);LBT=setTimeout(lbPushAll,8000)}
 /* Library page */
@@ -2056,6 +2064,7 @@ function lbUi(){
  if(h)h.textContent=lbTitleOf(R.i);
  if(f)f.textContent=left>0?(left===1?'1 page left in chapter':left+' pages left in chapter'):(R.i<R.bk.spine.length-1?'Last page of chapter':'End of book');
  if(p)p.textContent=(R.pct||0)+'%';
+ syncMark();
  if(!R.scrub){
   var sr=document.getElementById('lbsr'),sl=document.getElementById('lbsl');
   if(sr)sr.value=Math.round((R.cum[R.i]+(R.pages>1?R.page/(R.pages-1):0)*R.sz[R.i])/R.tot*1000);
@@ -2196,7 +2205,7 @@ function lbReader(b,buf){
  return lbParse(buf).then(function(bk){
   bk.b=b;
   var n=document.createElement('div');n.className='lb-read hide';n.id='lbr';
-  n.innerHTML='<div class="lb-head"><span id="lbh"></span></div><iframe class="lb-frame" sandbox="allow-same-origin allow-scripts" title="Book"></iframe><div class="lb-spine"></div><div class="lb-foot"><span id="lbf"></span><span id="lbp"></span></div>'+
+  n.innerHTML='<div class="lb-head"><span id="lbh"></span></div><iframe class="lb-frame" sandbox="allow-same-origin allow-scripts" title="Book"></iframe><div class="lb-spine"></div><div class="lb-foot"><span id="lbf"></span><span id="lboff"></span><span id="lbp"></span></div>'+
   '<div class="lb-top"><button class="lb-ib" data-lb-close="1" aria-label="Back to library">'+ic('left',18)+'<span style="margin-left:2px">Library</span></button><span class="lb-grow"></span>'+
   '<button class="lb-ib" data-lb-search="1" aria-label="Search in book">'+ic('search',20)+'</button><button class="lb-ib" data-lb-aa="1" aria-label="Themes and settings"><b style="font-family:ui-serif,Georgia,serif">Aa</b></button><button class="lb-ib" data-lb-toc="1" aria-label="Contents">'+ic('list',20)+'</button><button class="lb-ib" data-lb-bm="1" id="lbbm" aria-label="Bookmark">'+lbIc('bm')+'</button></div>'+
   '<div class="lb-bot"><div class="lb-sl-l" id="lbsl"></div><input class="lb-sl" id="lbsr" type="range" min="0" max="1000" value="0" aria-label="Position in book"></div>'+

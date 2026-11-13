@@ -454,7 +454,7 @@ a.chip{color:inherit;text-decoration:none}
 .rc-spd .chips{margin-top:12px;justify-content:center}
 .rc-spd .chip{height:34px;padding:0 12px}
 .rc-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
-.rc-tools .chip{height:40px}
+.rc-tools .chip{min-height:40px;height:auto;white-space:normal}
 .rc-mk{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
 .rc-mk:first-of-type{border-top:0}
 .rc-mk .chip{height:32px;padding:0 11px;font-size:12.5px;font-variant-numeric:tabular-nums}
@@ -2525,7 +2525,7 @@ document.addEventListener('change',function(e){if(e.target&&e.target.id==='lbsr'
 var RC={items:[],prog:{},have:{},dl:{},q:'',f:'All',cur:null,live:0,open:0,speed:2,prev:2,loop:null,rep:0,scrub:0,v:0,err:'',folder:'',pt:0,sv:0,busy:0,url:''};
 try{RC.items=JSON.parse(localStorage.getItem('hq-reclist')||'[]');RC.prog=JSON.parse(localStorage.getItem('hq-recprog')||'{}');RC.speed=+localStorage.getItem('hq-recspeed')||2;RC.folder=localStorage.getItem('hq-recfolder')||'';RC.v=+localStorage.getItem('hq-recv')||0}catch(e){}
 var RCCH=3*1024*1024,RCPRE=[1,1.5,2,2.5,3],RCPAL=['eve','aft','morning','late'];
-var RCSIL='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+var RCSIL='data:audio/wav;base64,UklGRmQGAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YUAGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
 var RA=document.createElement('audio');RA.id='rcaud';RA.preload='auto';RA.setAttribute('playsinline','');RA.style.display='none';document.body.appendChild(RA);
 try{RA.preservesPitch=true;RA.webkitPreservesPitch=true}catch(e){}
 function rcSave(){try{
@@ -2570,7 +2570,7 @@ function rcWipe(id){return rcTx(['chunks','meta'],'readwrite',function(t){t.obje
 function rcInit(){
  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
  rcTx(['meta'],'readonly',function(t){return t.objectStore('meta').getAll()}).then(function(all){
-  RC.have={};(all||[]).forEach(function(m){RC.have[m.id]=m;if(m.src==='local'&&!rcItem(m.id))RC.items.push({id:m.id,name:m.name,size:m.size,mime:m.mime,ts:m.ts,src:'local'})});
+  RC.have={};(all||[]).filter(function(m){if(m.src==='local'&&!m.done){rcWipe(m.id).catch(function(){});return false}return true}).forEach(function(m){RC.have[m.id]=m;if(m.src==='local'&&!rcItem(m.id))RC.items.push({id:m.id,name:m.name,size:m.size,mime:m.mime,ts:m.ts,src:'local'})});
   /* a copy that only exists on this device stays listed even if it left the Drive folder */
   Object.keys(RC.have).forEach(function(k){var m=RC.have[k];if(!rcItem(k))RC.items.push({id:k,name:m.name,size:m.size,mime:m.mime,ts:m.ts,src:m.src==='local'?'local':'drive',gone:m.src==='local'?0:1})});
   rcRefresh()}).catch(function(){});
@@ -2603,7 +2603,8 @@ function rcMergeProg(rows){(rows||[]).forEach(function(r){
  if(t>(l.t||0)&&RC.cur!==r.id){l.p=+r.pos||0;l.t=t;l.fin=r.fin==='1'?1:0;if(r.title)l.n=r.title;else delete l.n}
  if(+r.dur>0)l.d=+r.dur})}
 function rcPull(manual){
- if(!CFG.url){RC.v=0;rcRefresh();return}
+ RC.pt=Date.now();
+ if(!CFG.url){RC.v=0;return}
  if(RC.busy)return;RC.busy=1;RC.pt=Date.now();
  getTab('_info').then(function(j){
   if(j.error)throw new Error(j.error==='token'?'token':'server:'+(j.message||j.error));
@@ -2628,7 +2629,7 @@ function rcPushAll(){
   var rows=Object.keys(RC.prog).filter(function(k){return k.indexOf('local-')!==0&&RC.prog[k].t}).map(function(k){var p=RC.prog[k];return {id:k,pos:Math.round(p.p||0),dur:Math.round(p.d||0),ts:p.t,fin:p.fin?'1':'0',title:p.n||'',marks:JSON.stringify(p.m||[])}});
   if(!rows.length)return {ok:1};
   return postTab('recprog',rows)}).then(function(j){if(j&&j.error)throw j;RCP.busy=0;RCP.tries=0}).catch(function(){
-  RCP.busy=0;if(RCP.tries<2){RCP.tries++;RCP.t=setTimeout(rcPushAll,15000)}})}
+  RCP.busy=0;if(RCP.tries<2){RCP.tries++;RCP.t=setTimeout(rcPushAll,15000)}else{RCP.tries=0;RC.err='Could not save your listening progress to the Sheet. It is kept on this device and will retry.';toast(RC.err)}})}
 function rcShown(){if(Date.now()-RC.pt>45000)rcPull()}
 /* ---------- downloading from Drive (resumable) ---------- */
 var RCQ=[];
@@ -2734,17 +2735,18 @@ function rcProbe(id){
 /* ---------- audio element ---------- */
 function rcPlaying(){return RC.live&&!RA.paused&&!RA.ended}
 function rcBlocked(e){rcPP();if(e&&e.name==='NotAllowedError')toast('Tap play to start')}
-function rcUnlock(){if(RC.unl)return;RC.unl=1;try{RA.src=RCSIL;var p=RA.play();if(p&&p.catch)p.catch(function(){})}catch(e){}}
+function rcUnlock(){if(RC.unl)return;try{RA.src=RCSIL;var p=RA.play();if(p&&p.then)p.then(function(){RC.unl=1}).catch(function(){});else RC.unl=1}catch(e){}}
 function rcPlay(id,at){
  var it=rcItem(id);if(!it)return;
  if(!rcOn(id)){rcGet(it);return}
  rcUnlock();
  if(RC.cur===id&&RC.live){if(at!=null)RA.currentTime=at;var pr=RA.play();if(pr&&pr.catch)pr.catch(rcBlocked);rcOpenFull();return}
  if(RC.live){rcPos(1);RA.pause()}
- RC.cur=id;RC.live=0;RC.loop=null;
+ RC.cur=id;RC.live=0;RC.loop=null;var tok=RC.tok=(RC.tok||0)+1;
+ if(RC.once)RA.removeEventListener('loadedmetadata',RC.once);
  rcOpenFull();rcDrawFull();rcMini();
  rcBlob(id).then(function(b){
-  if(RC.cur!==id)return;
+  if(RC.cur!==id||tok!==RC.tok)return;
   if(RC.url)URL.revokeObjectURL(RC.url);
   RC.url=URL.createObjectURL(b);
   var p=rcPg(id),st=at!=null?at:(p.fin?0:Math.max(0,(p.p||0)-2));
@@ -2752,13 +2754,14 @@ function rcPlay(id,at){
    if(st>0&&isFinite(RA.duration))RA.currentTime=Math.min(st,Math.max(0,RA.duration-1));
    if(isFinite(RA.duration)&&RA.duration>0){p.d=RA.duration}
    rcTick(1);rcDrawFull();rcMS()};
-  RA.addEventListener('loadedmetadata',once);
+  RC.once=once;RA.addEventListener('loadedmetadata',once);
   RC.live=1;RA.src=RC.url;RA.defaultPlaybackRate=RC.speed;RA.playbackRate=RC.speed;
   var pr2=RA.play();if(pr2&&pr2.catch)pr2.catch(rcBlocked);
   rcMS()}).catch(function(e){
+  if(tok!==RC.tok)return;
   RC.cur=null;RC.live=0;rcCloseFull();rcMini();
   var s=lbMsg(rcName(it),String(e&&e.message)==='missing'?'The saved copy on this device is incomplete. Remove it and save it again from Drive.':rcWhy(e));
-  if(it.src!=='local'){delete RC.have[id];rcWipe(id).catch(function(){});rcRefresh()}})}
+  if(it.src!=='local'&&String(e&&e.message)==='missing'){delete RC.have[id];rcWipe(id).catch(function(){});rcRefresh()}})}
 function rcToggle(){
  if(!RC.cur)return;
  if(!RC.live)return;
@@ -2786,7 +2789,7 @@ RA.addEventListener('ended',function(){
  if(!RC.live)return;
  if(RC.rep){RA.currentTime=0;var p=RA.play();if(p&&p.catch)p.catch(rcBlocked);return}
  var q=rcPg(RC.cur);q.fin=1;q.p=0;q.t=Date.now();rcSave();rcPushQ();rcPP();rcTick(1);rcRefresh()});
-RA.addEventListener('timeupdate',function(){if(!RC.live)return;rcTick();rcPos(0)});
+RA.addEventListener('timeupdate',function(){if(!RC.live)return;var L=RC.loop;if(L&&L.b!=null&&RA.currentTime>=L.b&&RA.currentTime<L.b+30)RA.currentTime=L.a;rcTick();rcPos(0)});
 RA.addEventListener('durationchange',function(){if(RC.live)rcTick(1)});
 RA.addEventListener('seeked',function(){if(RC.live)rcMS()});
 RA.addEventListener('error',function(){
@@ -2800,7 +2803,7 @@ function rcLoopWatch(){
  clearInterval(RCLT);if(!RC.loop||RC.loop.b==null)return;
  RCLT=setInterval(function(){
   var L=RC.loop;if(!L||L.b==null||!rcPlaying()){clearInterval(RCLT);return}
-  var t=RA.currentTime;if(t>=L.b&&t<L.b+0.8)RA.currentTime=L.a},60)}
+  var t=RA.currentTime;if(t>=L.b)RA.currentTime=L.a},60)}
 function rcLoopTap(){
  if(!RC.live)return;var t=Math.round(RA.currentTime*10)/10;
  if(!RC.loop){RC.loop={a:t};toast('Loop starts at '+rcFmt(t)+'. Tap again where it should end.')}
@@ -2950,6 +2953,7 @@ function rcDrawFull(){
  var el=document.getElementById('rcfull'),it=RC.cur&&rcItem(RC.cur);if(!el)return;if(!it){el.remove();RC.open=0;return}
  var d=rcD(it.ts),p=rcPg(it.id),mk=rcMarks(it.id),L=RC.loop;
  var loopTxt=!L?'Loop section':L.b==null?'Set loop end ('+rcFmt(L.a)+')':'Looping '+rcFmt(L.a)+' to '+rcFmt(L.b)+' · clear';
+ var rcS=[el.scrollTop,(el.querySelector('.rc-card')||{}).scrollTop||0];
  el.innerHTML='<div class="rc-card"><div class="rc-top"><button class="rc-ib" data-rc="min" aria-label="Minimise player">'+ic('chev',26)+'</button><span class="rc-lab">Recording</span><button class="rc-ib" data-rc="optc" aria-label="More options">'+ic('dots',22)+'</button></div>'
  +'<div class="rc-body"><div class="rc-cover" style="'+rcPal(it.id)+'"><small>'+MON[d.getUTCMonth()]+'</small><b>'+d.getUTCDate()+'</b><small>'+WD[d.getUTCDay()].slice(0,3)+'</small></div>'
  +'<h2 class="rc-ti">'+esc(rcName(it))+'</h2><p class="rc-su">'+rcDate(it.ts)+(p.d?' · '+rcLen(p.d):'')+' · '+rcMB(it.size)+'</p>'
@@ -3012,7 +3016,7 @@ document.addEventListener('keydown',function(e){
  if(!RC.open||LBR)return;
  var t=e.target;if(t&&(t.tagName==='INPUT'&&t.type!=='range'||t.tagName==='TEXTAREA'))return;
  if(document.querySelector('.sheet-bg'))return;
- if(e.key===' '){e.preventDefault();rcToggle()}
+ if(e.key===' '){if(t&&t.tagName==='BUTTON')return;e.preventDefault();rcToggle()}
  else if(e.key==='ArrowLeft'){e.preventDefault();rcSkip(-15)}
  else if(e.key==='ArrowRight'){e.preventDefault();rcSkip(30)}
  else if(e.key==='ArrowUp'){e.preventDefault();rcSetSpeed(RC.speed+0.05)}

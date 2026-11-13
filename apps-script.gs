@@ -66,7 +66,8 @@ function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).se
 function doGet(e) {
   try {
     if (e.parameter.token !== TOKEN) return json_({ error: 'token' });
-    if (e.parameter.name === '_info') return json_({ rows: [{ id: ss_().getId(), url: ss_().getUrl() }] });
+    if (e.parameter.name === '_info') return json_({ rows: [{ id: ss_().getId(), url: ss_().getUrl(), v: 2 }] });
+    if (e.parameter.name === '_rec') return json_(recs_());
     if (e.parameter.name === '_file') return json_(file_(e.parameter.id, Number(e.parameter.part) || 0));
     if (e.parameter.name === 'events') return json_({ rows: events_(e.parameter.from, e.parameter.to) });
     // Reads never wait for the lock: saves overwrite in place, so a tab is never empty mid-save.
@@ -139,14 +140,17 @@ function setup() {
   syncHabits();
 }
 
-// ---- Library: sends one 3 MB piece of an eBook from the Drive folder "eBooks" ----
+// ---- Library and Recordings: sends one 3 MB piece of a file from the Drive folders below ----
 const EBOOKS_FOLDER = '1gJu91UUigdbea4N9M51dfzsTYOVUMw0E';
+const RECORDINGS_FOLDER = '1pqRUoKIHG8eKSQWMWPq1o-Syu2Wvxcv1'; // Drive folder "Meeting Recordings"
+function inFolders_(f) {
+  const ps = f.getParents();
+  while (ps.hasNext()) { const id = ps.next().getId(); if (id === EBOOKS_FOLDER || id === RECORDINGS_FOLDER) return true; }
+  return false;
+}
 function file_(id, part) {
   const f = DriveApp.getFileById(id);
-  const ps = f.getParents();
-  let ok = false;
-  while (ps.hasNext()) if (ps.next().getId() === EBOOKS_FOLDER) { ok = true; break; }
-  if (!ok) return { error: 'not-in-folder' };
+  if (!inFolders_(f)) return { error: 'not-in-folder' };
   const size = f.getSize(), CH = 3 * 1024 * 1024, n = Math.max(1, Math.ceil(size / CH));
   if (part < 0 || part >= n) return { error: 'bad-request' };
   const a = part * CH, b = Math.min(size, a + CH) - 1;
@@ -155,7 +159,18 @@ function file_(id, part) {
   const c = r.getResponseCode();
   if (c >= 300) return { error: 'server', message: 'Drive answered ' + c };
   if (c === 200 && n > 1) return { error: 'server', message: 'Drive ignored the range' };
-  return { n: n, part: part, size: size, data: Utilities.base64Encode(r.getContent()) };
+  return { n: n, part: part, size: size, mime: f.getMimeType(), data: Utilities.base64Encode(r.getContent()) };
+}
+// Lists the audio and video files in the "Meeting Recordings" folder, newest first.
+function recs_() {
+  const folder = DriveApp.getFolderById(RECORDINGS_FOLDER), it = folder.getFiles(), out = [];
+  while (it.hasNext()) {
+    const f = it.next(), m = f.getMimeType(), nm = f.getName();
+    if (/^(audio|video)\//.test(m) || /\.(m4a|mp3|mp4|wav|aac|mov|caf|m4v)$/i.test(nm))
+      out.push({ id: f.getId(), name: nm, size: f.getSize(), mime: m, ts: f.getDateCreated().getTime() });
+  }
+  out.sort((a, b) => b.ts - a.ts);
+  return { rows: out, folder: folder.getUrl() };
 }
 // Run this once in the Apps Script editor to give the script permission to read Drive.
-function authDrive() { DriveApp.getFolderById(EBOOKS_FOLDER).getName(); }
+function authDrive() { DriveApp.getFolderById(EBOOKS_FOLDER).getName(); DriveApp.getFolderById(RECORDINGS_FOLDER).getName(); }

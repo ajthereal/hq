@@ -68,6 +68,7 @@ function doGet(e) {
     if (e.parameter.token !== TOKEN) return json_({ error: 'token' });
     if (e.parameter.name === '_info') return json_({ rows: [{ id: ss_().getId(), url: ss_().getUrl(), v: 2 }] });
     if (e.parameter.name === '_rec') return json_(recs_());
+    if (e.parameter.name === '_waudio') return json_(waudio_());
     if (e.parameter.name === '_file') return json_(file_(e.parameter.id, Number(e.parameter.part) || 0));
     if (e.parameter.name === 'events') return json_({ rows: events_(e.parameter.from, e.parameter.to) });
     // Reads never wait for the lock: saves overwrite in place, so a tab is never empty mid-save.
@@ -143,9 +144,10 @@ function setup() {
 // ---- Library and Recordings: sends one 3 MB piece of a file from the Drive folders below ----
 const EBOOKS_FOLDER = '1gJu91UUigdbea4N9M51dfzsTYOVUMw0E';
 const RECORDINGS_FOLDER = '1pqRUoKIHG8eKSQWMWPq1o-Syu2Wvxcv1'; // Drive folder "Meeting Recordings"
+const WORSHIP_FOLDER = '1GB7LzZhbEDTtemT2xV-390AMdqeUWBPG'; // Drive folder "Worship Audio" (Worship app)
 function inFolders_(f) {
   const ps = f.getParents();
-  while (ps.hasNext()) { const id = ps.next().getId(); if (id === EBOOKS_FOLDER || id === RECORDINGS_FOLDER) return true; }
+  while (ps.hasNext()) { const id = ps.next().getId(); if (id === EBOOKS_FOLDER || id === RECORDINGS_FOLDER || id === WORSHIP_FOLDER) return true; }
   return false;
 }
 function file_(id, part) {
@@ -172,5 +174,16 @@ function recs_() {
   out.sort((a, b) => b.ts - a.ts);
   return { rows: out, folder: folder.getUrl() };
 }
+// Worship app: lists the audio files in "Worship Audio", by name.
+function waudio_() {
+  const folder = DriveApp.getFolderById(WORSHIP_FOLDER), it = folder.getFiles(), out = [];
+  while (it.hasNext()) {
+    const f = it.next(), m = f.getMimeType(), nm = f.getName();
+    if (/^audio\//.test(m) || /\.(m4a|mp3|wav|aac|caf|flac|ogg)$/i.test(nm))
+      out.push({ id: f.getId(), name: nm, size: f.getSize(), mime: m, ts: f.getLastUpdated().getTime() });
+  }
+  out.sort((a, b) => a.name.localeCompare(b.name));
+  return { rows: out, folder: folder.getUrl() };
+}
 // Run this once in the Apps Script editor to give the script permission to read Drive.
-function authDrive() { DriveApp.getFolderById(EBOOKS_FOLDER).getName(); DriveApp.getFolderById(RECORDINGS_FOLDER).getName(); }
+function authDrive() { DriveApp.getFolderById(EBOOKS_FOLDER).getName(); DriveApp.getFolderById(RECORDINGS_FOLDER).getName(); DriveApp.getFolderById(WORSHIP_FOLDER).getName(); }

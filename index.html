@@ -1113,10 +1113,14 @@ function doFollow(el){var p=people[el.dataset.fudone],row=el.closest('.task');if
 /* ---- WhatsApp loop: open the chat, and when you come back HQ asks once if it was sent, then logs it ---- */
 function toastBtn(m,label,fn,ms){var d=document.createElement('div');d.className='toast';d.appendChild(document.createTextNode(m));var b=document.createElement('button');b.className='un';b.textContent=label;d.appendChild(b);FR.appendChild(d);var t=setTimeout(function(){d.remove()},ms||6000);b.onclick=function(){clearTimeout(t);d.remove();fn()}}
 var PENDWA=null;try{PENDWA=JSON.parse(localStorage.getItem('hq-pendwa')||'null')}catch(e){}
+/* ---- WhatsApp greeting: two openers, alternated ---- */
+function nickOf(p){var r=p.raw||{},v=[p.nick,r.nick,r.nickname];for(var i=0;i<v.length;i++){if(v[i]&&String(v[i]).trim())return String(v[i]).trim()}return String(p.n||'').trim().split(/\s+/)[0]}
+var GREETS=['Yooohooo~! {nick} apa kabarnyaa?!?','Haaai~!! {nick} apa kabarnya kamuu??'],GREETN=0;
+function greetFor(p){var n;try{n=parseInt(localStorage.getItem('hq-greet'),10);if(isNaN(n))n=GREETN;localStorage.setItem('hq-greet',String(n+1))}catch(e){n=GREETN}GREETN=n+1;return GREETS[n%2].replace('{nick}',nickOf(p))}
 function openWA(p,o){o=o||{};
  if(!p.phone){toast('WhatsApp number for '+p.n+' is missing. Add it with Edit contact in the details');return false}
  if(p.phone.length<9){toast('Number for '+p.n+' looks incomplete. Fix it with Edit contact in the details');return false}
- var a=document.createElement('a');a.href='https://wa.me/'+p.phone+(o.text?'?text='+encodeURIComponent(o.text):'');a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
+ var a=document.createElement('a');a.href='https://wa.me/'+p.phone+'?text='+encodeURIComponent(o.text||greetFor(p));a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
  if(o.lid){PENDWA={pid:pid(p),type:o.type||'Follow-up',lid:o.lid||'',day:o.day||'',ts:Date.now()};try{localStorage.setItem('hq-pendwa',JSON.stringify(PENDWA))}catch(e){}}
  var su=markSent(p);if(su){if(o.q){SENT[pid(p)]=1;SENTU[pid(p)]=su}else toastU(p.n+' marked as sent. Waiting for a reply',function(){undoSent(su);render(true)})}
  return true}
@@ -3378,7 +3382,7 @@ document.addEventListener('click',function(e){
  if(d.gwa){var wn=GEN.filter(function(x){return x.id===d.gwa})[0],wp=wn&&gPerson(wn);
   if(!wp||!wp.phone){toast('WhatsApp number for '+(wn?wn.name:'this person')+' is missing. Add it in People');return}
   if(wp.phone.length<9){toast('Number for '+wn.name+' looks incomplete. Fix it in People');return}
-  var wa=document.createElement('a');wa.href='https://wa.me/'+wp.phone;wa.target='_blank';wa.rel='noopener';document.body.appendChild(wa);wa.click();wa.remove();return}
+  var wa=document.createElement('a');wa.href='https://wa.me/'+wp.phone+'?text='+encodeURIComponent(greetFor(wp));wa.target='_blank';wa.rel='noopener';document.body.appendChild(wa);wa.click();wa.remove();return}
  if(d.qopen){var qid=+d.qopen;if(wide()){selPid=qid;document.querySelectorAll('.qrow').forEach(function(r){r.classList.toggle('sel',+r.dataset.pid===qid)});$('#pdetail').innerHTML=pdetail(people[qid]);return}
   sheet(pdetail(people[qid])+'<button class="btn alt" data-close="1">Close</button>');return}
  if(d.qmsg){var mp=people[d.qmsg];if(!mp)return;if(openWA(mp,{type:'Follow-up',q:1}))render(true);return}
@@ -3527,7 +3531,7 @@ document.addEventListener('click',function(e){
  if(d.tt){teamTab=d.tt;render();return}
  if(d.hs){histSel=d.hs;render(true);return}
  if(d.copy){var rt=reportText();if(rt.indexOf('No data yet')===0){toast('No team volume yet, report not copied');return}copy(rt,'Copied. Open WhatsApp and paste.');return}
- if(d.wa){var wq=String(d.wa).toLowerCase(),wp=people.filter(function(x){return String(x.n||'').toLowerCase().indexOf(wq)>=0&&x.phone&&x.phone.length>=9})[0];if(wp){var wl=document.createElement('a');wl.href='https://wa.me/'+wp.phone;wl.target='_blank';wl.rel='noopener';document.body.appendChild(wl);wl.click();wl.remove()}else toast('WhatsApp number for '+d.wa+' is not in the People tab');return}
+ if(d.wa){var wq=String(d.wa).toLowerCase(),wp=people.filter(function(x){return String(x.n||'').toLowerCase().indexOf(wq)>=0&&x.phone&&x.phone.length>=9})[0];if(wp){var wl=document.createElement('a');wl.href='https://wa.me/'+wp.phone+'?text='+encodeURIComponent(greetFor(wp));wl.target='_blank';wl.rel='noopener';document.body.appendChild(wl);wl.click();wl.remove()}else toast('WhatsApp number for '+d.wa+' is not in the People tab');return}
  if(d.ct){ctSel=+d.ct;render(true);return}
  if(d.cmove){var c=ctById(ctSel);c.st=d.cmove;saveCt();haptic();render(true);toast('Moved to '+d.cmove);return}
  if(d.cv){ctView=d.cv;render();return}

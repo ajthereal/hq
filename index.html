@@ -96,6 +96,35 @@ h1{font-family:var(--display);font-weight:700;font-size:36px;line-height:1.02;ma
 .nowln{position:relative;display:flex;align-items:center;gap:8px;margin:2px 0 10px;padding-left:4px;font-weight:600;font-size:13px}
 .nowln::before{content:"";position:absolute;left:-26px;width:20px;height:20px;border-radius:50%;background:var(--card);border:3px solid var(--ink);box-shadow:0 0 0 3px var(--bg)}
 .nowln::after{content:"";flex:1;height:2px;border-radius:2px;background:var(--ink);opacity:.8}
+.gbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
+.gseg2{display:inline-flex;background:var(--card2);border-radius:12px;padding:3px}
+.gseg2 button{min-height:38px;padding:0 16px;border-radius:10px;font-weight:600;color:var(--mute)}
+.gseg2 button[aria-pressed="true"]{background:var(--btn);color:var(--btn-ink)}
+.gck{display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:0 12px;border-radius:10px;background:var(--card);font-size:13px;font-weight:600;color:var(--mute)}
+.gck[aria-pressed="true"]{color:var(--ink)}
+.gck .bx{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--mute);display:inline-grid;place-items:center;font-size:12px;line-height:1}
+.gck[aria-pressed="true"] .bx{background:var(--btn);color:var(--btn-ink);border-color:var(--btn)}
+.gtw{overflow:auto;max-height:calc(100dvh - 250px);min-height:320px;border-radius:16px;background:var(--card);-webkit-overflow-scrolling:touch}
+.gtab{border-collapse:separate;border-spacing:0;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+.gtab th,.gtab td{padding:0 12px;height:52px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--line);font-weight:400}
+.gtab thead th{position:sticky;top:0;z-index:3;background:var(--card2);height:44px;font-weight:600;color:var(--mute);font-size:13px}
+.gtab .n{text-align:right}
+.gtab tr.odd td,.gtab tr.odd th{background:color-mix(in srgb,var(--card2) 45%,var(--card))}
+.gtab tbody td,.gtab tbody th{background:var(--card)}
+.gtab .lv{width:64px;color:var(--mute);position:relative;padding-left:30px}
+.gtab .glt{position:absolute;left:6px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:700;padding:2px 4px;border-radius:5px;background:var(--aft-bg);color:var(--aft-ink)}
+.gtab .gname{position:sticky;left:0;z-index:1;min-width:240px;border-right:1px solid var(--line)}
+.gtab thead .gname{z-index:4}
+.gtab .gname>div{display:flex;align-items:center;gap:6px;padding-left:calc(var(--d,0)*16px)}
+.gnm{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.gtg{flex:none;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--mute);color:var(--mute);font-size:16px;line-height:1;display:grid;place-items:center}
+.gtg0{flex:none;width:26px}
+.gnm{text-align:left;font-weight:600;min-height:44px}
+.gwa{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:var(--ok);margin-left:2px}
+.gtab tr.past .gnm,.gtab tr.past td{color:var(--mute);font-weight:400}.gtab tr.past .gnm{font-weight:500}
+.gpast{font-size:11px;padding:1px 6px;border-radius:6px;background:var(--card2);color:var(--mute)}
+.gfoot{margin:10px 2px 24px}
+@media (max-width:700px){.gtab .gname{min-width:0;width:175px;max-width:175px;padding-right:6px}.gtab .gname>div{padding-left:calc(var(--d,0)*9px)}.gtab th,.gtab td{padding:0 9px}.gtab .lv{padding-left:26px}.gtab .lv{width:54px}.gtw{max-height:calc(100dvh - 300px)}}
 .gseg{display:flex;gap:4px;background:var(--card2);border-radius:14px;padding:4px;margin-top:14px;max-width:420px}
 .gseg button{flex:1;min-height:38px;border-radius:11px;font-weight:600;font-size:14px;color:var(--mute)}
 .gseg button[aria-current="page"]{background:var(--card);color:var(--ink);box-shadow:0 1px 3px var(--shadow)}
@@ -1817,7 +1846,7 @@ function teamRep(){return '<div class="card"><h2>Daily report to upline</h2><p>B
 function team(){
  var tabs=['Pulse','Volume','Meetings','Convention','Report','Long game'],M=teamModel();
  var h='<div class="top"><div class="stats"><span style="color:var(--mute)">'+(M?pLab(M.cur)+(M.note?' · '+esc(M.note):''):'Team')+'</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button><button data-add="today" aria-label="Add">'+ic('plus',22)+'</button></div></div>';
- h+='<div class="hrow"><h1>Team</h1><small>'+(M?pLab(M.cur):'')+'</small></div><p class="sub">PT. Alvacy Hana Utama</p>';
+ h+='<div class="hrow"><h1>Monitoring</h1><small>'+(M?pLab(M.cur):'')+'</small></div><p class="sub">PT. Alvacy Hana Utama</p>';
  if(wide()){
   var g=teamGrowth(),v=teamVolume(),m=teamMeet(),c=teamConv(),pl=teamPulse();
   var PV=pvData();return h+'<div style="margin:6px 0">'+(PV?fresh(PV):'<span class="meta">No genealogy data yet</span>')+'</div>'+pl[0]+'<div class="tgrid">'+pl.slice(1).concat([v[0],v[1],m[0],m[1]].concat(c,[teamRep()]),g).join('')+'</div>'}
@@ -3147,31 +3176,51 @@ document.addEventListener('keydown',function(e){
  else if(e.key==='Escape'){if(RC.fs)rcFsClose();else rcCloseFull()}});
 
 /* ---------- shell ---------- */
-var NAV=[['today','tasks','Today'],['work','users','People'],['team','chart','Team'],['library','book','Library'],['more','dots','More']];
-var SIDE=[['Every day',[['today','tasks','Today'],['work','users','People'],['team','chart','Team']]],['Make',[['content','video','Content']]],['Personal',[['library','book','Library'],['recordings','headphones','Recordings'],['trips','plane','Trips'],['health','heart','Health']]]];
-/* ---------- genealogy: read-only view of the Genealogy page (Sheet tab treenodes, newest snapshot) ---------- */
-var GEN=[],GTAB='group',GOPEN={},GQ='';
+var NAV=[['today','tasks','Today'],['work','users','People'],['team','chart','Monitoring'],['library','book','Library'],['more','dots','More']];
+var SIDE=[['Every day',[['today','tasks','Today'],['work','users','People'],['team','chart','Monitoring']]],['Make',[['content','video','Content']]],['Personal',[['library','book','Library'],['recordings','headphones','Recordings'],['trips','plane','Trips'],['health','heart','Health']]]];
+/* ---------- genealogy: read-only view of the Genealogy page (Sheet tab treenodes, newest snapshot). Laid out like Nu Skin's Group and Team reports ---------- */
+var GEN=[],GTAB='team',GOPEN={},GQ='',GVOL=false,GPAST=false;
 try{GEN=JSON.parse(localStorage.getItem('hq-gen')||'[]')}catch(e){}
 function pullGen(){if(!CFG.url)return;getTab('treenodes').then(function(j){if(j.error||!j.rows||!j.rows.length)return;var rows=j.rows.filter(function(r){return r.snap&&r.id});if(!rows.length)return;var last=rows[rows.length-1].snap;GEN=rows.filter(function(r){return r.snap===last});try{localStorage.setItem('hq-gen',JSON.stringify(GEN))}catch(e){}if(!document.querySelector('.sheet-bg')&&tab==='gen'&&!GQ)renderBg()}).catch(function(){})}
 function gKids(id){var k=GEN.filter(function(n){return n.parent===id&&n.tree===GTAB});return k.filter(function(n){return String(n.past)!=='1'}).concat(k.filter(function(n){return String(n.past)==='1'}))}
-function gMatch(n){if(!GQ)return true;if(String(n.name).toLowerCase().indexOf(GQ)>=0)return true;return gKids(n.id).some(gMatch)}
+function gN(v){var x=parseFloat(String(v==null?'':v).replace(/\s/g,'').replace(',','.'));return isNaN(x)?0:x}
+function gFmt(v){return gN(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function gVol(n){return gN(n.gsv)>0||gN(n.psv)>0||gKids(n.id).some(gVol)}
+function gShow(n){
+ if(GPAST&&GTAB==='group'&&String(n.past)==='1'&&!gKids(n.id).some(gShow))return false;
+ if(GVOL&&!gVol(n))return false;
+ if(!GQ)return true;if(String(n.name).toLowerCase().indexOf(GQ)>=0)return true;return gKids(n.id).some(gShow)}
+function gMatch(n){return gShow(n)}
 function gPerson(n){return n.hq?byPid(n.hq):null}
 function gMon(v){var m=/(\d{4})-(\d{2})/.exec(String(v||''));return m?MON[+m[2]-1]+' '+m[1]:''}
+function gTitle(t){return t==='BR'?'Brand Representative':t==='Root'?'':(t||'')}
+function gOpen(n){return GQ?true:(GOPEN[n.id]===undefined?true:GOPEN[n.id])}
+var GI=0;
 function gRow(n,depth){
- var k=gKids(n.id),open=GQ?true:(GOPEN[n.id]===undefined?depth===0:GOPEN[n.id]),p=gPerson(n),past=String(n.past)==='1',sub=[];
- if(n.status==='Future BR')sub.push('Future BR');else if(n.status&&n.status!=='Brand Affiliate'&&n.status!=='Root')sub.push(n.status);
- if(past)sub.push('past'+(gMon(n.last)?' · '+gMon(n.last):''));
- if(k.length)sub.push(k.length+(k.length===1?' direct':' directs'));
- if(Number(n.gsv)>0)sub.push('GSV '+Number(n.gsv).toLocaleString('en-US'));
- var act=p&&p.phone?'<button class="qb" data-gwa="'+esc(n.id)+'">'+ic('chat',15)+' Message</button>':'';
- var mark=k.length?'<span style="width:18px;color:var(--mute);text-align:center">'+(open?'▾':'▸')+'</span>':'<span style="width:18px"></span>';
- return '<div class="qrow" style="margin-left:'+Math.min(depth,6)*14+'px'+(past?';opacity:.6':'')+'"><button class="qm" data-gtog="'+esc(n.id)+'">'+mark+'<span class="pn"><b>'+esc(n.name)+'</b><small>'+esc(sub.join(' · '))+'</small></span></button>'+act+'</div>'+(open?k.filter(gMatch).map(function(c){return gRow(c,depth+1)}).join(''):'')}
-function gList(){var r=GEN.filter(function(n){return n.tree===GTAB&&!n.parent});return r.map(function(n){return gRow(n,0)}).join('')||'<p class="meta">Nothing in this tree yet.</p>'}
+ var k=gKids(n.id).filter(gShow),open=gOpen(n),p=gPerson(n),past=String(n.past)==='1',lt=/\(LT\)/i.test(n.name),nm=String(n.name).replace(/\s*\(LT\)\s*/i,'').trim();
+ var tg=k.length?'<button class="gtg" data-gtog="'+esc(n.id)+'" aria-label="'+(open?'Collapse ':'Expand ')+esc(nm)+'" aria-expanded="'+open+'">'+(open?'−':'+')+'</button>':'<span class="gtg0"></span>';
+ var wa=p&&p.phone?'<button class="gwa" data-gwa="'+esc(n.id)+'" aria-label="Message '+esc(nm)+' on WhatsApp">'+ic('chat',15)+'</button>':'';
+ var cells=GTAB==='team'
+  ?'<td>'+esc(gTitle(n.status))+'</td><td class="n">'+gN(n.bblk)+'</td><td class="n">'+gFmt(n.gsv)+'</td><td class="n">'+(depth?gFmt(n.ltsv):'–')+'</td><td class="n">'+(n.flex===''||n.flex==null?'–':gN(n.flex))+'</td>'
+  :'<td>'+esc(n.status==='Root'?'':(n.status||''))+(past?' <span class="gpast">past</span>':'')+'</td><td class="n">'+gFmt(n.psv)+'</td><td class="n">'+gFmt(n.gsv)+'</td><td class="n">'+esc(gMon(n.last)||'–')+'</td>';
+ var r='<tr class="'+(GI++%2?'odd':'')+(past?' past':'')+'"><td class="lv">'+(lt?'<span class="glt">LT</span>':'')+depth+'</td><th scope="row" class="gname"><div style="--d:'+Math.min(depth,8)+'">'+tg+'<button class="gnm" data-gtog="'+esc(n.id)+'" data-gname="1">'+esc(nm)+'</button>'+wa+'</div></th>'+cells+'</tr>';
+ return r+(open?k.map(function(c){return gRow(c,depth+1)}).join(''):'')}
+function gList(){
+ GI=0;var r=GEN.filter(function(n){return n.tree===GTAB&&!n.parent}).filter(gShow);
+ if(!r.length)return '<p class="meta" style="padding:14px 4px">'+(GQ?'No one matches "'+esc(GQ)+'".':GVOL?'No one has volume yet this period.':'Nothing in this tree yet.')+'</p>';
+ var hd=GTAB==='team'?'<th>Title</th><th class="n">BBLK</th><th class="n">GSV</th><th class="n">LTSV</th><th class="n">Flex Bloc</th>':'<th>Status</th><th class="n">PSV</th><th class="n">GSV</th><th class="n">Last order</th>';
+ return '<div class="gtw"><table class="gtab"><thead><tr><th class="lv">Level</th><th class="gname">Name</th>'+hd+'</tr></thead><tbody>'+r.map(function(n){return gRow(n,0)}).join('')+'</tbody></table></div>'}
+function gStamp(){var s=GEN[0]&&GEN[0].snap,m=/s(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})/.exec(s||'');return m?(+m[3])+' '+MON[+m[2]-1]+' '+m[1]+' '+m[4]+':'+m[5]:''}
+function gAll(open){GEN.forEach(function(n){if(n.tree===GTAB)GOPEN[n.id]=open});render(true)}
 function genealogyPage(){
  var top='<div class="top"><div class="stats"></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button></div></div><div class="hrow"><h1>Genealogy</h1></div>';
  if(!CFG.url)return top+'<span class="sample">Connect the Sheet first in Sync</span>';
  if(!GEN.length)return top+'<div class="missed"><b>No genealogy yet</b><p class="meta" style="margin:6px 0 0">Open the Genealogy page in Claude and tap Save to HQ once. It shows up here after that.</p></div>';
- return top+'<div style="display:flex;gap:8px;margin:12px 0"><button class="chip" data-gt="group" aria-pressed="'+(GTAB==='group')+'">Group</button><button class="chip" data-gt="team" aria-pressed="'+(GTAB==='team')+'">Team</button></div><div class="search" style="position:static;padding:0 0 10px"><label><input id="gq" type="text" placeholder="Search name" value="'+esc(GQ)+'"></label></div><div id="glist">'+gList()+'</div>'}
+ var bar='<div class="gbar"><div class="gseg2" role="tablist" aria-label="Tree"><button data-gt="group" aria-pressed="'+(GTAB==='group')+'">Group</button><button data-gt="team" aria-pressed="'+(GTAB==='team')+'">Team</button></div>'
+  +'<button class="gck" data-gvol="1" aria-pressed="'+GVOL+'"><span class="bx">'+(GVOL?'✓':'')+'</span>Has volume</button>'
+  +(GTAB==='group'?'<button class="gck" data-gpast="1" aria-pressed="'+GPAST+'"><span class="bx">'+(GPAST?'✓':'')+'</span>Hide past</button>':'')
+  +'<span style="flex:1"></span><button class="gck" data-gall="1">Expand all</button><button class="gck" data-gall="0">Collapse all</button></div>';
+ return top+bar+'<div class="search" style="position:static;padding:0 0 10px"><label><input id="gq" type="text" placeholder="Search name" value="'+esc(GQ)+'"></label></div><div id="glist">'+gList()+'</div><p class="meta gfoot">Last updated '+esc(gStamp())+' · Save to HQ again from the Genealogy page to refresh</p>'}
 var PGRP=['work','people','lists','gen'];
 function navOn(k){return tab===k||(k==='work'&&PGRP.indexOf(tab)>-1)||(k==='more'&&!wide()&&['content','trips','health','recordings'].indexOf(tab)>-1)}
 function gseg(){return '<div class="gseg" role="tablist" aria-label="People views">'+[['work','Focus'],['people','My group'],['lists','Lists'],['gen','Genealogy']].map(function(x){return '<button data-tab="'+x[0]+'"'+(tab===x[0]?' aria-current="page"':'')+'>'+x[1]+'</button>'}).join('')+'</div>'}
@@ -3316,12 +3365,16 @@ function completeTask(el){
   setTimeout(function(){render(true);if(wasLate>0&&lateTasks().length===0){haptic(true);toast('Nothing overdue. Nothing missed.');var f=$('#spk');f&&burst(f,true)}},REDUCE?0:760);
  }else{row.classList.remove('done','pop');haptic(false);setTimeout(function(){render(true)},120)}}
 document.addEventListener('click',function(e){
- var el=e.target.closest('[data-gtog],[data-gwa],[data-gt],[data-tgset],[data-today],[data-tab],[data-done],[data-fold],[data-day],[data-add],[data-open],[data-act],[data-pv],[data-ptoggle],[data-msg],[data-log],[data-next],[data-pdet],[data-jump],[data-tt],[data-copy],[data-wa],[data-addp],[data-goto],[data-ct],[data-cmove],[data-cv],[data-idea],[data-mode],[data-theme-set],[data-gotab],[data-sync],[data-impor],[data-hab],[data-trips],[data-hx],[data-tback],[data-ttick],[data-tcopy],[data-fudone],[data-evdone],[data-pprod],[data-promo],[data-newlist],[data-laddm],[data-lmenu],[data-lmst],[data-lmprod],[data-lmtick],[data-buy],[data-edit],[data-hs],[data-fwa],[data-lwa],[data-score],[data-rwa],[data-bdwa],[data-chkin],[data-chkwa],[data-bulk],[data-tmove],[data-nbwa],[data-pstage],[data-qopen],[data-qmsg],[data-reply],[data-unsent],[data-fix],[data-fresh],[data-gv],[data-qo],[data-qpath],[data-qn],[data-qmore],[data-qm],[data-qi],[data-qsave],[data-fx]');if(!el)return;
+ var el=e.target.closest('[data-gall],[data-gvol],[data-gpast],[data-gtog],[data-gwa],[data-gt],[data-tgset],[data-today],[data-tab],[data-done],[data-fold],[data-day],[data-add],[data-open],[data-act],[data-pv],[data-ptoggle],[data-msg],[data-log],[data-next],[data-pdet],[data-jump],[data-tt],[data-copy],[data-wa],[data-addp],[data-goto],[data-ct],[data-cmove],[data-cv],[data-idea],[data-mode],[data-theme-set],[data-gotab],[data-sync],[data-impor],[data-hab],[data-trips],[data-hx],[data-tback],[data-ttick],[data-tcopy],[data-fudone],[data-evdone],[data-pprod],[data-promo],[data-newlist],[data-laddm],[data-lmenu],[data-lmst],[data-lmprod],[data-lmtick],[data-buy],[data-edit],[data-hs],[data-fwa],[data-lwa],[data-score],[data-rwa],[data-bdwa],[data-chkin],[data-chkwa],[data-bulk],[data-tmove],[data-nbwa],[data-pstage],[data-qopen],[data-qmsg],[data-reply],[data-unsent],[data-fix],[data-fresh],[data-gv],[data-qo],[data-qpath],[data-qn],[data-qmore],[data-qm],[data-qi],[data-qsave],[data-fx]');if(!el)return;
  var d=el.dataset;
  if(d.gt){GTAB=d.gt;render(true);return}
- if(d.gtog){var gn=GEN.filter(function(x){return x.id===d.gtog})[0];if(!gn)return;var gk=gKids(gn.id);
-  if(gk.length){var go=GOPEN[gn.id]===undefined?!gn.parent:GOPEN[gn.id];GOPEN[gn.id]=!go;render(true)}
-  else{var gp0=gPerson(gn);if(gp0)sheet(pdetail(gp0)+'<button class="btn alt" data-close="1">Close</button>');else toast(gn.name+' is not in your People tab yet')}return}
+ if(d.gall){gAll(d.gall==='1');return}
+ if(d.gvol){GVOL=!GVOL;render(true);return}
+ if(d.gpast){GPAST=!GPAST;render(true);return}
+ if(d.gtog){var gn=GEN.filter(function(x){return x.id===d.gtog})[0];if(!gn)return;var gp0=gPerson(gn);
+  if(d.gname&&gp0){sheet(pdetail(gp0)+'<button class="btn alt" data-close="1">Close</button>');return}
+  if(gKids(gn.id).length){GOPEN[gn.id]=!gOpen(gn);render(true)}
+  else toast(String(gn.name).replace(/\s*\(LT\)\s*/i,'')+' is not in your People tab yet');return}
  if(d.gwa){var wn=GEN.filter(function(x){return x.id===d.gwa})[0],wp=wn&&gPerson(wn);
   if(!wp||!wp.phone){toast('WhatsApp number for '+(wn?wn.name:'this person')+' is missing. Add it in People');return}
   if(wp.phone.length<9){toast('Number for '+wn.name+' looks incomplete. Fix it in People');return}
@@ -3388,7 +3441,7 @@ document.addEventListener('click',function(e){
    var nw=PR.nw.length,ex=PR.ex.length;if(nw)savePeople();ab.remove();render(true);toast((nw?nw+' added to Namelist':'')+(nw&&ex?', ':'')+(ex?ex+' already in HQ':'')+(BL?' · list '+BL.name:''));haptic(true)};
   bt.focus();return}
  if(d.goto){var g=d.goto.split(':');tab=g[0];if(g[0]==='people'){legacyView(g[1]);pq=''}else teamTab=g[1];render();return}
- if(d.open){var tk=tasks.filter(function(x){return x.id==d.open})[0];sheet('<h3>'+esc(tk.t)+'</h3><p class="meta" style="margin:0">'+(tk.ev?esc(tk.ev)+' · 2 hours on the AJ Jonathan calendar':((tk.at?esc(tk.at)+' · ':'')+esc(tk.dur||'')))+'</p>'+(tk.go==='team'?'<button class="btn" data-close="1" data-gotab="team" style="margin-top:0">Open Team</button>':'')+'<div class="lbl">Move date</div><div class="chips" style="flex-wrap:wrap"><button class="chip" data-tmove="'+tk.id+'|1">Tomorrow</button><button class="chip" data-tmove="'+tk.id+'|2">In 2 days</button><button class="chip" data-tmove="'+tk.id+'|7">Next week</button></div>');return}
+ if(d.open){var tk=tasks.filter(function(x){return x.id==d.open})[0];sheet('<h3>'+esc(tk.t)+'</h3><p class="meta" style="margin:0">'+(tk.ev?esc(tk.ev)+' · 2 hours on the AJ Jonathan calendar':((tk.at?esc(tk.at)+' · ':'')+esc(tk.dur||'')))+'</p>'+(tk.go==='team'?'<button class="btn" data-close="1" data-gotab="team" style="margin-top:0">Open Monitoring</button>':'')+'<div class="lbl">Move date</div><div class="chips" style="flex-wrap:wrap"><button class="chip" data-tmove="'+tk.id+'|1">Tomorrow</button><button class="chip" data-tmove="'+tk.id+'|2">In 2 days</button><button class="chip" data-tmove="'+tk.id+'|7">Next week</button></div>');return}
  if(d.tmove){var tm2=d.tmove.split('|'),tt=tasks.filter(function(x){return String(x.id)===tm2[0]})[0];if(!tt)return;tt.day=TD+Number(tm2[1]);saveTasks();document.querySelectorAll('.sheet-bg').forEach(function(x){x.remove()});render(true);toast('Moved to '+dueTxt(tt.day-TD));haptic();return}
  if(d.pv){pview=d.pv;QORD=null;SENT={};SENTU={};pq='';render();return}
  if(d.ptoggle){var id=+d.ptoggle;

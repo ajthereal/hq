@@ -22,7 +22,7 @@ Time-of-day pastels are the color language. Everything else stays neutral.
 - Sentence case everywhere. No all-caps labels.
 
 ## Layout
-- iPhone: labelled tab bar with 5 items: Today, People, Team, Library, More.
+- iPhone: labelled tab bar with 5 items: Today, People, Monitoring, Library, More.
 - iPad: grouped sidebar (Every day / Make / Personal), Settings & sync at the bottom.
 - People = Focus (was Work), My group, Lists, switched by the segment under the title.
 - Today: the day rail runs morning → noon → evening down the left, with a "Now" line in the current part of the day.

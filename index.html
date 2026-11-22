@@ -1162,7 +1162,7 @@ function mOf(lid,pd){return LM.filter(function(m){return m.lid===lid&&m.pid===pd
 function mDone(m){return String(m.done)==='1'}
 function lastTxt(p){return p.last>=9999?'never contacted':p.last===0?'contacted today':p.last===1?'contacted yesterday':'contacted '+p.last+' days ago'}
 function lmRow(l,m){var p=byPid(m.pid);if(!p)return '';var done=mDone(m),k=esc(l.id)+'|'+esc(m.pid);
- var chip=isEv(l)?'<button class="chip" data-lmst="'+k+'" aria-label="Status">'+esc(m.status||'Not yet')+'</button>':'<button class="chip" data-lmprod="'+k+'" aria-label="Product">'+esc(m.product||'Product')+'</button>';
+ var chip=isEv(l)?'<button class="chip" data-lmst="'+k+'" aria-label="Status">'+esc(m.status||'Not yet')+'</button>':'';
  var act=(p.phone||p.ig)?'<button class="qb" data-lwa="'+k+'">'+ic('chat',15)+' Message</button>':'<button class="qb alt" data-edit="'+p.id+'">Add contact</button>';
  return '<div class="qrow'+(done?' done':'')+(wide()&&WSEL===p.id&&(tab==='lists'||tab==='work')?' sel':'')+'"><button class="qm" data-pdet="'+p.id+'"><span class="av" style="background:'+avc(p)+'">'+esc(p.n[0])+'</span><span class="pn"><b>'+esc(p.n)+'</b><small>'+esc(p.st)+(p.next!==null?' · next '+dueTxt(p.next):'')+'</small></span></button>'+chip+act+'<button class="ck" data-lmtick="'+k+'" aria-label="Mark as done"><i>'+ic('check',14)+'</i></button></div>'}
 var LQ='';

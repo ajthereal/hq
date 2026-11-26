@@ -258,7 +258,7 @@ h1{font-family:var(--display);font-weight:700;font-size:36px;line-height:1.02;ma
 .card p{margin:3px 0 0;color:var(--mute);font-size:12.5px}
 .flag{border-radius:16px;background:var(--late-bg);color:var(--late-ink);padding:10px 13px;font-size:13px;margin-top:10px}
 .tgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start;margin-top:10px}
-.rp{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--card2);color:var(--mute);white-space:nowrap;font-variant-numeric:tabular-nums}.rp.ok{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}.rp.warn{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+.rpl{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--card2);color:var(--mute);white-space:nowrap;font-variant-numeric:tabular-nums}.rpl.ok{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}.rpl.warn{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
 .rgrid{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:10px}@media(min-width:700px){.rgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(min-width:1000px){.rgrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .rmini{background:transparent;border:1px solid var(--line);border-radius:16px;padding:10px 10px 4px;text-align:left;color:inherit;font:inherit;min-height:44px;width:100%;cursor:pointer}.rmini.big{grid-column:1/-1}.rmini .lt b{font-size:14px}
 .rtab{border-collapse:collapse;width:100%;font-size:13px}.rtab th,.rtab td{padding:8px 6px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}.rtab th:first-child,.rtab td:first-child{text-align:left}.rtab th{font-weight:600;color:var(--mute);font-size:12px;border-bottom:1px solid var(--line)}.rtab td.h{border-radius:6px}
@@ -1881,9 +1881,9 @@ function teamRhythm(){
  var a='<div class="card full"><h2>'+esc(title)+'</h2><p>'+esc(lede)+'</p>'+ctl+'</div>';
  var b='<div class="card"><h2>Who\'s on track</h2><p>'+MS+'. Bar to 10K, the mark is 3,000.</p>';
  rows.forEach(function(r,i){
-  var p3=early?(r.hit3?'<span class="rp ok">3K done</span>':'<span class="rp">'+num(3000-r.now)+' to go by the 12th</span>'):(r.hit3?'<span class="rp ok">3K by the 12th</span>':'<span class="rp warn">Missed 3K by the 12th ('+rhK(r.by12)+')</span>');
+  var p3=early?(r.hit3?'<span class="rpl ok">3K done</span>':'<span class="rpl">'+num(3000-r.now)+' to go by the 12th</span>'):(r.hit3?'<span class="rpl ok">3K by the 12th</span>':'<span class="rpl warn">Missed 3K by the 12th ('+rhK(r.by12)+')</span>');
   var pace=r.done?'10K done':(T.live&&left>0?'needs '+num((10000-r.now)/left)+' a day':num(10000-r.now)+' short of 10K');
-  b+='<div class="lrow'+(i?'':' first')+'"><div class="lt"><b>'+esc(r.n)+'</b><span class="meta" style="font-size:14px;font-weight:700;color:var(--ink)">'+num(r.now)+'</span></div><div class="trk'+(r.done?' reached':'')+'"><b style="width:'+Math.min(100,r.now/100)+'%"></b><i style="left:calc(30% - 1px)"></i></div><div class="mt">'+p3+'<span class="rp'+(r.done?' ok':'')+'">'+esc(pace)+'</span></div></div>'});
+  b+='<div class="lrow'+(i?'':' first')+'"><div class="lt"><b>'+esc(r.n)+'</b><span class="meta" style="font-size:14px;font-weight:700;color:var(--ink)">'+num(r.now)+'</span></div><div class="trk'+(r.done?' reached':'')+'"><b style="width:'+Math.min(100,r.now/100)+'%"></b><i style="left:calc(30% - 1px)"></i></div><div class="mt">'+p3+'<span class="rpl'+(r.done?' ok':'')+'">'+esc(pace)+'</span></div></div>'});
  b+='</div>';
  var c='<div class="card full"><h2>The climb, day by day</h2><p>'+MO+' in blue, the month before in grey. Dashed line is 10K, the circle is 3,000 on the 12th.</p><div class="rgrid">';
  rows.forEach(function(r){var open=RH.open===r.key;

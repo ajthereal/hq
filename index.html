@@ -2849,7 +2849,7 @@ function rcRange(id){return IDBKeyRange.bound(id+':',id+':￿')}
 function rcBlob(id){var m=RC.have[id];if(!m)return Promise.reject(new Error('missing'));
  return rcTx(['chunks'],'readonly',function(t){return t.objectStore('chunks').getAll(rcRange(id))}).then(function(a){
   if(!a||a.length!==m.n)throw new Error('missing');return new Blob(a,{type:m.mime||rcMime(m.name)})})}
-function rcWipe(id){return rcTx(['chunks','meta'],'readwrite',function(t){t.objectStore('chunks').delete(rcRange(id));t.objectStore('meta').delete(id)}).then(function(){delete RC.have[id];delete RC.dl[id]})}
+function rcWipe(id){if(RC.dl[id])RC.dl[id].stop=1;return rcTx(['chunks','meta'],'readwrite',function(t){t.objectStore('chunks').delete(rcRange(id));t.objectStore('meta').delete(id)}).then(function(){delete RC.have[id];delete RC.dl[id]})}
 function rcInit(){
  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
  rcTx(['meta'],'readonly',function(t){return t.objectStore('meta').getAll()}).then(function(all){
@@ -2904,9 +2904,9 @@ function rcPull(manual){
  }).then(function(){RC.err=''}).catch(function(e){RC.err=rcWhy(e);if(manual)toast(RC.err)}).then(function(){RC.busy=0;rcRefresh()})}
 /* progress and bookmarks go to the Sheet tab "recprog". Same rule as the Library: read and merge first, and push nothing if the read fails */
 var RCP={busy:0,t:0,tries:0};
-function rcPushQ(){if(!CFG.url||RC.v<2)return;clearTimeout(RCP.t);RCP.t=setTimeout(rcPushAll,8000)}
+function rcPushQ(){if(!CFG.url||RC.v<2)return;RCP.q=1;clearTimeout(RCP.t);RCP.t=setTimeout(rcPushAll,8000)}
 function rcPushAll(){
- if(!CFG.url||RC.v<2)return;if(RCP.busy){RCP.t=setTimeout(rcPushAll,4000);return}RCP.busy=1;
+ if(!CFG.url||RC.v<2)return;if(RCP.busy){RCP.t=setTimeout(rcPushAll,4000);return}RCP.busy=1;RCP.q=0;
  getTab('recprog').then(function(j){
   if(j.error||!j.rows)throw j;rcMergeProg(j.rows);rcSave();
   var rows=Object.keys(RC.prog).filter(function(k){return k.indexOf('local-')!==0&&RC.prog[k].t}).map(function(k){var p=RC.prog[k];return {id:k,pos:Math.round(p.p||0),dur:Math.round(p.d||0),ts:p.t,fin:p.fin?'1':'0',title:p.n||'',marks:JSON.stringify(p.m||[])}});
@@ -2915,7 +2915,7 @@ function rcPushAll(){
   RCP.busy=0;if(RCP.tries<2){RCP.tries++;RCP.t=setTimeout(rcPushAll,15000)}else{RCP.tries=0;RC.err='Could not save your listening progress to the Sheet. It is kept on this device and will retry.';toast(RC.err)}})}
 function rcShown(){if(Date.now()-RC.pt>45000)rcPull()}
 /* ---------- downloading from Drive (resumable) ---------- */
-var RCQ=[];
+var RCQ=[],RCBL=1;
 function rcFetchPart(id,i,tries){
  return fetch(CFG.url+'?token='+encodeURIComponent(CFG.token)+'&name=_file&id='+encodeURIComponent(id)+'&part='+i).then(function(r){return r.json()}).then(function(j){
   if(j.error)throw new Error(j.error==='server'?'server:'+(j.message||''):j.error);
@@ -2949,6 +2949,7 @@ function rcRun(it){
   if(m==='changed'){rcWipe(id).then(function(){RC.dl[id]={err:rcWhy(e)};rcPump();rcRefresh()});return}
   st.err=rcWhy(e);toast(st.err);fin()}
  function step(){
+  if(RC.dl[id]!==st){st.run=0;return}
   if(st.stop){st.stop=0;st.run=0;rcPump();rcRefresh();return}
   return rcFetchPart(id,i).then(function(j){
    var m0=RC.have[id];
@@ -2957,7 +2958,8 @@ function rcRun(it){
    if(buf.byteLength!==want)throw new Error('size');
    var meta=(i>0&&m0)||{id:id,name:it.name,ts:it.ts,src:'drive',got:0,done:0};
    meta.size=j.size;meta.n=j.n;meta.mime=j.mime||it.mime||rcMime(it.name);meta.got=i+1;meta.done=(i+1>=j.n)?1:0;
-   return rcTx(['chunks','meta'],'readwrite',function(t){t.objectStore('chunks').put(buf,rcKey(id,i));t.objectStore('meta').put(meta,id)}).then(function(){
+   function put(v){return rcTx(['chunks','meta'],'readwrite',function(t){t.objectStore('chunks').put(v,rcKey(id,i));t.objectStore('meta').put(meta,id)})}
+   return (RCBL?put(new Blob([buf])).catch(function(e){if(e&&e.name==='DataCloneError'){RCBL=0;return put(buf)}throw e}):put(buf)).then(function(){
     RC.have[id]=meta;st.i=i+1;st.n=j.n;rcBar(id);
     if(meta.done){st.run=0;rcDone(it);rcPump();return}
     i++;return step()})
@@ -3004,8 +3006,8 @@ function rcAddRun(f){
   function viaBuf(){return rcBuf(sl).then(function(buf){return put(i,buf)})}
   var w=useBlob?put(i,sl).catch(function(e){if(e&&e.name==='DataCloneError'){useBlob=0;return viaBuf()}throw e}):viaBuf();
   return w.then(function(){st.i=i+1;rcBar(id);return i+1>=n?0:step(i+1)})}
- return step(0).then(function(){st.run=0;delete RC.dl[id];rcProbe(id);toast('Added '+rcName(it))}).catch(function(e){
-  delete RC.dl[id];RC.items=RC.items.filter(function(x){return x.id!==id});rcWipe(id).catch(function(){});toast(rcWhy(e))})}
+ return step(0).then(function(){st.run=0;delete RC.dl[id];rcProbe(id);toast('Added '+rcName(it));rcPump()}).catch(function(e){
+  delete RC.dl[id];RC.items=RC.items.filter(function(x){return x.id!==id});rcWipe(id).catch(function(){});toast(rcWhy(e));rcPump()})}
 /* duration: read the mp4/m4a header (works without playing), else ask an audio element */
 function rcMp4Dur(b){
  function box(off,end){
@@ -3049,7 +3051,7 @@ RV.addEventListener('loadedmetadata',function(){
  var sl=document.getElementById('rcvslot');if(sl)sl.style.aspectRatio=Math.min(2.4,Math.max(1.2,RV.videoWidth/RV.videoHeight))+'';
  rcVSeek();rcVSync(1)});
 function rcBlocked(e){rcPP();if(e&&e.name==='NotAllowedError')toast('Tap play to start')}
-function rcUnlock(){if(RC.unl)return;try{RA.src=RCSIL;var p=RA.play();if(p&&p.then)p.then(function(){RC.unl=1}).catch(function(){});else RC.unl=1}catch(e){}}
+function rcUnlock(){if(RC.unl||RC.live)return;try{RA.src=RCSIL;var p=RA.play();if(p&&p.then)p.then(function(){RC.unl=1}).catch(function(){});else RC.unl=1}catch(e){}}
 function rcPlay(id,at){
  var it=rcItem(id);if(!it)return;
  if(!rcOn(id)){rcGet(it);return}
@@ -3115,7 +3117,7 @@ RA.addEventListener('error',function(){
  if(!RC.live||!RA.error)return;
  var c=RA.error.code;toast(c===4?'This device cannot play this file type. Add an m4a, mp3 or mp4 copy.':'Could not play this recording. Remove it from this device and save it again.');rcPP()});
 window.addEventListener('pagehide',function(){rcPos(1)});
-document.addEventListener('visibilitychange',function(){if(document.hidden){rcPos(1);rcPushQ();if(rcVOn())RV.pause()}else rcVSync(1)});
+document.addEventListener('visibilitychange',function(){if(document.hidden){rcPos(1);rcPushQ();if(RCP.q){clearTimeout(RCP.t);rcPushAll()}if(rcVOn())RV.pause()}else rcVSync(1)});
 /* loop a section and repeat the whole recording */
 var RCLT=0;
 function rcLoopWatch(){
@@ -3453,7 +3455,7 @@ function addSheet(part){
  s.querySelector('#sv').onclick=function(){var v=s.querySelector('#nt').value.trim();if(!v){toast('Write something first');return}
   if(mt){if(!CFG.url){toast('Connect the Sheet first in Sync');return}if(when==='nod'){toast('Pick Today or Tomorrow for a meeting');return}
    var dd=when==='tom'?TD+1:TD,tm=s.querySelector('#mtm').value||'10:00';s.remove();toast('Adding to calendar…');
-   fetch(CFG.url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({token:CFG.token,action:'event',title:v,date:isoOf(dd),time:tm,minutes:120})}).then(function(r){return r.json()}).then(function(j){if(j.ok){toast('On the calendar, 2 hours');haptic(true);pullEvents()}else toast('Could not add. Update the Apps Script first')}).catch(function(){toast('Could not add')});return}
+   fetch(CFG.url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({token:CFG.token,action:'event',title:v,date:isoOf(dd),time:tm,minutes:120})}).then(function(r){return r.json()}).then(function(j){if(j.ok){toast('On the calendar, 2 hours');haptic(true);pullEvents()}else toast(j.error==='token'?'Could not add: the secret code does not match.':'Could not add to the calendar. The Apps Script may need the latest version.')}).catch(function(){toast('Could not add to the calendar. Check your connection and try again.')});return}
   tasks.push({id:Date.now(),t:v,day:when==='nod'?null:when==='tom'?TD+1:TD,part:pt,dur:du,ic:'spark',c:'sand',done:false});saveTasks();s.remove();tab='today';sel=TD;render();haptic();toast(when==='nod'?'Added to No date':'Added to Today')}}
 
 /* ---------- Trips (data lives in the Sheet tab "trips", Claude keeps it fresh) ---------- */
@@ -3462,7 +3464,7 @@ try{TR=JSON.parse(localStorage.getItem('hq-trips')||'null')||TR;TK=JSON.parse(lo
 function jparse(s,d){try{return JSON.parse(s)}catch(e){return d}}
 function pullTrips(){if(!CFG.url)return;Promise.all([getTab('trips'),getTab('tripticks')]).then(function(a){if(a[0].error||a[1].error)return;
  var n={trips:[],cards:[],past:[],upd:''};a[0].rows.forEach(function(r){var j=jparse(r.json,null);if(!j)return;if(r.kind==='trip'){j.id=r.id;n.trips.push(j)}else if(r.kind==='cards')n.cards=j;else if(r.kind==='past')n.past=j;else if(r.kind==='meta')n.upd=j.updated||''});
- n.trips.sort(function(x,y){return x.start<y.start?-1:1});TR=n;TK=a[1].rows.map(function(r){return r.id});
+ n.trips.sort(function(x,y){return x.start<y.start?-1:1});TR=n;if(TKD)postTab('tripticks',TK.map(function(x){return {id:x}})).then(function(j){if(j.ok)TKD=0}).catch(function(){});else TK=a[1].rows.map(function(r){return r.id});
  try{localStorage.setItem('hq-trips',JSON.stringify(TR));localStorage.setItem('hq-tticks',JSON.stringify(TK))}catch(e){}
  if(!document.querySelector('.sheet-bg')&&tab==='trips')render(true)}).catch(function(){})}
 function tripSub(){if(!CFG.url||!TR.trips.length)return 'No trips yet';var t=upTrips()[0];return t?t.name+', '+fmtShort(t.start)+' to '+fmtShort(t.end):'No upcoming trips'}
@@ -3514,7 +3516,7 @@ function tripsPage(){
  if(!TR.trips.length)return h+'<div class="missed"><b>No trips yet</b><p class="meta" style="margin:6px 0 0">Tell Claude: "update my trip". Claude reads Gmail and fills the trips tab in the Sheet.</p></div>';
  var nx=allFl().filter(function(x){return new Date(x.f.dep)>new Date()})[0];
  if(nx){var ms=new Date(nx.f.dep)-Date.now(),dd=Math.floor(ms/864e5),hh=Math.floor(ms%864e5/36e5),mm=Math.floor(ms%36e5/6e4);
-  h+='<div class="tp-board"><small>Next departure · '+esc(nx.t.name)+'</small><div><b>'+esc(nx.f.from.code)+' → '+esc(nx.f.to.code)+'</b><span>'+dd+'h '+hh+'h '+mm+'m</span></div><small>'+esc(nx.f.fno)+' · '+fmtShort(nx.f.dep)+' · '+lhm(nx.f.dep)+' '+esc(nx.f.from.tz)+'</small></div>'}
+  h+='<div class="tp-board"><small>Next departure · '+esc(nx.t.name)+'</small><div><b>'+esc(nx.f.from.code)+' → '+esc(nx.f.to.code)+'</b><span>'+(dd?dd+'d ':'')+hh+'h '+mm+'m</span></div><small>'+esc(nx.f.fno)+' · '+fmtShort(nx.f.dep)+' · '+lhm(nx.f.dep)+' '+esc(nx.f.from.tz)+'</small></div>'}
  var due=[];ups.forEach(function(t){(t.prep||[]).forEach(function(p){if(TK.indexOf(t.id+':'+p.id)>-1)return;var n=dUntil(p.due);if(n<=14)due.push({n:n,t:t.name,l:p.label,w:pDue(p).t})})});due.sort(function(a,b){return a.n-b.n});
  if(due.length)h+=gp('tdue','late','alert','Due in 2 weeks',due.length)+(collapsed.tdue?'':'<div class="list">'+due.map(function(x){return '<div class="task"><div class="tb" style="padding:12px 14px"><b>'+esc(x.l)+'</b><small>'+esc(x.t)+' · '+x.w+' · '+relD(x.n)+'</small></div></div>'}).join('')+'</div>');
  ups.forEach(function(t){h+=tripBlock(t)});
@@ -3522,7 +3524,8 @@ function tripsPage(){
  if((TR.past||[]).length)h+='<details class="tp-fold"><summary>Past trips</summary>'+TR.past.map(function(p){return '<p><b>'+esc(p.name)+'</b> · '+esc(p.dates)+'<br>'+(p.lines||[]).map(esc).join('<br>')+'</p>'}).join('')+'</details>';
  return h}
 function tickTrip(id){var i=TK.indexOf(id);if(i>-1)TK.splice(i,1);else TK.push(id);try{localStorage.setItem('hq-tticks',JSON.stringify(TK))}catch(e){}
- if(CFG.url){setSync('idle');postTab('tripticks',TK.map(function(x){return {id:x}})).then(function(j){setSync(j.ok?'ok':'err')}).catch(function(){setSync('err')})}haptic(false);render(true)}
+ if(CFG.url){setSync('idle');TKD=1;postTab('tripticks',TK.map(function(x){return {id:x}})).then(function(j){if(j.ok)TKD=0;setSync(j.ok?'ok':'err');if(!j.ok)toast('Could not save the tick to the Sheet. It is kept here and will be sent again.')}).catch(function(){setSync('err');toast('Could not save the tick to the Sheet. It is kept here and will be sent again.')})}haptic(false);render(true)}
+var TKD=0;
 
 /* ---------- preview mode and theme ---------- */
 var DEV={phone:[390,844],ipad:[1024,768],mac:[1280,800]};
@@ -3594,8 +3597,8 @@ document.addEventListener('click',function(e){
  if(d.tgset){tgSheet();return}
  if(d.sync){var sb=sheet('<h3>Connect Google Sheet</h3><p class="meta" style="margin:0">Paste your Apps Script address and the secret code you made. Both are stored only on this device.</p><input id="su" type="url" placeholder="Apps Script address (https://script.google.com/...)" value="'+esc(CFG.url)+'" autocomplete="off"><input id="st" type="text" placeholder="Secret code" value="'+esc(CFG.token)+'" autocomplete="off"><button class="btn" id="sg" style="margin-top:0">Connect</button>'+(CFG.url?'<a class="btn alt" id="sw" style="margin-top:0;display:block;text-align:center;text-decoration:none" target="_blank" rel="noopener" href="https://ajthereal.github.io/worship/#connect='+encodeURIComponent(btoa(JSON.stringify({url:CFG.url,token:CFG.token})))+'">Open Worship (connected)</a><button class="btn alt" id="sx" style="margin-top:0">Disconnect</button>':''));
   sb.querySelector('#sg').onclick=function(){var u=sb.querySelector('#su').value.trim(),k=sb.querySelector('#st').value.trim();if(!/^https?:\/\//.test(u)||!k){toast('Enter the address and code first');return}
-   fetch(u+'?token='+encodeURIComponent(k)+'&name=tasks').then(function(r){return r.json()}).then(function(j){if(j.error){toast('Secret code does not match');return}
-    var had=tasks.slice();CFG={url:u,token:k};try{localStorage.setItem('hq-sync',JSON.stringify(CFG))}catch(e){}tasks=j.rows.map(normTask);try{localStorage.setItem('hq-tasks2',JSON.stringify(tasks))}catch(e){}pullPeople();pullX();sb.remove();render();toast('Connected. Your Sheet has '+tasks.length+' notes');haptic(true)}).catch(function(){toast('Address cannot be opened')})};
+   fetch(u+'?token='+encodeURIComponent(k)+'&name=tasks').then(function(r){return r.json()}).then(function(j){if(j.error){toast(j.error==='token'?'Secret code does not match':'The Sheet answered with an error ('+j.error+'). Check the Apps Script deployment.');return}if(!Array.isArray(j.rows)){toast('That address did not answer like HQ\'s Apps Script. Check the address.');return}
+    var had=tasks.slice();CFG={url:u,token:k};try{localStorage.setItem('hq-sync',JSON.stringify(CFG))}catch(e){}tasks=j.rows.map(normTask);try{localStorage.setItem('hq-tasks2',JSON.stringify(tasks))}catch(e){}pullPeople();pullX();sb.remove();render();toast('Connected. Your Sheet has '+tasks.length+' notes');haptic(true)}).catch(function(){toast('Could not reach that address. Check it and your connection.')})};
   var sx=sb.querySelector('#sx');if(sx)sx.onclick=function(){CFG={url:'',token:''};try{localStorage.removeItem('hq-sync');localStorage.removeItem('hq-tasks2')}catch(e){}sb.remove();location.reload()};return}
  if(d.mode){setMode(d.mode);return}
  if(d.themeSet){setTheme(d.themeSet);return}
@@ -3750,5 +3753,5 @@ setInterval(function(){if(Math.floor((Date.now()+7*36e5)/864e5)!==TD&&!rcPlaying
 var BUILD='';
 function buildTag(){return fetch(location.pathname,{method:'HEAD',cache:'no-store'}).then(function(r){return r.headers.get('etag')||r.headers.get('last-modified')||''}).catch(function(){return ''})}
 if(location.protocol.indexOf('http')===0){buildTag().then(function(t){BUILD=t});
- document.addEventListener('visibilitychange',function(){if(document.hidden||!BUILD)return;buildTag().then(function(t){if(t&&t!==BUILD){BUILD=t;toastBtn('A new version of HQ is ready.','Reload',function(){location.reload()},20000)}})})}
+ document.addEventListener('visibilitychange',function(){if(document.hidden)return;if(!BUILD){buildTag().then(function(t){BUILD=t});return}buildTag().then(function(t){if(t&&t!==BUILD){BUILD=t;toastBtn('A new version of HQ is ready.','Reload',function(){location.reload()},20000)}})})}
 </script></body></html>

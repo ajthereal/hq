@@ -654,6 +654,66 @@ window.addEventListener('online',function(){if(CFG.url)pullTasks()});
 function syncReason(j){if(!j||!j.error)return '';if(j.error==='token')return 'Secret code does not match, data is not synced.';if(j.error==='empty-refused')return 'The Sheet refused an empty save, your data in the Sheet is safe.';if(j.error==='bad-request')return 'Apps Script refused the data. Update the Apps Script from the HQ repo.';if(j.error==='not-loaded')return 'Data has not loaded from the Sheet, so saving is on hold.';return 'Sheet error'+(j.message?(': '+String(j.message).slice(0,60)):'')+'.'}
 var FLUSH={tasks:function(){pushTasks()},people:function(){savePeople()},habitlog:function(){saveHlog()},content:function(){saveCt()},top3:function(){saveTop3()},tripticks:function(){postTab('tripticks',TK.map(function(x){return {id:x}})).then(function(j){setSync(j.ok?'ok':'err')}).catch(function(){setSync('err')})}};
 var _fetch=window.fetch.bind(window);
+/* ---- merge on save: other tools (the journal, the quiz-leads sync, Claude) add rows to the same Sheet tabs. A save never
+   overwrites the tab blindly: HQ reads the Sheet again, keeps every row added or changed there since HQ last read it,
+   applies only the changes made on this device, then writes. Rows that came from elsewhere also show up here right away. ---- */
+var MGBASE={};
+function mgCanon(r){if(!r||typeof r!=='object')return String(r);var k=Object.keys(r).sort(),o=[];k.forEach(function(x){var v=r[x];if(v==null||v==='')return;if(typeof v==='object')v=JSON.stringify(v);o.push(x+'\u0001'+String(v))});return o.join('\u0002')}
+function mgStr(r){var o={};Object.keys(r).forEach(function(k){var v=r[k];o[k]=v==null?'':(typeof v==='object'?JSON.stringify(v):String(v))});return o}
+function mgId(r){return r&&r.id!=null&&r.id!==''?'id:'+r.id:'row:'+mgCanon(r)}
+var MG={
+ tasks:{arr:function(){return tasks},from:function(r){return normTask(r)},cache:'hq-tasks2'},
+ people:{arr:function(){return RAW},cache:'hq-people',after:function(){buildPeople()},key:function(r){return r.id?'id:'+r.id:'nm:'+String(r.name||'').trim().toLowerCase()}},
+ habitlog:{arr:function(){return HLOG},cache:'hq-hlog',key:function(r){return r.hid?'h:'+r.date+'|'+r.hid:mgId(r)}},
+ top3:{arr:function(){return T3},cache:'hq-top3',key:function(r){return 't:'+r.date+'|'+r.pid}},
+ content:{arr:function(){return CT},from:function(r,i){return normCt(r,i||0)},cache:'hq-content'},
+ tripticks:{arr:function(){return TK},from:function(r){return r.id},to:function(x){return {id:x}},cache:'hq-tticks',key:function(r){return 'id:'+r.id}},
+ listmembers:{key:function(r){return 'm:'+r.lid+'|'+r.pid}}
+};
+function mgCfg(n){var c=MG[n];if(!c&&XT[n])c=MG[n]={};if(!c)return null;
+ if(XT[n]){if(!c.arr)c.arr=XT[n][1];if(!c.cache)c.cache=XT[n][0]}
+ if(!c.key)c.key=mgId;if(!c.from)c.from=function(r){return r};if(!c.to)c.to=function(x){return x};return c}
+function mgBase(n){if(MGBASE[n])return MGBASE[n];try{var b=JSON.parse(localStorage.getItem('hq-base-'+n)||'null');if(b)MGBASE[n]=b;return b}catch(e){return null}}
+function mgSetBase(n,rows){MGBASE[n]=rows.map(mgStr);try{localStorage.setItem('hq-base-'+n,JSON.stringify(MGBASE[n]))}catch(e){}}
+/* three-way merge: base = the Sheet as HQ last read it, local = this device now, remote = the Sheet now */
+function mgMerge(n,base,localEls,remote){var c=mgCfg(n),K=c.key,cmpS=function(r){return mgCanon(mgStr(c.to(c.from(r))))},cmpL=function(x){return mgCanon(mgStr(c.to(x)))};
+ var local=localEls.map(function(x){return c.to(x)});
+ if(n==='people'){var lid={};local.forEach(function(r){if(r.id)lid[String(r.name||'').trim().toLowerCase()]=r.id});var rid={};remote.forEach(function(r){if(r.id)rid[r.id]=1});
+  var fix=function(r){if(!r.id){var g=lid[String(r.name||'').trim().toLowerCase()];if(g&&!rid[g]){r=Object.assign({},r,{id:g})}}return r};remote=remote.map(fix);if(base)base=base.map(fix)}
+ var B={},L={},used={},out=[],ext=[];
+ if(base)base.forEach(function(r){var k=K(r);if(!(k in B))B[k]=r});
+ local.forEach(function(r,i){var k=K(r);if(!(k in L))L[k]=i});
+ remote.forEach(function(r){var k=K(r);
+  if(k in L&&!used[k]){used[k]=1;var x=localEls[L[k]];
+   if(base&&k in B&&cmpL(x)===cmpS(B[k])){out.push(r);if(cmpS(r)!==cmpS(B[k]))ext.push({op:'upd',k:k,r:r})}
+   else out.push(local[L[k]]);return}
+  if(base&&k in B&&!used[k]){var b=B[k];/* gone on this device: keep it only if the Sheet changed it meanwhile */if(cmpS(r)!==cmpS(b)){out.push(r);ext.push({op:'add',k:k,r:r})}return}
+  out.push(r);if(!used[k])ext.push({op:'add',k:k,r:r})});
+ local.forEach(function(r,i){var k=K(r);if(used[k]||L[k]!==i)return;used[k]=1;
+  if(base&&k in B){/* removed from the Sheet by someone else: drop it here too, unless edited on this device */if(cmpL(localEls[i])!==cmpS(B[k])){out.push(r)}else ext.push({op:'del',k:k})}
+  else out.push(r)});
+ return {rows:out,ext:ext}}
+/* bring rows that came from the Sheet into this device's list, without touching anything edited here meanwhile */
+function mgApply(n,ext){if(!ext.length)return;var c=mgCfg(n),A=c.arr(),K=c.key,base=mgBase(n),B={};if(base)base.forEach(function(r){B[K(r)]=r});
+ var idx={};A.forEach(function(x,i){idx[K(c.to(x))]=i});var del={};
+ ext.forEach(function(e,j){var i=idx[e.k];
+  if(e.op==='add'){if(i==null){A.push(c.from(e.r,A.length+j));idx[e.k]=A.length-1}return}
+  if(i==null)return;var same=!B[e.k]||mgCanon(mgStr(c.to(A[i])))===mgCanon(mgStr(c.to(c.from(B[e.k]))));if(!same)return;
+  if(e.op==='del')del[i]=1;else{var v=c.from(e.r,i);if(v&&typeof v==='object'&&typeof A[i]==='object'){Object.keys(A[i]).forEach(function(q){if(!(q in v))delete A[i][q]});Object.assign(A[i],v)}else A[i]=v}});
+ for(var i=A.length-1;i>=0;i--)if(del[i])A.splice(i,1);
+ try{localStorage.setItem(c.cache,JSON.stringify(A))}catch(e){}
+ if(c.after)c.after();
+ if(!document.querySelector('.sheet-bg'))setTimeout(function(){try{renderBg()}catch(e){}},0)}
+var MGQ={};
+function mgWrite(n,init){var body;try{body=JSON.parse(init.body)}catch(e){return _fetch(CFG.url,init)}
+ var run=function(){var c=mgCfg(n),els=c.arr().slice(),base=mgBase(n);
+  return _fetch(CFG.url+'?token='+encodeURIComponent(CFG.token)+'&name='+encodeURIComponent(n)).then(function(r){return r.json()}).then(function(j){
+   if(!j||j.error||!Array.isArray(j.rows))return new Response(JSON.stringify(j&&j.error?j:{error:'server',message:'could not read the Sheet before saving'}),{status:200});
+   var m=mgMerge(n,base,els,j.rows);body.rows=m.rows;
+   if(!m.rows.length&&j.rows.length>=2)return new Response(JSON.stringify({error:'empty-refused'}),{status:200});
+   return _fetch(CFG.url,{method:'POST',headers:init.headers||{'Content-Type':'text/plain'},body:JSON.stringify(body)}).then(function(r){
+    return r.clone().json().then(function(k){if(k&&k.ok){mgSetBase(n,m.rows);mgApply(n,m.ext)}return r},function(){return r})})})};
+ var p=(MGQ[n]||Promise.resolve()).catch(function(){}).then(run);MGQ[n]=p;return p}
 function tabOf(u,init){if(!CFG.url||String(u).indexOf(CFG.url)!==0)return null;
  if(init&&init.method==='POST'){try{var b=JSON.parse(init.body);return b.action?null:{k:'w',n:b.name}}catch(e){return null}}
  var m=/[?&]name=([^&]+)/.exec(String(u));return m?{k:'r',n:decodeURIComponent(m[1])}:null}
@@ -661,11 +721,12 @@ window.fetch=function(u,init){var t=tabOf(u,init);if(!t)return _fetch(u,init);va
  if(t.k==='w'&&g&&!SYNCOK[n]){
   if(HASCACHE[n]){PEND[n]=true}else{SERR[n]='The '+n+' data has not loaded from the Sheet yet. Your last change was not sent, so the Sheet is not overwritten.';syncBanner()}
   return Promise.resolve(new Response(JSON.stringify({error:'not-loaded'}),{status:200}))}
- return _fetch(u,init).then(function(r){
+ return (t.k==='w'&&mgCfg(n)?mgWrite(n,init):_fetch(u,init)).then(function(r){
   return r.clone().json().then(function(j){
    if(t.k==='w'){if(j&&j.ok){PEND[n]=false;SERR[n]=''}else{SERR[n]=syncReason(j);PEND[n]=(j&&j.error==='empty-refused')?false:true}syncBanner();return r}
    if(j&&j.error){SERR[n]=syncReason(j);syncBanner();return r}
    SERR[n]='';syncBanner();
+   if(Array.isArray(j.rows)&&mgCfg(n)&&!PEND[n]&&!DIRTY[n])mgSetBase(n,j.rows);
    if(g){SYNCOK[n]=true;if(PEND[n]&&FLUSH[n]){PEND[n]=false;setTimeout(FLUSH[n],0);return Promise.reject(new Error('local edits pending'))}}
    return r},function(){return r})
  },function(err){if(t.k==='w'&&g)PEND[n]=true;SERR[n]='Offline or the Sheet cannot be reached. Changes are saved on this device and sent when you are connected.';syncBanner();throw err})};

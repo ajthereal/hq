@@ -797,7 +797,7 @@ try{TLOG=JSON.parse(localStorage.getItem('hq-tlog')||'[]');LISTS=JSON.parse(loca
 var XT={touchlog:['hq-tlog',function(){return TLOG},function(r){TLOG=r}],lists:['hq-lists',function(){return LISTS},function(r){LISTS=r}],listmembers:['hq-lm',function(){LM.forEach(function(m){['done','doneDate','tid','plc','pnd'].forEach(function(k){if(m[k]==null)m[k]=''})});return LM},function(r){LM=r}],purchases:['hq-pur',function(){return PUR},function(r){PUR=r}],evdone:['hq-evd',function(){return EVD},function(r){EVD=r}],results:['hq-res',function(){return RES},function(r){RES=r}]};
 function saveX(n){var x=XT[n];try{localStorage.setItem(x[0],JSON.stringify(x[1]()))}catch(e){}
  if(!CFG.url)return;DIRTY[n]=true;
- if(!LOADED[n]){DIRTY[n]=true;toast('Not in the Sheet yet, '+n+' has not loaded. I will try again later');return}
+ if(!LOADED[n]){DIRTY[n]=true;toast('Not in the Sheet yet, '+n+' has not loaded. I will try again later');return 0}
  setSync('idle');postTab(n,x[1]()).then(function(j){if(j.ok){DIRTY[n]=false;setSync('ok')}else{DIRTY[n]=true;setSync('err');toast('Could not save '+n+' to the Sheet, still safe on this device')}}).catch(function(){DIRTY[n]=true;setSync('err');toast('Could not save '+n+'. Check your connection, your data is still safe on this device')})}
 function pullX(){if(!CFG.url)return;Object.keys(XT).forEach(function(n){getTab(n).then(function(j){if(j.error||!j.rows)return;LOADED[n]=true;if(DIRTY[n]){saveX(n);return}XT[n][2](j.rows);try{localStorage.setItem(XT[n][0],JSON.stringify(j.rows))}catch(e){}if(!document.querySelector('.sheet-bg')&&!pq)renderBg()}).catch(function(){})})}
 /* ---------- Family Health ----------
@@ -993,7 +993,7 @@ function hxForm(p,title,keys,src){
   if(!rows.length){toast('Enter at least one number');return}
   var g='g'+Date.now().toString(36);
   rows.forEach(function(r,i){HL.push({id:g+i+Math.random().toString(36).slice(2,5),date:d,pid:p.id,src:sr,metric:r.k,value:String(r.v),unit:HM[r.k][1],note:note,grp:g,void:''})});
-  saveX('healthlog');b.remove();render(true);toast('Saved '+rows.length+' number'+(rows.length>1?'s':'')+' for '+hxShort(p))}
+  var sv=saveX('healthlog');b.remove();render(true);if(sv!==0)toast('Saved '+rows.length+' number'+(rows.length>1?'s':'')+' for '+hxShort(p))}
  return b}
 function hxOmron(p){var y=hxAgeY(p.dob,hxToday()),k=['weight','height'];if(y>=10)k=k.concat(['bodyfat','muscle','rm']);if(y>=18)k=k.concat(['visceral','bodyage']);var b=hxForm(p,'Omron HBF-375 scan',k,'Omron');var m=y<10?'The HBF-375 shows only weight and BMI under age 10. Height here is just for the BMI calculation.':y<18?'For ages 10 to 17 the scale shows body fat and muscle, but no visceral fat or body age.':'';if(m)b.querySelector('h3').insertAdjacentHTML('afterend','<p class="meta" style="margin:6px 0">'+m+'</p>')}
 function hxCheckup(p){hxForm(p,'Checkup or labs',['height','weight','waist','bpsys','bpdia','pulse','glucose','hba1c','tc','ldl','hdl','tg','vitd'],'')}
@@ -1004,7 +1004,7 @@ function hxVisitForm(p){
   if(!g('#vd')){toast('Pick the visit date');return}
   if(!g('#vdoc')&&!g('#vre')){toast('Add the doctor or the reason');return}
   HV.push({id:'v'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),date:g('#vd'),pid:p.id,doctor:g('#vdoc'),spec:g('#vsp'),place:g('#vpl'),reason:g('#vre'),findings:g('#vfi'),fu:g('#vfu'),fudate:g('#vfd'),fudone:''});
-  saveX('healthvisits');b.remove();render(true);toast('Visit saved')}}
+  var sv=saveX('healthvisits');b.remove();render(true);if(sv!==0)toast('Visit saved')}}
 function hxPuberty(p){
  var y=hxAgeY(p.dob,hxToday());if(y<8||y>17)return '';
  var tv=hxLast(p.id,'testis'),ns=HN.filter(function(n){return n.pid===p.id}).sort(function(x,z){return x.date<z.date?1:x.date>z.date?-1:0});
@@ -1067,7 +1067,9 @@ var CAD={'Closing':7,'Prospect':14,'Warming Partner':14,'TRME Active':14,'Partne
 function cad(st){return CAD[st]||14}
 var STAGES=['Namelist','Relationship','Prospect','Closing','TRME Active','Customer','Warming Partner','Partner','Not Now'];
 function pid(p){return p.raw&&p.raw.id?p.raw.id:p.n}
-function byPid(id){return people.filter(function(p){return pid(p)===id})[0]}
+var BPC={a:null,n:-1,m:null};
+function byPid(id){if(BPC.a!==people||BPC.n!==people.length){BPC.a=people;BPC.n=people.length;BPC.m={};people.forEach(function(p){var k=pid(p);if(!(k in BPC.m))BPC.m[k]=p})}
+ var h=BPC.m[id];if(h&&pid(h)===id)return h;return people.filter(function(p){return pid(p)===id})[0]}
 function parseNameLines(txt){
  var out=[],bad=0;
  String(txt||'').split(/\r?\n/).forEach(function(line){
@@ -1108,7 +1110,7 @@ function markSent(p){var r=p.raw;if(!r)return null;
 function undoSent(u){u.r.lastContact=u.prev.lc;u.r.nextDate=u.prev.nd;u.r.waiting=u.prev.w;u.r.sentDate=u.prev.sa;TLOG=TLOG.filter(function(x){return x.id!==u.e.id});savePeople();saveX('touchlog')}
 var PFIL='All',PLST='',QORD=null,SENT={},SENTU={},QL={},FIX={ids:[],i:0},PILE_DAYS=14,CONTACT_GOAL=3,NAME_GOAL=2;
 var PRE={'Ordered':7,'Replied':3,'No reply':2,'Meeting set':1,'Said yes':7,'Not now':30};
-function legacyView(v){var m={'Follow-up':['Queue'],'No next step':['Everyone','No next step'],'TRME':['Everyone','TRME Active'],'Pipeline':['Everyone','Prospect'],'Customers':['Everyone','Customer'],'Promo':['Everyone','Buyers'],'All':['Everyone','All']}[v]||[v];pview=m[0];if(m[1])PFIL=m[1];QORD=null;SENT={};SENTU={}}
+function legacyView(v){var m={'Follow-up':['Queue'],'No next step':['Everyone','No next step'],'TRME':['Everyone','TRME Active'],'Pipeline':['Everyone','Prospect'],'Customers':['Everyone','Customer'],'Promo':['Everyone','Buyers'],'Reorder due':['Everyone','Reorder due'],'All':['Everyone','All']}[v]||[v];pview=m[0];if(m[1])PFIL=m[1];QORD=null;SENT={};SENTU={}}
 function byname(a,b){return a.n<b.n?-1:1}
 function contactedToday(){var s={},d=isoOf(TD);TLOG.forEach(function(x){if(dIso(x.date)===d)s[x.pid]=1});return Object.keys(s).length}
 function newNamesToday(){var d=isoOf(TD);return RAW.filter(function(r){return r.added===d}).length}
@@ -1196,14 +1198,14 @@ function sentTail(p,o){
  if(o.lid){PENDWA={pid:pid(p),type:o.type||'Follow-up',lid:o.lid||'',day:o.day||'',ts:Date.now()};try{localStorage.setItem('hq-pendwa',JSON.stringify(PENDWA))}catch(e){}}
  var su=markSent(p);if(su){if(o.q){SENT[pid(p)]=1;SENTU[pid(p)]=su}else toastU(p.n+' marked as sent. Waiting for a reply',function(){undoSent(su);render(true)})}
  return true}
-function copyText(t){var ok=false;try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).catch(function(){});return true}}catch(e){}
+function copyText(t,onErr){var ok=false;try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).catch(function(){if(onErr)onErr()});return true}}catch(e){}
  try{var ta=document.createElement('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;left:-9999px;top:0;opacity:0';document.body.appendChild(ta);ta.select();ta.setSelectionRange(0,t.length);ok=document.execCommand('copy');ta.remove()}catch(e){}
  return ok}
 function openIG(p,o){o=o||{};
  if(!p.ig){toast('Instagram for '+p.n+' is missing. Add it with Edit contact in the details');return false}
- var text=o.text||greetFor(p);copyText(text);
+ var text=o.text||greetFor(p),bad=function(){toast('Could not copy the greeting. Type it in the Instagram chat')},cp=copyText(text,bad);
  var a=document.createElement('a');a.href='https://ig.me/m/'+p.ig;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
- toast('Greeting copied. Paste it in the Instagram chat');
+ if(cp)toast('Greeting copied. Paste it in the Instagram chat');else bad();
  return sentTail(p,o)}
 function openWA(p,o){o=o||{};
  if(!p.phone&&p.ig)return openIG(p,o);
@@ -1236,7 +1238,7 @@ function mDone(m){return String(m.done)==='1'}
 function lastTxt(p){return p.last>=9999?'never contacted':p.last===0?'contacted today':p.last===1?'contacted yesterday':'contacted '+p.last+' days ago'}
 function lmRow(l,m){var p=byPid(m.pid);if(!p)return '';var done=mDone(m),k=esc(l.id)+'|'+esc(m.pid);
  var chip=isEv(l)?'<button class="chip" data-lmst="'+k+'" aria-label="Status">'+esc(m.status||'Not yet')+'</button>':'';
- var act=(p.phone||p.ig)?'<button class="qb" data-lwa="'+k+'">'+ic('chat',15)+' Message</button>':'<button class="qb alt" data-edit="'+p.id+'">Add contact</button>';
+ var act=(p.phone||p.ig)?'<button class="qb" data-lwa="'+k+'" aria-label="Message '+esc(p.n)+'">'+ic('chat',15)+(isEv(l)?'':' Message')+'</button>':'<button class="qb alt" data-edit="'+p.id+'">Add contact</button>';
  return '<div class="qrow'+(done?' done':'')+(wide()&&WSEL===p.id&&(tab==='lists'||tab==='work')?' sel':'')+'"><button class="qm" data-pdet="'+p.id+'"><span class="av" style="background:'+avc(p)+'">'+esc(p.n[0])+'</span><span class="pn"><b>'+esc(p.n)+'</b><small>'+esc(p.st)+(p.next!==null?' · next '+dueTxt(p.next):'')+'</small></span></button>'+chip+act+'<button class="ck" data-lmtick="'+k+'" aria-label="Mark as done"><i>'+ic('check',14)+'</i></button></div>'}
 var LQ='';
 function listsPage(){
@@ -1373,7 +1375,7 @@ function chkList(){return people.filter(function(p){return p.last!==0}).map(func
 function chkCard(){if(!CFG.url)return '';var L=chkList();if(!L.length)return '';
  return gp('chk','nod','spark','TRME results check-in',L.length)+(collapsed.chk?'':'<div class="list">'+L.map(function(o){var p=o.p;return '<div class="task"><div class="ic '+avIc(p)+'">'+ic('chat',17)+'</div><button class="tb" data-chkin="'+p.id+'|'+o.c.day+'"><b>'+esc(p.n)+'</b><small>Day '+o.c.day+' · log results</small></button><button class="rb" data-fwa="'+p.id+'" data-fk="chk'+o.c.day+'" data-ft="Check-in day '+o.c.day+'" aria-label="Open WhatsApp">'+ic('chat',16)+'</button></div>'}).join('')+'</div>')}
 function funnel(){var c=function(f){return people.filter(f).length},st=function(){var a=arguments;return c(function(p){return Array.prototype.indexOf.call(a,p.st)>-1})};
- var steps=[['Prospects',st('Namelist','Prospect','Warming Partner','Closing','Customer','TRME Active','Partner')],['Closing',st('Closing','Customer','TRME Active','Partner')],['Customer',st('Customer','TRME Active','Partner')],['Results (TRME)',st('TRME Active','Partner')],['Builder',st('Partner')]];
+ var steps=[['Prospects',st('Namelist','Relationship','Prospect','Warming Partner','Closing','Customer','TRME Active','Partner')],['Closing',st('Closing','Customer','TRME Active','Partner')],['Customer',st('Customer','TRME Active','Partner')],['Results (TRME)',st('TRME Active','Partner')],['Builder',st('Partner')]];
  return steps.map(function(x,i){var pc=i&&steps[i-1][1]?Math.round(x[1]/steps[i-1][1]*100)+'% of '+steps[i-1][0]:'';return '<div class="lt" style="margin-top:8px"><b>'+x[0]+'</b><span class="meta">'+x[1]+(pc?' · '+pc:'')+'</span></div>'}).join('')}
 function scoreP(p){if(p.st==='Not Now'||p.last===0)return null;var W={'Closing':50,'Prospect':35,'Warming Partner':30,'TRME Active':28,'Partner':20,'Customer':15,'Namelist':10,'Relationship':5},sc=W[p.st]||0,why=[],kind='',ft='Follow-up';
  if(p.next!==null&&p.next<=0){sc+=20+Math.min(-p.next,14)*2;why.push(p.next<0?'overdue '+(-p.next)+(p.next===-1?' day':' days'):'follow-up today')}
@@ -1420,7 +1422,7 @@ function streakN(){var set={};TLOG.forEach(function(x){set[dIso(x.date)]=1});var
 function scoreSheet(){var a=dayAct(isoOf(TD)),T={names:tgt('target_names',5),fu:tgt('target_follow',10),inv:tgt('target_invite',3)};
  var row=function(l,v,t){return '<div class="lrow first" style="border-top:0"><div class="lt"><b>'+l+'</b><span class="meta">'+v+' / '+t+'</span></div><div class="trk"><b style="width:'+Math.min(100,v/t*100)+'%"></b></div></div>'};
  var wk='';for(var i=6;i>=0;i--){var dd=isoOf(TD-i),c=dayAct(dd).all;wk+='<span style="flex:1;text-align:center"><i style="display:block;margin:0 auto 4px;width:60%;border-radius:4px;background:var(--chart);height:'+(4+Math.min(c,20)*3)+'px"></i><small class="meta">'+WD[wdOf(TD-i)][0]+' '+c+'</small></span>'}
- sheet('<h3>Today\'s activity</h3><p class="meta" style="margin:0">Streak: '+streakN()+' days in a row with a logged contact</p>'+row('New names',a.names,T.names)+row('Follow-up',a.fu,T.fu)+row('Invite',a.inv,T.inv)+'<div class="lbl">Funnel now</div>'+funnel()+'<div class="lbl">Last 7 days</div><div style="display:flex;align-items:flex-end;gap:6px;height:90px">'+wk+'</div><p class="meta" style="margin:10px 0 0">You can change the targets in the Sheet, teamdata tab: rows with type cfg and scope target_names, target_follow, target_invite.</p><button class="btn alt" data-close="1">Close</button>')}
+ sheet('<h3>Today\'s activity</h3><p class="meta" style="margin:0">Streak: '+streakN()+(streakN()===1?' day':' days in a row')+' with a logged contact</p>'+row('New names',a.names,T.names)+row('Follow-up',a.fu,T.fu)+row('Invite',a.inv,T.inv)+'<div class="lbl">Funnel now</div>'+funnel()+'<div class="lbl">Last 7 days</div><div style="display:flex;align-items:flex-end;gap:6px;height:90px">'+wk+'</div><p class="meta" style="margin:10px 0 0">You can change the targets in the Sheet, teamdata tab: rows with type cfg and scope target_names, target_follow, target_invite.</p><button class="btn alt" data-close="1">Close</button>')}
 function noNext(p){return p.next===null&&['Prospect','Closing','Warming Partner','TRME Active','Partner'].indexOf(p.st)>-1}
 function blindspots(){
  var nNo=grpP().filter(noNext).length,reoN=reorderList().length,out=[];
@@ -1429,7 +1431,7 @@ function blindspots(){
    var rk=leadRisk(PVb);if(rk.length)out.push({t:rk.length+' leader'+(rk.length>1?'s':'')+' behind pace',d:rk.slice(0,3).map(function(m){return m.n}).join(', ')+(rk.length>3?'…':''),go:'team:Pulse',c:'peach',i:'users'});
    var cvb=convOpen();if(cvb&&cvb.un.length&&cvb.left<=60)out.push({t:cvb.un.length+' not paid for convention',d:cvb.left+(cvb.left===1?' day left':' days left'),go:'team:Convention',c:'sky',i:'eye'})}}
  if(nNo)out.push({t:nNo+' people in the pipeline with no follow-up',d:'Not shown in Today because there is no date',go:'people:No next step',c:'lav',i:'users'});
- if(reoN)out.push({t:reoN+' customers due for reorder',d:'Based on the last order and the supply you logged',go:'people:Customers',c:'mint',i:'chat'});
+ if(reoN)out.push({t:reoN+' customers due for reorder',d:'Based on the last order and the supply you logged',go:'people:Reorder due',c:'mint',i:'chat'});
  return out}
 function bsRow(b){return '<div class="task"><div class="ic '+b.c+'">'+ic(b.i,17)+'</div><button class="tb" data-goto="'+b.go+'"><b>'+esc(b.t)+'</b><small>'+esc(b.d)+'</small></button><span class="ck" style="color:var(--mute)">'+ic('right',16)+'</span></div>'}
 function durMin(s){if(!s)return 30;return /h/.test(s)?parseInt(s)*60:parseInt(s)}
@@ -1450,8 +1452,8 @@ function schedule(D){
  var h='',day=tasks.filter(function(t){return t.day===D}),evs=evOn(D),ad=evs.filter(function(x){return x.a==='1'});
  var due=D>TD?[]:HAB.filter(function(x){return habDue(x,D)});
  if(ad.length)h+='<div class="list" style="margin-bottom:6px">'+ad.map(evRow).join('')+'</div>';
- if(D<TD&&!day.length&&!evs.length&&!due.length)h+='<p class="note">No notes for today.</p>';
- if(D>TD&&!day.length&&!evs.length)h+='<p class="note">Nothing scheduled today.</p>';
+ if(D<TD&&!day.length&&!evs.length&&!due.length)h+='<p class="note">Nothing logged on this day.</p>';
+ if(D>TD&&!day.length&&!evs.length)h+='<p class="note">Nothing scheduled on this day.</p>';
  var hp={morning:'morning',afternoon:'noon',evening:'evening'},rp=[];
  PARTS.forEach(function(p){
   var hb=due.filter(function(x){return habPart(x)===hp[p[0]]}),items=day.filter(function(t){return t.part===p[0]}),pe=evs.filter(function(x){return x.a!=='1'&&evPart(x)===p[0]});

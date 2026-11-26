@@ -2177,7 +2177,7 @@ function lbPrep(bk,item,xml){
 /* ---------- Library (list lives in the Sheet tab "books"; files stay in Drive; opened books are saved on this device) ---------- */
 var LB={books:[],prog:{},q:'',shelf:'All',saved:{},cov:{}};
 try{LB.books=JSON.parse(localStorage.getItem('hq-books')||'[]');LB.prog=JSON.parse(localStorage.getItem('hq-bookprog')||'{}')}catch(e){}
-var LBR=null,LBT=0;
+var LBR=null,LBT=0,LBMV=0;/* LBMV: the reader moved by the person since the book opened; until then the saved position is not stamped as newer */
 function lbSave(){try{localStorage.setItem('hq-books',JSON.stringify(LB.books));localStorage.setItem('hq-bookprog',JSON.stringify(LB.prog))}catch(e){}}
 function lbBook(id){return LB.books.filter(function(b){return b.id===id})[0]}
 function lbSub(){return LB.books.length?LB.books.length+' books, '+Object.keys(LB.saved).length+' saved on this device':'Your eBooks, readable offline'}
@@ -2187,16 +2187,20 @@ function lbDB(){return new Promise(function(ok,no){
  if(!window.indexedDB)return no(new Error('nodb'));
  var r=indexedDB.open('hq-lib',1);
  r.onupgradeneeded=function(){var d=r.result;d.createObjectStore('files');d.createObjectStore('covers')};
- r.onsuccess=function(){lbDB.p=r.result;ok(r.result)};
+ r.onsuccess=function(){var d=r.result;d.onclose=function(){lbDB.p=null};d.onversionchange=function(){d.close();lbDB.p=null};lbDB.p=d;ok(d)};
  r.onerror=function(){no(r.error||new Error('nodb'))}})}
-function lbIdb(store,mode,fn){return lbDB().then(function(d){return new Promise(function(ok,no){
- var t=d.transaction(store,mode),q=fn(t.objectStore(store));
+/* iOS can drop the database connection after HQ sat in the background; then reconnect once instead of downloading the book again */
+function lbIdb(store,mode,fn,again){return lbDB().then(function(d){return new Promise(function(ok,no){
+ var t,q;try{t=d.transaction(store,mode);q=fn(t.objectStore(store))}catch(e){return no(e)}
  t.oncomplete=function(){ok(q&&q.result)};
- t.onerror=t.onabort=function(){no(t.error||new Error('idb'))}})})}
+ t.onerror=t.onabort=function(){no(t.error||new Error('idb'))}})}).catch(function(e){if(again||(e&&e.message==='nodb'))throw e;lbDB.p=null;return lbIdb(store,mode,fn,1)})}
 function lbInit(){
  lbIdb('files','readonly',function(s){return s.getAllKeys()}).then(function(k){LB.saved={};(k||[]).forEach(function(x){LB.saved[x]=1});lbRefresh()}).catch(function(){});
  lbIdb('covers','readonly',function(s){return s.getAllKeys()}).then(function(k){
-  return lbIdb('covers','readonly',function(s){return s.getAll()}).then(function(v){(k||[]).forEach(function(x,i){LB.cov[x]=v[i]});lbRefresh()})}).catch(function(){})}
+  return lbIdb('covers','readonly',function(s){return s.getAll()}).then(function(v){(k||[]).forEach(function(x,i){LB.cov[x]=v[i]});lbRefresh()})}).catch(function(){});
+ /* a note made just before HQ was closed is sent on the next start; progress and notes are sent right away when HQ goes to the background */
+ try{if(localStorage.getItem('hq-lbnd'))lbPush(1)}catch(e){}
+ document.addEventListener('visibilitychange',function(){if(document.hidden&&(LBQ.prog||LBQ.notes)){clearTimeout(LBT);lbPushAll()}})}
 function lbRefresh(){if(tab==='library'&&!LBR&&!document.querySelector('.sheet-bg')&&document.activeElement!==document.getElementById('lbq'))render(true)}
 function lbMergeProg(rows){(rows||[]).forEach(function(r){var l=LB.prog[r.id],t=+r.ts||0;if(!l||t>(l.t||0))LB.prog[r.id]={c:+r.ch||0,p:+r.pos||0,pct:+r.pct||0,t:t}})}
 function lbMergeNotes(rows){(rows||[]).forEach(function(r){
@@ -2239,7 +2243,7 @@ function lbPushAll(){
  if(doP)P=P.then(function(){return step('bookprog',function(){return Object.keys(LB.prog).map(function(k){var p=LB.prog[k];return {id:k,ch:p.c,pos:p.p,pct:p.pct,ts:p.t}})},lbMergeProg)});
  if(doN)P=P.then(function(){return step('booknotes',function(){var nr=[];Object.keys(LB.notes).forEach(function(id){LB.notes[id].forEach(function(n){nr.push({id:id,uid:n.u,k:n.k,ch:n.ch,a:n.a,b:n.b,c:n.c,t:n.t,n:n.n,ts:n.ts,d:n.d?'1':'0'})})});return nr},lbMergeNotes)});
  P.then(function(){
-  LBQ.busy=0;LBQ.tries=0;LBQ.told=0;setSync('ok');
+  LBQ.busy=0;LBQ.tries=0;LBQ.told=0;setSync('ok');if(doN&&!LBQ.notes)try{localStorage.removeItem('hq-lbnd')}catch(e){}
   if(LBQ.again){LBQ.again=0;lbPushAll()}}).catch(fail)}
 function lbPush(notes){LBQ.prog=1;if(notes)LBQ.notes=1;clearTimeout(LBT);LBT=setTimeout(lbPushAll,8000)}
 /* Library page */
@@ -2295,11 +2299,11 @@ function lbWhy(e){
 function lbB64(s){var a=atob(s),u=new Uint8Array(a.length);for(var i=0;i<a.length;i++)u[i]=a.charCodeAt(i);return u}
 function lbFetch(b){
  if(!CFG.url)return Promise.reject(new Error('nosync'));
- var sh=sheet('<h3>'+esc(b.title)+'</h3><p class="meta" style="margin:0" id="lbpm">Downloading from Drive...</p><div class="lb-bar"><i id="lbpb" style="width:3%"></i></div><p class="meta" style="margin:0">It is saved on this device, so this only happens once.</p>');
+ var sh=sheet('<h3>'+esc(b.title)+'</h3><p class="meta" style="margin:0" id="lbpm">Downloading from Drive...</p><div class="lb-bar"><i id="lbpb" style="width:3%"></i></div><p class="meta" style="margin:0">It is saved on this device, so this only happens once.</p><button class="btn alt" data-close="1">Cancel</button>');
  var parts=[],n=1,total=0;
  function setP(i,n){var t=sh.querySelector('#lbpm'),p=sh.querySelector('#lbpb');if(t)t.textContent='Downloading from Drive, part '+i+' of '+n+'…';if(p)p.style.width=Math.max(3,Math.round(i/n*100))+'%'}
- function one(i){return fetch(CFG.url+'?token='+encodeURIComponent(CFG.token)+'&name=_file&id='+encodeURIComponent(b.id)+'&part='+i).then(function(r){return r.json()}).then(function(j){
-  if(j.error)throw new Error(j.error==='server'?'server:'+(j.message||''):j.error);
+ function one(i){if(!sh.isConnected)return Promise.reject(new Error('cancel'));return fetch(CFG.url+'?token='+encodeURIComponent(CFG.token)+'&name=_file&id='+encodeURIComponent(b.id)+'&part='+i).then(function(r){return r.json()}).then(function(j){
+  if(!sh.isConnected)throw new Error('cancel');if(j.error)throw new Error(j.error==='server'?'server:'+(j.message||''):j.error);
   if(typeof j.data!=='string'||!j.n)throw new Error('old-script');
   n=j.n;total=j.size;parts.push(lbB64(j.data));setP(i+1,n);
   return i+1<n?one(i+1):0})}
@@ -2317,17 +2321,19 @@ function lbLoad(b){
 function lbOpen(id){
  var b=lbBook(id);if(!b)return;
  if(b.ext!=='epub'&&b.ext!=='pdf'){lbMsg(b.title,'This is a '+String(b.ext).toUpperCase()+' file, and HQ can only open EPUB and PDF. Add an EPUB copy of this book to the eBooks folder, then ask Claude to update the library.');return}
- lbLoad(b).then(function(buf){return b.ext==='pdf'?lbPdf(b,buf):lbReader(b,buf)}).catch(function(e){lbMsg(b.title,lbWhy(e),b.id)})}
+ /* get the newest reading position from the Sheet first (2.5 s at most), so a book never opens at an older spot from this device */
+ lbLoad(b).then(function(buf){if(b.ext==='pdf'||!CFG.url)return buf;return Promise.race([getTab('bookprog').then(function(j){if(j&&!j.error)lbMergeProg(j.rows)}),new Promise(function(r){setTimeout(r,2500)})]).catch(function(){}).then(function(){return buf})}).then(function(buf){return b.ext==='pdf'?lbPdf(b,buf):lbReader(b,buf)}).catch(function(e){if(e&&e.message==='cancel')return;lbMsg(b.title,lbWhy(e),b.id)})}
 function lbPdf(b,buf){
  var u=URL.createObjectURL(new Blob([buf],{type:'application/pdf'}));
  var s=sheet('<h3>'+esc(b.title)+'</h3><p class="meta" style="margin:0">This is a PDF. It opens in Safari\'s own viewer.</p><a class="btn" style="display:grid;place-items:center" href="'+u+'" target="_blank" rel="noopener">Open PDF</a><button class="btn alt" data-close="1">Close</button>');
+ s.addEventListener('click',function(e){if(e.target===s||e.target.closest('[data-close]'))setTimeout(function(){URL.revokeObjectURL(u)},60000)});
  render(true);return s}
 /* reader: paged like Apple Books (CSS columns, swipe or tap to turn, themes, fonts, scrubber, search, bookmarks, highlights) */
 var LBS={theme:'auto',font:'ny',fs:19,ls:1.5,mg:1,just:0};
 try{var _s=JSON.parse(localStorage.getItem('hq-lb-set')||'{}');for(var _k in _s)LBS[_k]=_s[_k]}catch(e){}
 LB.notes={};try{LB.notes=JSON.parse(localStorage.getItem('hq-booknotes')||'{}')}catch(e){}
 function lbSaveSet(){try{localStorage.setItem('hq-lb-set',JSON.stringify(LBS))}catch(e){}}
-function lbNSave(){try{localStorage.setItem('hq-booknotes',JSON.stringify(LB.notes))}catch(e){}lbPush(1)}
+function lbNSave(){try{localStorage.setItem('hq-booknotes',JSON.stringify(LB.notes));localStorage.setItem('hq-lbnd','1')}catch(e){}lbPush(1)}
 function lbNotes(id,k){return (LB.notes[id]||[]).filter(function(n){return !n.d&&(!k||n.k===k)})}
 function lbUid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 var LBTH={orig:['Original','#ffffff','#1c1c1e','#2F6FD0'],paper:['Paper','#f3ead6','#3a3226','#8a5a1c'],quiet:['Quiet','#3b3b3e','#d9d9dc','#8ab4ff'],bold:['Bold','#ffffff','#000000','#0a4fb3'],calm:['Calm','#e9dcc0','#4b402e','#8a4b12'],focus:['Focus','#fdf8cf','#1d1d1d','#0a4fb3']};
@@ -2410,7 +2416,7 @@ function lbPendPage(p){
  return Math.max(0,Math.min(R.pages-1,Math.floor((p.pos||0)*R.pages+1e-6)))}
 function lbWithoutTransform(fn){var R=LBR,b=R.body,tr=b.style.transform,tn=b.style.transition;b.style.transition='none';b.style.transform='none';var v;try{v=fn()}finally{b.style.transform=tr;b.style.transition=tn}return v}
 function lbJump(i,p){
- var R=LBR;if(!R)return;
+ var R=LBR;if(!R)return;LBMV=1;
  if(i!==R.i||!R.ok){lbShow(i,p);return}
  var pg=lbWithoutTransform(function(){return lbPendPage(p)});
  lbSetPage(pg==null?R.page:pg,false);lbFindMark(p)}
@@ -2420,21 +2426,21 @@ function lbSetPage(p,instant,nocap){
  bs.transition='none';bs.transform=to;
  lbMark();
  if(!nocap)lbCapture();
+ lbRec();lbUi();
  if(!instant&&prev&&prev!==to&&prev!=='none'){
   bs.transform=prev;void R.body.offsetWidth;
-  bs.transition='transform .32s cubic-bezier(.22,.8,.3,1)';bs.transform=to}
- lbRec();lbUi()}
+  bs.transition='transform .32s cubic-bezier(.22,.8,.3,1)';bs.transform=to}}
 function lbCapture(){
  var R=LBR;if(!R||!R.ok)return;
  var doc=R.doc,m=R.d.m,ys=[8,26,48],xs=[m+6,R.d.W/2];
  for(var a=0;a<ys.length;a++)for(var b=0;b<xs.length;b++){
   var rg=doc.caretRangeFromPoint?doc.caretRangeFromPoint(xs[b],ys[a]):null;
   if(rg&&rg.startContainer&&doc.body.contains(rg.startContainer)){var o=lbOffsetOf(doc,rg.startContainer,rg.startOffset);if(o!=null){R.off=o;return}}}}
-function lbNext(){var R=LBR;if(!R||!R.ok)return;if(R.page<R.pages-1)lbSetPage(R.page+1,false);else if(R.i<R.bk.spine.length-1)lbShow(R.i+1,{pos:0});else lbSetPage(R.page,false)}
-function lbPrev(){var R=LBR;if(!R||!R.ok)return;if(R.page>0)lbSetPage(R.page-1,false);else if(R.i>0)lbShow(R.i-1,{end:1});else lbSetPage(R.page,false)}
+function lbNext(){var R=LBR;if(!R||!R.ok)return;LBMV=1;if(R.page<R.pages-1)lbSetPage(R.page+1,false);else if(R.i<R.bk.spine.length-1)lbShow(R.i+1,{pos:0});else lbSetPage(R.page,false)}
+function lbPrev(){var R=LBR;if(!R||!R.ok)return;LBMV=1;if(R.page>0)lbSetPage(R.page-1,false);else if(R.i>0)lbShow(R.i-1,{end:1});else lbSetPage(R.page,false)}
 /* progress + header and footer */
 function lbRec(){
- var R=LBR;if(!R||!R.ok)return;
+ var R=LBR;if(!R||!R.ok||!LBMV)return;
  var f=R.pages>1?R.page/(R.pages-1):0,pct=Math.round((R.cum[R.i]+f*R.sz[R.i])/R.tot*100);
  R.pct=pct;
  var rl=lbRaw().length;LB.prog[R.bk.b.id]={c:R.i,p:+((R.off!=null&&rl?R.off/rl:R.page/R.pages)).toFixed(5),pct:pct,t:Date.now()};
@@ -2571,7 +2577,7 @@ function lbKey(e){
  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();lbNext()}
  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();lbPrev()}}
 function lbLink(a){
- var R=LBR,h=a.getAttribute('href')||'';
+ LBMV=1;var R=LBR,h=a.getAttribute('href')||'';
  if(h.charAt(0)==='#'){lbGoAnchor(h.slice(1));return}
  if(/^[a-z][a-z0-9+.-]*:/i.test(h))return;
  var cur=R.bk.spine[R.i].p,idx=R.bk.idx[lbJoin(lbDirOf(cur),h)];
@@ -2583,6 +2589,7 @@ function lbLink(a){
 function lbGoAnchor(id){var R=LBR;try{id=decodeURIComponent(id)}catch(e){}lbJump(R.i,{anchor:id})}
 /* open, show, close */
 function lbReader(b,buf){
+ LBMV=0;
  return lbParse(buf).then(function(bk){
   bk.b=b;
   var n=document.createElement('div');n.className='lb-read hide';n.id='lbr';
@@ -2650,7 +2657,7 @@ function lbCloseR(){
  if(tab==='library')render(true)}
 /* scrubber */
 function lbScrub(v,go){
- var R=LBR,x=v/1000*R.tot,k=0;
+ if(go)LBMV=1;var R=LBR,x=v/1000*R.tot,k=0;
  while(k<R.sz.length-1&&R.cum[k+1]<=x)k++;
  var f=Math.max(0,Math.min(1,(x-R.cum[k])/R.sz[k]));
  if(!go){var sl=document.getElementById('lbsl');if(sl)sl.textContent=lbTitleOf(k)+' · '+Math.round(v/10)+'%';return}
@@ -2788,6 +2795,8 @@ document.addEventListener('input',function(e){
  if(t.id==='lbfs'){LBS.fs=+t.value;lbSaveSet();cancelAnimationFrame(LBFT);LBFT=requestAnimationFrame(function(){lbApply()});return}
  if(t.id==='lbsr'&&LBR){LBR.scrub=1;lbScrub(+t.value,false)}});
 document.addEventListener('change',function(e){if(e.target&&e.target.id==='lbsr'&&LBR)lbScrub(+e.target.value,true)});
+/* letting go of the slider where it started fires no change event, so the slider would stop following page turns */
+document.addEventListener('touchend',function(e){if(e.target&&e.target.id==='lbsr'&&LBR)setTimeout(function(){if(LBR&&LBR.scrub){LBR.scrub=0;lbUi()}},300)},{passive:true});
 
 /* ---------- Recordings (meeting audio: the Drive folder "Meeting Recordings" is listed through Apps Script, files are saved on this device in pieces so a broken download can resume, played with speed control, loop, bookmarks and lock screen controls) ---------- */
 var RC={items:[],prog:{},have:{},dl:{},q:'',f:'All',cur:null,live:0,open:0,speed:2,gs:2,vid:0,fs:0,vt:0,prev:2,loop:null,rep:0,scrub:0,v:0,err:'',folder:'',pt:0,sv:0,busy:0,url:''};
@@ -3734,7 +3743,7 @@ mode='auto';document.querySelectorAll('[data-mode]').forEach(function(b){b.setAt
 if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0)navigator.serviceWorker.register("sw.js").catch(function(){});
 buildPeople();fit();render();lbInit();rcInit();setTimeout(rcPull,3500);
 pullTasks();setTimeout(askLog,1200);
-document.addEventListener('visibilitychange',function(){if(document.hidden)return;if(Math.floor((Date.now()+7*36e5)/864e5)!==TD&&!rcPlaying()){location.reload();return}pullTasks();setTimeout(askLog,500)});
+document.addEventListener('visibilitychange',function(){if(document.hidden)return;if(Math.floor((Date.now()+7*36e5)/864e5)!==TD&&!rcPlaying()&&!document.querySelector('.sheet-bg')&&!LBR&&!RC.open){location.reload();return}pullTasks();setTimeout(askLog,500)});
 /* a new day starts while the app stays open (an iPad left on the desk): reload once nothing is in progress */
 setInterval(function(){if(Math.floor((Date.now()+7*36e5)/864e5)!==TD&&!rcPlaying()&&!document.querySelector('.sheet-bg')&&!LBR&&!RC.open)location.reload()},60000);
 /* tell him when a new version of HQ was published */

@@ -761,7 +761,7 @@ function habDue(h,d){var x=String(h.days||'').toLowerCase().replace(/\s/g,'');re
 function habDone(h,d){var k=isoOf(d);return HLOG.some(function(l){return l.date===k&&l.hid===h.id})}
 function habStreak(h){var d=TD,n=0;if(!habDone(h,d))d--;for(var i=0;i<400;i++,d--){if(!habDue(h,d))continue;if(habDone(h,d))n++;else break}return n}
 function habRow(h,d){var dn_=habDone(h,d),st=habStreak(h),tm=(h.time||'').replace(':','.');
- return '<div class="task'+(dn_?' done':'')+'"><div class="ic '+(h.c||'mint')+'">'+ic(h.ic||'spark',17)+'</div><div class="tb"><b>'+esc(h.name)+'</b><small>'+(tm?tm+' · ':'')+(st?ic('flame',12)+' '+st+' days':'Starts today')+'</small></div><button class="ck" data-hab="'+esc(h.id)+'" data-hday="'+d+'" aria-label="Done"><i>'+ic('check',14)+'</i></button></div>'}
+ return '<div class="task'+(dn_?' done':'')+'"><div class="ic '+(h.c||'mint')+'">'+ic(h.ic||'spark',17)+'</div><div class="tb"><b>'+esc(h.name)+'</b><small>'+(tm?tm+' · ':'')+(st?ic('flame',12)+' '+st+(st===1?' day':' days'):'Starts today')+'</small></div><button class="ck" data-hab="'+esc(h.id)+'" data-hday="'+d+'" aria-label="Done"><i>'+ic('check',14)+'</i></button></div>'}
 function habPart(h){var x=String(h.part||'').toLowerCase();return /morn/.test(x)?'morning':/noon|lunch/.test(x)?'noon':/even|night/.test(x)?'evening':''}
 var HPARTS=[['morning','Morning habits','sun','morning'],['noon','Noon habits','noon','aft'],['evening','Evening habits','moon','eve'],['','Habits','flame','nod']];
 function habBlock(d){var due=HAB.filter(function(h){return habDue(h,d)});if(!due.length||d>TD)return '';
@@ -1376,7 +1376,7 @@ function funnel(){var c=function(f){return people.filter(f).length},st=function(
  var steps=[['Prospects',st('Namelist','Prospect','Warming Partner','Closing','Customer','TRME Active','Partner')],['Closing',st('Closing','Customer','TRME Active','Partner')],['Customer',st('Customer','TRME Active','Partner')],['Results (TRME)',st('TRME Active','Partner')],['Builder',st('Partner')]];
  return steps.map(function(x,i){var pc=i&&steps[i-1][1]?Math.round(x[1]/steps[i-1][1]*100)+'% of '+steps[i-1][0]:'';return '<div class="lt" style="margin-top:8px"><b>'+x[0]+'</b><span class="meta">'+x[1]+(pc?' · '+pc:'')+'</span></div>'}).join('')}
 function scoreP(p){if(p.st==='Not Now'||p.last===0)return null;var W={'Closing':50,'Prospect':35,'Warming Partner':30,'TRME Active':28,'Partner':20,'Customer':15,'Namelist':10,'Relationship':5},sc=W[p.st]||0,why=[],kind='',ft='Follow-up';
- if(p.next!==null&&p.next<=0){sc+=20+Math.min(-p.next,14)*2;why.push(p.next<0?'overdue '+(-p.next)+' days':'follow-up today')}
+ if(p.next!==null&&p.next<=0){sc+=20+Math.min(-p.next,14)*2;why.push(p.next<0?'overdue '+(-p.next)+(p.next===-1?' day':' days'):'follow-up today')}
  var ck=chkDue(p);if(ck){sc+=35;why.push('check-in day '+ck.day);kind='chk'+ck.day;ft='Check-in day '+ck.day}
  var bd=bdIn(p);if(bd!==null&&bd<=2){sc+=30;why.push(bd===0?'birthday today':'birthday '+(bd===1?'tomorrow':'in '+bd+' days'));if(!kind){kind='bd';ft='Birthday'}}
  var r=reo(p);if(r){sc+=25;why.push(r.rel<=0?'time to reorder':'reorder '+dueTxt(r.rel).toLowerCase());if(!kind){kind='reo';ft='Reorder'}}
@@ -1427,7 +1427,7 @@ function blindspots(){
  if(CFG.url){var PVb=null;try{PVb=pvData()}catch(e){}
   if(PVb){var ab=dn(PVb.hi),ag=ab==null?0:TD-ab;if(ag>=2)out.push({t:'Team data is '+ag+' days old',d:'Send the latest genealogy PDF to Claude',go:'team:Pulse',c:'sand',i:'chart'});
    var rk=leadRisk(PVb);if(rk.length)out.push({t:rk.length+' leader'+(rk.length>1?'s':'')+' behind pace',d:rk.slice(0,3).map(function(m){return m.n}).join(', ')+(rk.length>3?'…':''),go:'team:Pulse',c:'peach',i:'users'});
-   var cvb=convOpen();if(cvb&&cvb.un.length&&cvb.left<=60)out.push({t:cvb.un.length+' not paid for convention',d:cvb.left+' days left',go:'team:Convention',c:'sky',i:'eye'})}}
+   var cvb=convOpen();if(cvb&&cvb.un.length&&cvb.left<=60)out.push({t:cvb.un.length+' not paid for convention',d:cvb.left+(cvb.left===1?' day left':' days left'),go:'team:Convention',c:'sky',i:'eye'})}}
  if(nNo)out.push({t:nNo+' people in the pipeline with no follow-up',d:'Not shown in Today because there is no date',go:'people:No next step',c:'lav',i:'users'});
  if(reoN)out.push({t:reoN+' customers due for reorder',d:'Based on the last order and the supply you logged',go:'people:Customers',c:'mint',i:'chat'});
  return out}
@@ -1701,11 +1701,13 @@ function people_(){
 /* ---------- Team ---------- */
 var TDATA=[];try{TDATA=JSON.parse(localStorage.getItem('hq-team')||'[]')}catch(e){}buildLead();
 var THIST=[],histSel='ORG TOV';try{THIST=JSON.parse(localStorage.getItem('hq-thist')||'[]')}catch(e){}
-function pullTeam(){if(!CFG.url)return;getTab('teamdata').then(function(j){if(j.error||!j.rows)return;TDATA=j.rows.filter(function(r){return r.type});buildLead();try{localStorage.setItem('hq-team',JSON.stringify(TDATA))}catch(e){}if(!document.querySelector('.sheet-bg'))renderBg()}).catch(function(){})}
+var TERR=0;
+function pullTeam(){if(!CFG.url)return;getTab('teamdata').then(function(j){if(j.error||!j.rows){TERR=1;if(tab==='team'&&!document.querySelector('.sheet-bg'))renderBg();return}TERR=0;TDATA=j.rows.filter(function(r){return r.type});buildLead();try{localStorage.setItem('hq-team',JSON.stringify(TDATA))}catch(e){}if(!document.querySelector('.sheet-bg'))renderBg()}).catch(function(){TERR=1;if(tab==='team'&&!document.querySelector('.sheet-bg'))renderBg()})}
+function tErr(){return TERR&&CFG.url?'<div class="flag" style="margin:6px 0">Could not reach your Sheet. '+(TDATA.length?'These are the last numbers saved on this device.':'Check your connection and open Monitoring again.')+'</div>':''}
 var MONID=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function nfp(s){s=String(s==null?'':s).trim().replace(/\s/g,'');if(s==='')return null;
- if(/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(s))s=s.replace(/,/g,'');
- else if(/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(s))s=s.replace(/\./g,'').replace(',','.');
+ if(/^-?[1-9]\d{0,2}(,\d{3})+(\.\d+)?$/.test(s))s=s.replace(/,/g,'');
+ else if(/^-?[1-9]\d{0,2}(\.\d{3})+(,\d+)?$/.test(s))s=s.replace(/\./g,'').replace(',','.');
  else if(s.indexOf(',')>-1&&s.indexOf('.')<0)s=s.replace(',','.');
  var n=Number(s);return isNaN(n)?null:n}
 function nf(s){var n=nfp(s);return n===null?0:n}
@@ -1728,15 +1730,15 @@ function teamModel(){
  var tdy=isoOf(TD),live=tdy.slice(0,7)===cur,dim=new Date(+cur.slice(0,4),+cur.slice(5,7),0).getDate(),day=+tdy.slice(8,10),frac=live?day/dim:1;
  var legs=Object.keys(C).filter(function(k){return k.indexOf('leg:')===0}).sort(function(a,b){return C[b]-C[a]});
  var rows=['org','personal'].concat(legs).map(function(k){var c=C[k]||0,p=P[k]||0;
-  var pj=live&&frac>0?c/frac:c;return {k:k,n:k==='org'?'Org total':k==='personal'?'Personal (PT AHU)':k.slice(4),c:c,p:p,pj:pj,early:live&&day<4,g:p>0?c/p-1:null,gp:p>0?pj/p-1:null,min:p*(1+gm),str:p*(1+gs),nmin:c*(1+gm),nstr:c*(1+gs)}});
- var base=C.org,c0=base*cr,life=cfg.lifetime?cfg.lifetime.v:0,paths={};
+  var pj=live&&frac>0?c/frac:c;return {k:k,n:k==='org'?'Org total':k==='personal'?'Personal (PT AHU)':k.slice(4),c:c,p:p,pj:pj,early:live&&day<4,g:p>0?c/p-1:null,gp:p>0?pj/p-1:null,min:p*(1+gm),str:p*(1+gs),nmin:(live?(day<4?p:pj):c)*(1+gm),nstr:(live?(day<4?p:pj):c)*(1+gs)}});
+ var base=live?(day<4?(P.org||C.org):(frac>0?C.org/frac:C.org)):C.org,c0=base*cr,life=cfg.lifetime?cfg.lifetime.v:0,paths={};
  [['min',gm],['str',gs]].forEach(function(a){var cum=life,arr=[],yr={};
   for(var k=1;k<=120;k++){var f=Math.pow(1+a[1],k),com=c0*f,per=pAdd(cur,k),y=per.slice(0,4);cum+=com;arr.push({p:per,com:com,cum:cum});
    var o=yr[y]=yr[y]||{com:0,tov:0,n:0};o.com+=com;o.tov+=base*f;o.n++}
   paths[a[0]]={arr:arr,yr:yr}});
  var coe=[1,2,3,4,5].map(function(i){var t=cfg['coe'+i];if(!t)return null;var o={i:i,t:t.v,gy:(t.n.match(/\d{4}/)||[''])[0]};
   ['min','str'].forEach(function(s){var a=paths[s].arr,hit=null;for(var j=0;j<a.length;j++)if(a[j].cum>=t.v){hit=a[j].p;break}o[s]=hit});return o}).filter(Boolean);
- return {cur:cur,prev:prev,live:live,day:day,dim:dim,note:tov[cur]._n||'',rows:rows,gm:gm,gs:gs,cr:cr,c0:c0,life:life,lifeAt:cfg.lifetime?cfg.lifetime.p:'',paths:paths,coe:coe,coe1:cfg.coe1?cfg.coe1.v:1e6}}
+ return {base:base,cur:cur,prev:prev,live:live,day:day,dim:dim,note:tov[cur]._n||'',rows:rows,gm:gm,gs:gs,cr:cr,c0:c0,life:life,lifeAt:cfg.lifetime?cfg.lifetime.p:'',paths:paths,coe:coe,coe1:cfg.coe1?cfg.coe1.v:1e6}}
 function gStat(r){if(r.g===null)return r.c>0?['pan','New']:['pan','Empty'];if(r.early)return ['pan','Early month'];var v=r.pj;if(v>=r.str)return ['reached','Stretch pace'];if(v>=r.min)return ['track','On pace'];return r.gp<0?['urgent','Falling']:['behind','Below pace']}
 function growthChart(M){
  var cp=M.cur,gy=+((M.coe[0]&&M.coe[0].gy)||2028),n=(gy-(+cp.slice(0,4)))*12+(12-(+cp.slice(5,7)));
@@ -1770,13 +1772,13 @@ function teamGrowth(){
    (r.p>0?'<div class="trk '+(s[0]==='track'||s[0]==='pan'?'':s[0])+'"><b style="width:'+Math.min(100,r.c/r.str*100)+'%"></b><i style="left:calc('+((1+M.gm)/(1+M.gs)*100)+'% - 1px)"></i></div>':'<div style="height:6px"></div>')+
    '<div class="meta">'+num(r.c)+' of '+num(r.p)+(r.g===null?'':' · '+pct(r.g))+'</div>'+(r.p>0?'<div class="meta">Min '+num(r.min)+' · Stretch '+num(r.str)+'</div>':'')+'</div>'});
  out.push(a+'</div>');
- var b='<div class="card"><h2>Target '+pLab(nx)+'</h2><p>Calculated from the '+pLab(M.cur)+'.</p>';
+ var b='<div class="card"><h2>Target '+pLab(nx)+'</h2><p>'+(M.live?(M.day<4?'Calculated from '+pLab(M.prev)+', because '+pLab(M.cur)+' has only just started.':'Calculated from where '+pLab(M.cur)+' is heading at its pace so far.'):'Calculated from '+pLab(M.cur)+'.')+'</p>';
  M.rows.forEach(function(r){b+='<div class="tline"><b>'+esc(r.n)+'</b><small>Min '+num(r.nmin)+' · Stretch '+num(r.nstr)+'</small></div>'});
  out.push(b+'</div>');
  var gy=+((M.coe[0]&&M.coe[0].gy)||2028),yrs=Object.keys(M.paths.min.yr).filter(function(y){return +y<=gy}).sort();
- var c='<div class="card"><h2>Commission per year</h2><p>Compounding from commission '+pLab(M.cur)+' ('+usd(M.c0)+'). The yearly goal is the sum of the monthly projections.</p>';
+ var c='<div class="card"><h2>Commission per year</h2><p>Compounding from commission '+pLab(M.cur)+(M.live?' at its pace so far':'')+' ('+usd(M.c0)+'). The yearly goal is the sum of the monthly projections.</p>';
  yrs.forEach(function(y){var m=M.paths.min.yr[y],s=M.paths.str.yr[y];
-  c+='<div class="tline"><b>'+(m.n<12?MONID[12-m.n]+'-Dec '+y:y)+'</b><small>Min '+usd(m.com)+' · Stretch '+usd(s.com)+'</small><small>TOV min '+num(m.tov)+' · stretch '+num(s.tov)+'</small></div>'});
+  c+='<div class="tline"><b>'+(m.n===1?'Dec '+y:m.n<12?MONID[12-m.n]+'-Dec '+y:y)+'</b><small>Min '+usd(m.com)+' · Stretch '+usd(s.com)+'</small><small>TOV min '+num(m.tov)+' · stretch '+num(s.tov)+'</small></div>'});
  out.push(c+'</div>');
  out.push('<div class="card"><h2>Lifetime earning and COE</h2><p>Starting from '+usd(M.life)+(M.lifeAt?' per '+dLab(M.lifeAt):'')+', plus projected commission each month.</p>'+growthChart(M)+'<div class="lg"><span><i></i>Stretch +'+gs+'%</span><span><i class="m"></i>Minimum +'+gm+'%</span><span><i class="d"></i>COE1</span></div></div>');
  var e='<div class="card"><h2>When each COE is reached</h2>';
@@ -1821,7 +1823,7 @@ function teamPulse(){var P=pvData(),M=teamModel();
  var rows=[],risk=leadRisk(P);
  risk.slice(0,4).forEach(function(m){rows.push({n:m.n,t:pvSt(m,pc)==='urgent'?'Far behind pace':'Behind pace',s:num(m.v)+' of 3,000, pace line '+num(pc),wa:1})});
  if(M)M.rows.filter(function(r){return r.k.indexOf('leg:')===0&&!r.early&&r.gp!==null&&r.gp<0}).slice(0,2).forEach(function(r){rows.push({n:'Leg '+r.n,t:'Falling',s:'Projected '+num(r.pj)+' vs '+num(r.p)+' last month',wa:0})});
- var cv=convOpen();if(cv&&cv.un.length&&cv.left<=60)rows.push({n:'Convention',t:cv.un.length+' not paid',s:cv.left+' days left. '+cv.un.slice(0,4).map(function(p){return p.n}).join(', ')+(cv.un.length>4?'...':''),wa:0});
+ var cv=convOpen();if(cv&&cv.un.length&&cv.left<=60)rows.push({n:'Convention',t:cv.un.length+' not paid',s:cv.left+(cv.left===1?' day left. ':' days left. ')+cv.un.slice(0,4).map(function(p){return p.n}).join(', ')+(cv.un.length>4?'...':''),wa:0});
  var M2=mtgData();if(M2){var rc=LEAD.filter(function(m){var r=mtgCount(M2,m,'rcp');return !m.pan&&m.n!=='AJ'&&LKEY[m.n]&&r[1]&&r[0]/r[1]<.5}).length;if(rc)rows.push({n:'RCP attendance',t:rc+' leader'+(rc>1?'s':'')+' under half',s:'See the Meetings tab',wa:0})}
  var nd='<div class="card"><h2>Needs you now</h2>';
  if(!rows.length)nd+='<p>Nothing is flagged. Everyone is at or above pace.</p>';
@@ -1878,9 +1880,9 @@ function histCard(){
  if(miss.length)h+='<p class="meta" style="margin-top:6px">No file yet: day '+miss.join(', ')+'</p>';
  return h+'</div>'}
 /* ---------- Rhythm: each leader's month-to-date climb vs the team habit (3K by the 12th, 10K by month end). All numbers come from the Sheet. ---------- */
-var RH={m:'g',mo:'',open:''};try{var _rh=JSON.parse(localStorage.getItem('hq-rhythm')||'{}')||{};if(_rh.m==='l')RH.m='l';if(_rh.mo)RH.mo=String(_rh.mo)}catch(e){}
+var RH={m:'g',mo:'',open:''};try{var _rh=JSON.parse(localStorage.getItem('hq-rhythm')||'{}')||{};if(_rh.m==='l')RH.m='l'}catch(e){}
 var RMN=['January','February','March','April','May','June','July','August','September','October','November','December'];
-function rhSave(){try{localStorage.setItem('hq-rhythm',JSON.stringify({m:RH.m,mo:RH.mo}))}catch(e){}}
+function rhSave(){try{localStorage.setItem('hq-rhythm',JSON.stringify({m:RH.m}))}catch(e){}}
 function rhK(n){return n>=1000?(Math.round(n/100)/10)+'K':String(Math.round(n))}
 function rhPad(n){return ('0'+n).slice(-2)}
 function rhData(){
@@ -1940,7 +1942,7 @@ function teamRhythm(){
  if(D.months.indexOf(RH.mo)<0)RH.mo=D.months[D.months.length-1];
  var mo=RH.mo,meas=RH.m,T=rhTime(mo),rows=rhRows(D,mo,meas),n=rows.length,left=T.dim-T.td;
  var MO=RMN[+mo.slice(5,7)-1],MS=MO.slice(0,3)+' '+mo.slice(0,4);
- var done=rows.filter(function(r){return r.done}),hit=rows.filter(function(r){return r.hit3}).length,early=T.live&&T.td<12;
+ var done=rows.filter(function(r){return r.done}),hit=rows.filter(function(r){return r.hit3}).length,early=T.live&&T.td<=12;
  var title=!done.length?'No leader has reached 10K yet':done.length===1?done[0].n+' is the only leader past 10K'+(T.live?(left>0?', with '+left+(left===1?' day':' days')+' left':''):' in '+MO):done.length+' of '+n+' leaders reached 10K'+(T.live?' so far':' in '+MO);
  var lede=(early?hit+' of '+n+' leaders are already at 3,000.':hit+' of '+n+' leaders had 3,000 by the 12th.')+' '+(meas==='g'?'Counting each leader\'s own group volume (GSV).':'Counting each leader\'s whole team volume (LTSV); for the top leader that is the org total.');
  var ctl='<div class="seg" style="margin-top:12px;flex-wrap:wrap"><button class="chip" style="min-height:44px" data-rm="g" aria-pressed="'+(meas==='g')+'">Own group (GSV)</button><button class="chip" style="min-height:44px" data-rm="l" aria-pressed="'+(meas==='l')+'">Whole team (LTSV)</button></div>';
@@ -1991,7 +1993,7 @@ function teamMeet(){var P=pvData(),M=mtgData();
  a+='</div>';
  var pc=P?pvPace(P).pc:pacePersonal();
  var cf=P?rows.filter(function(x){return !x.m.pan&&!x.nk&&x.r[1]&&x.r[0]/x.r[1]<.5&&x.m.v<pc}):[];
- var b='<div class="card"><h2>Call first</h2><p>Rarely attends RCP and volume is still under pace.'+(P?'':' Volume data is missing, so this list is empty.')+'</p>'+(cf.length?cf.map(function(x,i){var m=x.m;return '<div class="lrow'+(i?'':' first')+'"><div class="lt"><b>'+esc(m.n)+'</b><button class="chip" data-wa="'+esc(m.n)+'">'+ic('send',14)+'Chat</button></div><div class="meta">'+num(m.v)+' volume · attended RCP '+x.r[0]+' of '+x.r[1]+'</div></div>'}).join(''):'<div class="meta">None, everyone attends enough or is above pace.</div>')+'</div>';
+ var b='<div class="card"><h2>Call first</h2><p>Rarely attends RCP and volume is still under pace.'+(P?'':' Volume data is missing, so this list is empty.')+'</p>'+(cf.length?cf.map(function(x,i){var m=x.m;return '<div class="lrow'+(i?'':' first')+'"><div class="lt"><b>'+esc(m.n)+'</b><button class="chip" style="min-height:44px" data-wa="'+esc(m.n)+'">'+ic('send',14)+'Chat</button></div><div class="meta">'+num(m.v)+' volume · attended RCP '+x.r[0]+' of '+x.r[1]+'</div></div>'}).join(''):'<div class="meta">None, everyone attends enough or is above pace.</div>')+'</div>';
  return [a,b]}
 function convData(){
  var meta=null,ppl=[];
@@ -2000,7 +2002,7 @@ function convData(){
 function teamConv(){var C=convData();
  if(!C)return ['<div class="card"><h2>Convention</h2><p>No convention data in your Sheet yet (teamdata tab, rows of type conv). Ask me to pull it from ST Monitoring.</p></div>','','',''];
  var mt=C.meta,st=C.ppl.filter(function(p){return p.tr==='st26'}),mv=C.ppl.filter(function(p){return p.tr==='mvp'}),paid=st.filter(function(p){return p.paid}).length;
- var t=isoOf(TD),dd=mt.start?Math.round((new Date(mt.start+'T00:00:00')-new Date(t+'T00:00:00'))/864e5):NaN,left=isNaN(dd)?'Date missing':dd>0?dd+' days':(t<=mt.end?'In progress':'Done');
+ var t=isoOf(TD),dd=mt.start?Math.round((new Date(mt.start+'T00:00:00')-new Date(t+'T00:00:00'))/864e5):NaN,left=isNaN(dd)?'Date missing':dd>0?dd+(dd===1?' day':' days'):(t<=mt.end?'In progress':'Done');
  var names=function(l){return '<div class="names">'+l.map(function(p){return '<span'+(p.paid?' class="paid"':'')+'>'+esc(p.n)+'</span>'}).join('')+'</div>'};
  var unp=st.filter(function(p){return !p.paid});
  var out=['<div class="card"><h2>'+esc(mt.name||'Convention')+'</h2><p>'+dLab(mt.start)+' to '+dLab(mt.end)+', '+esc(mt.city||'')+(mt.tier?' · '+esc(mt.tier):'')+'</p><div class="tiles" style="margin-top:10px;grid-template-columns:1fr 1fr"><div class="tile"><small>Days left</small><b>'+left+'</b></div><div class="tile"><small>Paid</small><b>'+paid+' of '+st.length+'</b></div></div></div>'].concat(unp.length?['<div class="card"><h2>Not paid yet ('+unp.length+')</h2>'+names(unp)+'</div>']:[]);
@@ -2033,8 +2035,8 @@ function team(){
  h+='<div class="hrow"><h1>Monitoring</h1><small>'+(M?pLab(M.cur):'')+'</small></div><p class="sub">PT. Alvacy Hana Utama</p>';
  if(wide()){
   var g=teamGrowth(),v=teamVolume(),rt=teamRhythm(),m=teamMeet(),c=teamConv(),pl=teamPulse();
-  var PV=pvData();return h+'<div style="margin:6px 0">'+(PV?fresh(PV):'<span class="meta">No genealogy data yet</span>')+'</div>'+pl[0]+'<div class="tgrid">'+pl.slice(1).concat([v[0],v[1]].concat(rt.length>4?[rt[0],rt[1],rt[3],rt[2],rt[4]]:rt,[m[0],m[1]]).concat(c,[teamRep()]),g).join('')+'</div>'}
- {var PV=pvData();h+='<div style="margin:6px 0">'+(PV?fresh(PV):'<span class="meta">No genealogy data yet</span>')+'</div>'}
+  var PV=pvData();return h+tErr()+'<div style="margin:6px 0">'+(PV?fresh(PV):'<span class="meta">No genealogy data yet</span>')+'</div>'+pl[0]+'<div class="tgrid">'+pl.slice(1).concat(v.filter(Boolean).concat(rt.length>4?[rt[0],rt[1],rt[3],rt[2],rt[4]]:rt,[m[0],m[1]]).concat(c,[teamRep()]),g).join('')+'</div>'}
+ {var PV=pvData();h+=tErr()+'<div style="margin:6px 0">'+(PV?fresh(PV):'<span class="meta">No genealogy data yet</span>')+'</div>'}
  h+='<div class="seg">'+tabs.map(function(t){return '<button class="chip" data-tt="'+t+'" aria-pressed="'+(teamTab===t)+'">'+t+'</button>'}).join('')+'</div>';
  if(teamTab==='Pulse')return h+teamPulse().join('');
  if(teamTab==='Long game')return h+teamGrowth().join('');
@@ -2054,16 +2056,15 @@ function ctDetail(){
  if(c.par)h+='<p>Spin-off of "'+esc(ctById(c.par).t)+'"</p>';
  h+='<div class="lbl" style="margin-top:14px">Status</div><div class="chips" style="flex-wrap:wrap;margin-top:6px">'+CSTS.map(function(s){return '<button class="chip" style="height:32px;padding:0 11px;font-size:12px" data-cmove="'+s+'" aria-pressed="'+(c.st===s)+'">'+s+'</button>'}).join('')+'</div></div>';
  if(c.kids)h+='<div class="card"><h2>Spin-offs</h2>'+c.kids.map(function(k,i){var x=ctById(k);return '<div class="lrow'+(i?'':' first')+'"><div class="lt"><b>'+esc(x.t)+'</b><span class="cs pan">'+x.st+'</span></div></div>'}).join('')+'</div>';
- if(c.type==='YouTube')h+='<div class="card"><h2>Editor hand-off</h2><p>Drive folder ready'+(c.due?', due '+c.due:'')+'</p></div>';
- h+='<div class="card"><h2>Write and record</h2></div>';
+ if(c.due)h+='<div class="card"><h2>Deadline</h2><p>'+esc(c.due)+'</p></div>';
  return h}
 function ctBoard(){
  var h='<div class="board">'+CSTS.map(function(s){var L=CT.filter(function(c){return c.st===s});return '<div class="col"><h3><span>'+s+'</span><span>'+L.length+'</span></h3>'+L.map(ccard).join('')+'</div>'}).join('')+'</div>';
  return h}
 function ctSchedule(){
- var days=['Mon 2','Tue 3','Wed 4','Thu 5','Fri 6','Sat 7','Sun 8'];
+ var mon=TD-((new Date(TD*864e5).getUTCDay()+6)%7),DW=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],days=DW.map(function(w,i){var x=new Date((mon+i)*864e5);return w+' '+x.getUTCDate()+' '+MONID[x.getUTCMonth()]});
  return '<div class="sch">'+days.map(function(d,i){var L=CT.filter(function(c){return c.pub===i});
-  return '<div class="sd"><h3>'+d+' Nov</h3>'+L.map(function(c){return '<button class="cc" data-ct="'+c.id+'"><span class="tg '+TGC[c.type]+'">'+esc(c.type)+'</span><b style="margin-top:6px">'+esc(c.t)+'</b><small>'+c.at+'</small></button>'}).join('')+'</div>'}).join('')+'</div>'}
+  return '<div class="sd"><h3>'+d+'</h3>'+L.map(function(c){return '<button class="cc" data-ct="'+c.id+'"><span class="tg '+TGC[c.type]+'">'+esc(c.type)+'</span><b style="margin-top:6px">'+esc(c.t)+'</b><small>'+c.at+'</small></button>'}).join('')+'</div>'}).join('')+'</div>'}
 function content(){
  var top='<div class="top"><div class="stats"><span style="color:var(--mute)">One video, all its spin-offs</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button><button data-add="today" aria-label="Add">'+ic('plus',22)+'</button></div></div><div class="hrow"><h1>Content</h1></div>'+(CFG.url?'':'<span class="sample">Sample data</span>');
  if(CFG.url&&!wide()){var ideas=CT.filter(function(c){return c.st==='Idea'});return top+'<div class="gp"><span class="gpb nod">'+ic('spark',16)+'Capture ideas</span></div><div class="card" style="margin-top:0"><div class="search" style="position:static;padding:0"><label><input id="idea" type="text" placeholder="New idea, keep it short"><button data-idea="1" aria-label="Save idea" style="color:var(--ink);width:44px;height:44px;display:grid;place-items:center;margin:-12px -12px -12px 0">'+ic('plus',20)+'</button></label></div>'+(ideas.length?ideas.map(function(c){return '<div class="tline"><b>'+esc(c.t)+'</b></div>'}).join(''):'<p class="meta" style="margin:10px 0 0">Still empty. Write your first idea above.</p>')+'</div>'}

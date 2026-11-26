@@ -673,7 +673,7 @@ if(CFG.url)tasks=[];
 try{var _t=JSON.parse(localStorage.getItem('hq-tasks2')||'null');if(_t&&(_t.length||CFG.url))tasks=_t}catch(e){}
 function setSync(s){syncState=s;var d=document.getElementById('sdot');if(d){d.dataset.s=s;d.title={ok:'Saved',err:'Not synced yet',idle:'Syncing',off:'Only on this device'}[s]}}
 function normPart(p,dated){p=String(p||'').toLowerCase().trim();if(p==='morning'||p==='afternoon'||p==='evening')return p;return dated?'morning':undefined}
-var idSeq=0;function normTask(r){var dd=r.date?dn(r.date):null;return {id:Number(r.id)||(Date.now()+(idSeq++)),t:r.t,day:dd!=null?dd:(r.day===''||r.day==null||isNaN(Number(r.day)))?null:Number(r.day),part:normPart(r.part,dd!=null||(r.day!==''&&r.day!=null&&!isNaN(Number(r.day)))),dur:r.dur||undefined,at:r.at||undefined,ic:r.ic||'spark',c:r.c||'sand',ev:r.ev||undefined,go:r.go||undefined,done:r.done==='true'||r.done===true}}
+var idSeq=0;function normTask(r){var dd=r.date?dn(r.date):null;if(dd==null&&typeof r.day==='string'&&/[-\s]/.test(r.day))dd=dn(r.day);return {id:Number(r.id)||(Date.now()+(idSeq++)),t:r.t,day:dd!=null?dd:(r.day===''||r.day==null||isNaN(Number(r.day)))?null:Number(r.day),part:normPart(r.part,dd!=null||(r.day!==''&&r.day!=null&&!isNaN(Number(r.day)))),dur:r.dur||undefined,at:r.at||undefined,ic:r.ic||'spark',c:r.c||'sand',ev:r.ev||undefined,go:r.go||undefined,done:r.done===true||/^(true|1|yes)$/i.test(String(r.done==null?'':r.done).trim())}}
 function pushTasks(){if(!CFG.url)return;setSync('idle');fetch(CFG.url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({token:CFG.token,name:'tasks',rows:tasks})}).then(function(r){return r.json()}).then(function(j){setSync(j.ok?'ok':'err')}).catch(function(){setSync('err')})}
 var TGL=[];try{TGL=JSON.parse(localStorage.getItem('hq-tglog')||'[]')}catch(e){}
 function pullTg(){getTab('tglog').then(function(j){if(j.error||!j.rows)return;TGL=j.rows.slice(-20);try{localStorage.setItem('hq-tglog',JSON.stringify(TGL))}catch(e){}}).catch(function(){})}
@@ -717,7 +717,11 @@ var T3=[];try{T3=JSON.parse(localStorage.getItem('hq-top3')||'[]')}catch(e){}
 function saveTop3(){PEND.top3=true;try{localStorage.setItem('hq-top3',JSON.stringify(T3))}catch(e){}if(!CFG.url)return;setSync('idle');postTab('top3',T3).then(function(j){setSync(j.ok?'ok':'err')}).catch(function(){setSync('err')})}
 function pullTop3(){if(!CFG.url)return;getTab('top3').then(function(j){if(j.error||!j.rows)return;T3=j.rows.filter(function(r){return r.date&&r.pid});try{localStorage.setItem('hq-top3',JSON.stringify(T3))}catch(e){}if(!document.querySelector('.sheet-bg'))renderBg()}).catch(function(){})}
 var pushP=null;
-function dn(s){var m=String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?Math.floor(Date.UTC(+m[1],+m[2]-1,+m[3])/864e5):null}
+/* dates are text yyyy-mm-dd; rows that were typed as real dates in the Sheet come back like "Tue Oct 13 2026 00:00:00 GMT+0700", read those too */
+var DNMON=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+function dn(s){s=String(s||'');var m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);if(m)return Math.floor(Date.UTC(+m[1],+m[2]-1,+m[3])/864e5);
+ m=s.match(/^(?:[A-Za-z]{3},? )?([A-Za-z]{3}) (\d{1,2}),? (\d{4})/);if(m){var i=DNMON.indexOf(m[1].toLowerCase());if(i>-1)return Math.floor(Date.UTC(+m[3],i,+m[2])/864e5)}return null}
+function dIso(s){var d=dn(s);return d==null?'':isoOf(d)}
 function isoOf(d){return new Date(d*864e5).toISOString().slice(0,10)}
 function buildPeople(){if(!CFG.url)return;people=RAW.map(function(r,i){if(!r.id)r.id=String(r.name||'p').toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+i;var nx=dn(r.nextDate),lc=dn(r.lastContact),lo=dn(r.lastOrder);return {id:i,n:String(r.name||'').trim()||'No name',st:r.stage,next:nx==null?null:nx-TD,last:lc==null?9999:TD-lc,ord:lo==null?null:TD-lo,note:r.nextAction||r.notes||'',tags:r.tags||'',phone:normPhone(r.phone),ig:normIg(r.ig),raw:r}})}
 function savePeople(){PEND.people=true;try{localStorage.setItem('hq-people',JSON.stringify(RAW))}catch(e){}buildPeople();clearTimeout(pushP);pushP=setTimeout(function(){if(!CFG.url)return;setSync('idle');fetch(CFG.url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({token:CFG.token,name:'people',rows:RAW})}).then(function(r){return r.json()}).then(function(j){setSync(j.ok?'ok':'err')}).catch(function(){setSync('err')})},800)}
@@ -1014,7 +1018,7 @@ function parseNameLines(txt){
  out.bad=bad;return out}
 function normIg(s){var v=String(s||'').trim().replace(/^https?:\/\//i,'').replace(/^www\./i,'').replace(/^instagram\.com\//i,'').replace(/[?#].*$/,'').replace(/^@+/,'').replace(/\/+$/,'');return v.replace(/[^A-Za-z0-9._]/g,'')}
 function normPhone(s){var d=String(s||'').replace(/[^0-9]/g,'');if(d.indexOf('620')===0)d='62'+d.slice(3);else if(d.indexOf('0')===0)d='62'+d.slice(1);else if(d.indexOf('8')===0)d='62'+d;return d}
-function sparkN(){return TLOG.filter(function(x){return x.date===isoOf(TD)}).length}
+function sparkN(){var t=isoOf(TD);return TLOG.filter(function(x){return dIso(x.date)===t}).length}
 function toastU(m,fn){var d=document.createElement('div');d.className='toast';d.appendChild(document.createTextNode(m));var b=document.createElement('button');b.className='un';b.textContent='Undo';d.appendChild(b);FR.appendChild(d);var t=setTimeout(function(){d.remove()},5200);b.onclick=function(){clearTimeout(t);d.remove();fn();haptic()}}
 function contactDone(p,o){o=o||{};var r=p.raw;if(!r){toast('Connect the Sheet first so the contact is saved');return null}
  var prev={lc:r.lastContact||'',nd:r.nextDate||''},nd=dn(r.nextDate);
@@ -1043,7 +1047,7 @@ var PFIL='All',PLST='',QORD=null,SENT={},SENTU={},QL={},FIX={ids:[],i:0},PILE_DA
 var PRE={'Ordered':7,'Replied':3,'No reply':2,'Meeting set':1,'Said yes':7,'Not now':30};
 function legacyView(v){var m={'Follow-up':['Queue'],'No next step':['Everyone','No next step'],'TRME':['Everyone','TRME Active'],'Pipeline':['Everyone','Prospect'],'Customers':['Everyone','Customer'],'Promo':['Everyone','Buyers'],'All':['Everyone','All']}[v]||[v];pview=m[0];if(m[1])PFIL=m[1];QORD=null;SENT={};SENTU={}}
 function byname(a,b){return a.n<b.n?-1:1}
-function contactedToday(){var s={},d=isoOf(TD);TLOG.forEach(function(x){if(x.date===d)s[x.pid]=1});return Object.keys(s).length}
+function contactedToday(){var s={},d=isoOf(TD);TLOG.forEach(function(x){if(dIso(x.date)===d)s[x.pid]=1});return Object.keys(s).length}
 function newNamesToday(){var d=isoOf(TD);return RAW.filter(function(r){return r.added===d}).length}
 function isPile(p){return p.next!==null&&p.next<-PILE_DAYS&&['Namelist','Relationship','Prospect'].indexOf(p.st)>-1&&!isWait(p)}
 function dueQ(p){return grpOK(p)&&!isWait(p)&&p.st!=='Not Now'&&p.next!==null&&p.next<=0&&!isPile(p)}
@@ -1348,8 +1352,8 @@ function numStrip(){if(!CFG.url)return '';var P=null,M=null;try{P=pvData();M=tea
  return h}
 function tgt(k,def){var r=TDATA.filter(function(x){return x.type==='cfg'&&x.scope===k})[0],v=r?nf(r.value):0;return v>0?v:def}
 function isInv(x){return String(x.type||'').indexOf('Invite')===0}
-function dayAct(t){var L=TLOG.filter(function(x){return x.date===t}),inv=L.filter(isInv).length,names=people.filter(function(p){return p.raw&&p.raw.created===t}).length;return {names:names,inv:inv,fu:L.length-inv,all:L.length}}
-function streakN(){var set={};TLOG.forEach(function(x){set[x.date]=1});var d=TD,n=0;if(!set[isoOf(d)])d=TD-1;while(set[isoOf(d)]&&n<400){n++;d--}return n}
+function dayAct(t){var L=TLOG.filter(function(x){return dIso(x.date)===t}),inv=L.filter(isInv).length,names=people.filter(function(p){return p.raw&&(p.raw.added===t||p.raw.created===t)}).length;return {names:names,inv:inv,fu:L.length-inv,all:L.length}}
+function streakN(){var set={};TLOG.forEach(function(x){set[dIso(x.date)]=1});var d=TD,n=0;if(!set[isoOf(d)])d=TD-1;while(set[isoOf(d)]&&n<400){n++;d--}return n}
 function scoreSheet(){var a=dayAct(isoOf(TD)),T={names:tgt('target_names',5),fu:tgt('target_follow',10),inv:tgt('target_invite',3)};
  var row=function(l,v,t){return '<div class="lrow first" style="border-top:0"><div class="lt"><b>'+l+'</b><span class="meta">'+v+' / '+t+'</span></div><div class="trk"><b style="width:'+Math.min(100,v/t*100)+'%"></b></div></div>'};
  var wk='';for(var i=6;i>=0;i--){var dd=isoOf(TD-i),c=dayAct(dd).all;wk+='<span style="flex:1;text-align:center"><i style="display:block;margin:0 auto 4px;width:60%;border-radius:4px;background:var(--chart);height:'+(4+Math.min(c,20)*3)+'px"></i><small class="meta">'+WD[wdOf(TD-i)][0]+' '+c+'</small></span>'}
@@ -3613,7 +3617,7 @@ document.addEventListener('click',function(e){
  if(d.lmtick){var kt=d.lmtick.split('|'),lt=lById(kt[0]),mt=mOf(kt[0],kt[1]),pt=byPid(kt[1]);if(!lt||!mt||!pt)return;
   var lrow=el.closest('.task,.qrow');
   if(mDone(mt)){
-   var hadT=mt.tid&&pt.raw&&TLOG.some(function(x){return x.id===mt.tid&&x.date===isoOf(TD)});
+   var hadT=mt.tid&&pt.raw&&TLOG.some(function(x){return x.id===mt.tid&&dIso(x.date)===isoOf(TD)});
    if(hadT)undoContact({r:pt.raw,prev:{lc:mt.plc||'',nd:mt.pnd||''},e:{id:mt.tid}});
    mt.done='';mt.doneDate='';mt.tid='';mt.plc='';mt.pnd='';saveX('listmembers');haptic(false);render(true);toast('Unticked '+pt.n);return}
   var lu2=null;

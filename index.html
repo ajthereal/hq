@@ -258,6 +258,11 @@ h1{font-family:var(--display);font-weight:700;font-size:36px;line-height:1.02;ma
 .card p{margin:3px 0 0;color:var(--mute);font-size:12.5px}
 .flag{border-radius:16px;background:var(--late-bg);color:var(--late-ink);padding:10px 13px;font-size:13px;margin-top:10px}
 .tgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start;margin-top:10px}
+.rp{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--card2);color:var(--mute);white-space:nowrap;font-variant-numeric:tabular-nums}.rp.ok{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}.rp.warn{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+.rgrid{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:10px}@media(min-width:700px){.rgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(min-width:1000px){.rgrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.rmini{background:transparent;border:1px solid var(--line);border-radius:16px;padding:10px 10px 4px;text-align:left;color:inherit;font:inherit;min-height:44px;width:100%;cursor:pointer}.rmini.big{grid-column:1/-1}.rmini .lt b{font-size:14px}
+.rtab{border-collapse:collapse;width:100%;font-size:13px}.rtab th,.rtab td{padding:8px 6px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}.rtab th:first-child,.rtab td:first-child{text-align:left}.rtab th{font-weight:600;color:var(--mute);font-size:12px;border-bottom:1px solid var(--line)}.rtab td.h{border-radius:6px}
+.rgap{display:grid;gap:3px;margin:10px 0 6px}.rgap span{height:22px;border-radius:4px;background:var(--card2)}.rgap span.y{background:var(--chart)}.rgap span.t{outline:2px solid var(--ink);outline-offset:-2px}
 .tgrid .card{margin-top:0}.tgrid .full{grid-column:1/-1}
 svg.chart{width:100%;height:auto;margin-top:8px}
 .chart text{fill:var(--mute);font-size:11px;font-family:var(--body)}
@@ -1804,6 +1809,99 @@ function histCard(){
  var miss=[];for(var d=1;d<=dim;d++){var dd=mon+'-'+('0'+d).slice(-2);if(days.indexOf(dd)<0&&d<=+days[days.length-1].slice(8,10))miss.push(d)}
  if(miss.length)h+='<p class="meta" style="margin-top:6px">No file yet: day '+miss.join(', ')+'</p>';
  return h+'</div>'}
+/* ---------- Rhythm: each leader's month-to-date climb vs the team habit (3K by the 12th, 10K by month end). All numbers come from the Sheet. ---------- */
+var RH={m:'g',mo:'',open:''};try{var _rh=JSON.parse(localStorage.getItem('hq-rhythm')||'{}')||{};if(_rh.m==='l')RH.m='l';if(_rh.mo)RH.mo=String(_rh.mo)}catch(e){}
+var RMN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+function rhSave(){try{localStorage.setItem('hq-rhythm',JSON.stringify({m:RH.m,mo:RH.mo}))}catch(e){}}
+function rhK(n){return n>=1000?(Math.round(n/100)/10)+'K':String(Math.round(n))}
+function rhPad(n){return ('0'+n).slice(-2)}
+function rhData(){
+ var R={},ORG={},LV={},root='';
+ var put=function(d,k,g,l){if(!/^\d{4}-\d\d-\d\d$/.test(d))return;var mo=d.slice(0,7),dd=+d.slice(8,10);if(!dd)return;if(!R[mo])R[mo]={};if(!R[mo][dd])R[mo][dd]={};R[mo][dd][k]={g:g,l:l}};
+ THIST.forEach(function(r){var d=String(r.date||'').slice(0,10),k=String(r.name||'').toUpperCase();if(!k)return;
+  if(k==='ORG TOV'){if(!/^\d{4}-\d\d-\d\d$/.test(d))return;var mo=d.slice(0,7);if(!ORG[mo])ORG[mo]={};ORG[mo][+d.slice(8,10)]=nf(r.gsv);put(d,k,nf(r.gsv),nf(r.gsv))}
+  else put(d,k,nf(r.gsv),nf(r.ltsv))});
+ TDATA.forEach(function(r){if(r.type!=='snap')return;var d=String(r.period||'').slice(0,10),k=String(r.scope||'').toUpperCase(),j={};if(!k)return;
+  try{j=JSON.parse(r.note||'{}')||{}}catch(e){j={}}
+  put(d,k,nf(r.value),nf(j.ltsv));if(!LV[d])LV[d]={};LV[d][k]=j.lvl;if(j.lvl===0)root=k});
+ if(!root&&LKEY['AJ'])root=LKEY['AJ'];
+ return {R:R,ORG:ORG,LV:LV,root:root,months:Object.keys(R).sort()}}
+function rhOrgAt(D,mo,d){
+ if(D.ORG[mo]&&D.ORG[mo][d]!=null)return D.ORG[mo][d];
+ var e=D.R[mo]&&D.R[mo][d]&&D.R[mo][d][D.root],lv=D.LV[mo+'-'+rhPad(d)];
+ if(!e||!lv)return null;var s=e.g;Object.keys(lv).forEach(function(k){if(lv[k]===1&&D.R[mo][d][k])s+=D.R[mo][d][k].l});return s}
+function rhSeries(D,mo,key,meas){
+ var out=[],days=Object.keys(D.R[mo]||{}).map(Number).sort(function(a,b){return a-b});
+ days.forEach(function(d){var e=D.R[mo][d][key],v;
+  if(key===D.root&&meas==='l'){var o=rhOrgAt(D,mo,d);if(o!=null)v=o;else if(e)v=e.l;else return}
+  else{if(!e)return;v=meas==='g'?e.g:e.l}
+  out.push({d:d,v:v})});
+ return out}
+function rhAt(pts,d){var v=0;pts.forEach(function(p){if(p.d<=d)v=p.v});return v}
+function rhTime(mo){var t=isoOf(TD),dim=new Date(+mo.slice(0,4),+mo.slice(5,7),0).getDate(),live=t.slice(0,7)===mo;return {dim:dim,live:live,td:live?+t.slice(8,10):dim}}
+function rhPrev(mo){var y=+mo.slice(0,4),m=+mo.slice(5,7)-1;if(m<1){m=12;y--}return y+'-'+rhPad(m)}
+function rhRows(D,mo,meas){
+ var T=rhTime(mo),rows=[];
+ LEAD.forEach(function(m){var key=LKEY[m.n];if(!key)return;
+  var pts=rhSeries(D,mo,key,meas),now=rhAt(pts,T.td),by12=rhAt(pts,12);
+  rows.push({n:m.n,key:key,pts:pts,prev:rhSeries(D,rhPrev(mo),key,meas),now:now,by12:by12,hit3:by12>=3000,done:now>=10000})});
+ return rows.sort(function(a,b){return b.now-a.now})}
+function rhChart(r,mo,T,big){
+ var W=big&&wide()?700:340,H=big?(wide()?300:260):170,L=38,Rr=10,T0=12,B=22;
+ var line=function(pts,cap){var p=pts.filter(function(q){return q.d<=cap});if(!p.length||p[0].d>1)p.unshift({d:1,v:0});return p};
+ var cur=line(r.pts,T.td),pv=line(r.prev.map(function(q){return {d:Math.min(q.d,T.dim),v:q.v}}).filter(function(q,i,arr){return i===arr.length-1||arr[i+1].d!==q.d}),T.dim);
+ var top=Math.max.apply(null,[10000].concat(cur.map(function(p){return p.v}),pv.map(function(p){return p.v})))*1.08;
+ var step=top>40000?20000:top>20000?10000:5000;
+ var X=function(d){return L+(d-1)/(T.dim-1)*(W-L-Rr)},Y=function(v){return T0+(1-v/top)*(H-T0-B)};
+ var path=function(p){return p.map(function(q,i){return (i?'L':'M')+X(q.d).toFixed(1)+' '+Y(q.v).toFixed(1)}).join(' ')};
+ var s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(r.n)+' volume by day">';
+ for(var v=0;v<=top;v+=step)s+='<line class="g" x1="'+L+'" x2="'+(W-Rr)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'"/><text x="'+(L-6)+'" y="'+(Y(v)+4).toFixed(1)+'" text-anchor="end">'+rhK(v)+'</text>';
+ s+='<line class="p" x1="'+L+'" x2="'+(W-Rr)+'" y1="'+Y(10000).toFixed(1)+'" y2="'+Y(10000).toFixed(1)+'"/>';
+ s+='<line class="g" x1="'+X(12).toFixed(1)+'" x2="'+X(12).toFixed(1)+'" y1="'+T0+'" y2="'+(H-B)+'"/>';
+ [[1,'start'],[12,'middle'],[T.dim,'end']].forEach(function(a){s+='<text x="'+X(a[0]).toFixed(1)+'" y="'+(H-5)+'" text-anchor="'+a[1]+'">'+a[0]+'</text>'});
+ if(r.prev.length)s+='<path d="'+path(pv)+'" fill="none" stroke="var(--mute)" stroke-opacity=".4" stroke-width="2" stroke-linejoin="round"/>';
+ s+='<path class="a" d="'+path(cur)+'"/>';
+ r.pts.filter(function(q){return q.d<=T.td}).forEach(function(q){s+='<circle cx="'+X(q.d).toFixed(1)+'" cy="'+Y(q.v).toFixed(1)+'" r="2.8" fill="var(--chart)"/>'});
+ s+='<circle cx="'+X(12).toFixed(1)+'" cy="'+Y(3000).toFixed(1)+'" r="5" fill="'+(r.hit3?'var(--ok)':'var(--card)')+'" stroke="'+(r.hit3?'var(--ok)':'var(--warn)')+'" stroke-width="2"/>';
+ return s+'</svg>'}
+function teamRhythm(){
+ var D=rhData(),msg=function(t){return ['<div class="card"><h2>Rhythm</h2><p>'+t+'</p></div>']};
+ if(!LEAD.length)return msg('No leaders in the Sheet yet (teamdata rows of type lead).');
+ if(!LEAD.some(function(m){return LKEY[m.n]}))return msg('No leaders with a key in the Sheet yet (teamdata rows of type lead need a key).');
+ if(!D.months.length)return msg('No daily numbers in the Sheet yet. They come from the morning nuskin.com pull and the teamhist tab.');
+ if(D.months.indexOf(RH.mo)<0)RH.mo=D.months[D.months.length-1];
+ var mo=RH.mo,meas=RH.m,T=rhTime(mo),rows=rhRows(D,mo,meas),n=rows.length,left=T.dim-T.td;
+ var MO=RMN[+mo.slice(5,7)-1],MS=MO.slice(0,3)+' '+mo.slice(0,4);
+ var done=rows.filter(function(r){return r.done}),hit=rows.filter(function(r){return r.hit3}).length,early=T.live&&T.td<12;
+ var title=!done.length?'No leader has reached 10K yet':done.length===1?done[0].n+' is the only leader past 10K'+(T.live?(left>0?', with '+left+(left===1?' day':' days')+' left':''):' in '+MO):done.length+' of '+n+' leaders reached 10K'+(T.live?' so far':' in '+MO);
+ var lede=(early?hit+' of '+n+' leaders are already at 3,000.':hit+' of '+n+' leaders had 3,000 by the 12th.')+' '+(meas==='g'?'Counting each leader\'s own group volume (GSV).':'Counting each leader\'s whole team volume (LTSV); for the top leader that is the org total.');
+ var ctl='<div class="seg" style="margin-top:12px;flex-wrap:wrap"><button class="chip" style="min-height:44px" data-rm="g" aria-pressed="'+(meas==='g')+'">Own group (GSV)</button><button class="chip" style="min-height:44px" data-rm="l" aria-pressed="'+(meas==='l')+'">Whole team (LTSV)</button></div>';
+ if(D.months.length>1)ctl+='<div class="seg" style="margin-top:6px;flex-wrap:wrap">'+D.months.slice().reverse().map(function(x){return '<button class="chip" style="min-height:44px" data-rmo="'+x+'" aria-pressed="'+(x===mo)+'">'+RMN[+x.slice(5,7)-1].slice(0,3)+' '+x.slice(0,4)+'</button>'}).join('')+'</div>';
+ var a='<div class="card full"><h2>'+esc(title)+'</h2><p>'+esc(lede)+'</p>'+ctl+'</div>';
+ var b='<div class="card"><h2>Who\'s on track</h2><p>'+MS+'. Bar to 10K, the mark is 3,000.</p>';
+ rows.forEach(function(r,i){
+  var p3=early?(r.hit3?'<span class="rp ok">3K done</span>':'<span class="rp">'+num(3000-r.now)+' to go by the 12th</span>'):(r.hit3?'<span class="rp ok">3K by the 12th</span>':'<span class="rp warn">Missed 3K by the 12th ('+rhK(r.by12)+')</span>');
+  var pace=r.done?'10K done':(T.live&&left>0?'needs '+num((10000-r.now)/left)+' a day':num(10000-r.now)+' short of 10K');
+  b+='<div class="lrow'+(i?'':' first')+'"><div class="lt"><b>'+esc(r.n)+'</b><span class="meta" style="font-size:14px;font-weight:700;color:var(--ink)">'+num(r.now)+'</span></div><div class="trk'+(r.done?' reached':'')+'"><b style="width:'+Math.min(100,r.now/100)+'%"></b><i style="left:calc(30% - 1px)"></i></div><div class="mt">'+p3+'<span class="rp'+(r.done?' ok':'')+'">'+esc(pace)+'</span></div></div>'});
+ b+='</div>';
+ var c='<div class="card full"><h2>The climb, day by day</h2><p>'+MO+' in blue, the month before in grey. Dashed line is 10K, the circle is 3,000 on the 12th.</p><div class="rgrid">';
+ rows.forEach(function(r){var open=RH.open===r.key;
+  c+='<button class="rmini'+(open?' big':'')+'" data-rop="'+esc(r.key)+'" aria-expanded="'+open+'"><div class="lt"><b>'+esc(r.n)+'</b><span class="meta">'+num(r.now)+'</span></div>'+rhChart(r,mo,T,open)+'</button>'});
+ c+='</div><p class="meta" style="margin-top:8px">Tap a leader to open their chart full width. Dots are days HQ has a reading.</p></div>';
+ var cuts=[[1,7],[8,12],[13,20],[21,T.dim]],lab=['1–7','8–12','13–20','21–'+T.dim];
+ var d='<div class="card"><h2>Monthly rhythm</h2><p>Share of each leader\'s '+MO+(T.live?' so far':'')+' that came in each stretch of the month.</p><div style="overflow-x:auto;margin-top:8px"><table class="rtab"><thead><tr><th>Leader</th>'+lab.map(function(l){return '<th>Day '+l+'</th>'}).join('')+'</tr></thead><tbody>';
+ rows.forEach(function(r){var tot=r.now;
+  d+='<tr><td>'+esc(r.n)+'</td>'+cuts.map(function(cu){var x=tot>0?Math.max(0,(rhAt(r.pts,Math.min(cu[1],T.td))-rhAt(r.pts,cu[0]-1))/tot):0;
+   return '<td class="h" style="background:color-mix(in srgb,var(--chart) '+Math.round(x*70)+'%,transparent)">'+(tot>0?Math.round(x*100)+'%':'–')+'</td>'}).join('')+'</tr>'});
+ d+='</tbody></table></div></div>';
+ var days={},nd=0,e='<div class="card full"><h2>Readings this month</h2>';
+ Object.keys(D.R[mo]).forEach(function(k){days[k]=1;nd++});
+ var miss=[];for(var q=1;q<=T.td;q++)if(!days[q])miss.push(q);
+ e+='<p>'+MO+' has readings on '+nd+(nd===1?' day':' days')+'. The morning nuskin.com pull adds a reading every day.</p><div class="rgap" style="grid-template-columns:repeat('+T.dim+',minmax(0,1fr))">';
+ for(var z=1;z<=T.dim;z++)e+='<span class="'+(days[z]?'y':'')+(z===12?' t':'')+'" title="'+z+' '+MO.slice(0,3)+'"></span>';
+ e+='</div><div class="lt meta"><span>1</span><span>12</span><span>'+T.dim+'</span></div>';
+ if(miss.length)e+='<p class="meta" style="margin-top:6px">No reading yet: day '+miss.join(', ')+'</p>';
+ return [a,b,c,d,e+'</div>']}
 function teamVolumeSample(){
  return ['<div class="card"><h2>Team volume</h2><p>No team data from the Sheet yet. Send a genealogy file to Claude and the numbers show up here.</p></div>','']}
 function mtgData(){
@@ -1862,17 +1960,18 @@ function reportText(){
  return L.join('\n')}
 function teamRep(){return '<div class="card"><h2>Daily report to upline</h2><p>Built from the numbers above, in the same format as now.</p><pre id="wat">'+esc(reportText())+'</pre><button class="btn" data-copy="1">Copy and open WhatsApp</button></div>'}
 function team(){
- var tabs=['Pulse','Volume','Meetings','Convention','Report','Long game'],M=teamModel();
+ var tabs=['Pulse','Volume','Rhythm','Meetings','Convention','Report','Long game'],M=teamModel();
  var h='<div class="top"><div class="stats"><span style="color:var(--mute)">'+(M?pLab(M.cur)+(M.note?' · '+esc(M.note):''):'Team')+'</span></div><div class="capsule"><button data-act="menu" aria-label="Menu">'+ic('dots',20)+'</button><button data-add="today" aria-label="Add">'+ic('plus',22)+'</button></div></div>';
  h+='<div class="hrow"><h1>Monitoring</h1><small>'+(M?pLab(M.cur):'')+'</small></div><p class="sub">PT. Alvacy Hana Utama</p>';
  if(wide()){
-  var g=teamGrowth(),v=teamVolume(),m=teamMeet(),c=teamConv(),pl=teamPulse();
-  var PV=pvData();return h+'<div style="margin:6px 0">'+(PV?fresh(PV):'<span class="meta">No genealogy data yet</span>')+'</div>'+pl[0]+'<div class="tgrid">'+pl.slice(1).concat([v[0],v[1],m[0],m[1]].concat(c,[teamRep()]),g).join('')+'</div>'}
+  var g=teamGrowth(),v=teamVolume(),rt=teamRhythm(),m=teamMeet(),c=teamConv(),pl=teamPulse();
+  var PV=pvData();return h+'<div style="margin:6px 0">'+(PV?fresh(PV):'<span class="meta">No genealogy data yet</span>')+'</div>'+pl[0]+'<div class="tgrid">'+pl.slice(1).concat([v[0],v[1]].concat(rt.length>4?[rt[0],rt[1],rt[3],rt[2],rt[4]]:rt,[m[0],m[1]]).concat(c,[teamRep()]),g).join('')+'</div>'}
  {var PV=pvData();h+='<div style="margin:6px 0">'+(PV?fresh(PV):'<span class="meta">No genealogy data yet</span>')+'</div>'}
  h+='<div class="seg">'+tabs.map(function(t){return '<button class="chip" data-tt="'+t+'" aria-pressed="'+(teamTab===t)+'">'+t+'</button>'}).join('')+'</div>';
  if(teamTab==='Pulse')return h+teamPulse().join('');
  if(teamTab==='Long game')return h+teamGrowth().join('');
  if(teamTab==='Volume')return h+teamVolume().join('');
+ if(teamTab==='Rhythm')return h+teamRhythm().join('');
  if(teamTab==='Meetings')return h+teamMeet().join('');
  if(teamTab==='Convention')return h+teamConv().join('');
  return h+teamRep()}
@@ -3383,7 +3482,7 @@ function completeTask(el){
   setTimeout(function(){render(true);if(wasLate>0&&lateTasks().length===0){haptic(true);toast('Nothing overdue. Nothing missed.');var f=$('#spk');f&&burst(f,true)}},REDUCE?0:760);
  }else{row.classList.remove('done','pop');haptic(false);setTimeout(function(){render(true)},120)}}
 document.addEventListener('click',function(e){
- var el=e.target.closest('[data-gall],[data-gvol],[data-gpast],[data-gtog],[data-gwa],[data-gt],[data-tgset],[data-today],[data-tab],[data-done],[data-fold],[data-day],[data-add],[data-open],[data-act],[data-pv],[data-ptoggle],[data-msg],[data-igm],[data-log],[data-next],[data-pdet],[data-jump],[data-tt],[data-copy],[data-wa],[data-addp],[data-goto],[data-ct],[data-cmove],[data-cv],[data-idea],[data-mode],[data-theme-set],[data-gotab],[data-sync],[data-impor],[data-hab],[data-trips],[data-hx],[data-tback],[data-ttick],[data-tcopy],[data-fudone],[data-evdone],[data-pprod],[data-promo],[data-newlist],[data-laddm],[data-lmenu],[data-lmst],[data-lmprod],[data-lmtick],[data-buy],[data-edit],[data-hs],[data-fwa],[data-lwa],[data-score],[data-rwa],[data-bdwa],[data-chkin],[data-chkwa],[data-bulk],[data-tmove],[data-nbwa],[data-pstage],[data-qopen],[data-qmsg],[data-reply],[data-unsent],[data-fix],[data-fresh],[data-gv],[data-qo],[data-qpath],[data-qn],[data-qmore],[data-qm],[data-qi],[data-qsave],[data-fx]');if(!el)return;
+ var el=e.target.closest('[data-gall],[data-gvol],[data-gpast],[data-gtog],[data-gwa],[data-gt],[data-tgset],[data-today],[data-tab],[data-done],[data-fold],[data-day],[data-add],[data-open],[data-act],[data-pv],[data-ptoggle],[data-msg],[data-igm],[data-log],[data-next],[data-pdet],[data-jump],[data-tt],[data-rm],[data-rmo],[data-rop],[data-copy],[data-wa],[data-addp],[data-goto],[data-ct],[data-cmove],[data-cv],[data-idea],[data-mode],[data-theme-set],[data-gotab],[data-sync],[data-impor],[data-hab],[data-trips],[data-hx],[data-tback],[data-ttick],[data-tcopy],[data-fudone],[data-evdone],[data-pprod],[data-promo],[data-newlist],[data-laddm],[data-lmenu],[data-lmst],[data-lmprod],[data-lmtick],[data-buy],[data-edit],[data-hs],[data-fwa],[data-lwa],[data-score],[data-rwa],[data-bdwa],[data-chkin],[data-chkwa],[data-bulk],[data-tmove],[data-nbwa],[data-pstage],[data-qopen],[data-qmsg],[data-reply],[data-unsent],[data-fix],[data-fresh],[data-gv],[data-qo],[data-qpath],[data-qn],[data-qmore],[data-qm],[data-qi],[data-qsave],[data-fx]');if(!el)return;
  var d=el.dataset;
  if(d.gt){GTAB=d.gt;render(true);return}
  if(d.gall){gAll(d.gall==='1');return}
@@ -3544,6 +3643,9 @@ document.addEventListener('click',function(e){
  if(d.jump){var idx=PITEMS.findIndex(function(x){return x.k==='l'&&x.l===d.jump});while(PSHOWN<=idx&&PSHOWN<PITEMS.length)appendChunk();var t2=document.getElementById('L'+d.jump);if(t2)t2.scrollIntoView({block:'start'});return}
  if(d.tt){teamTab=d.tt;render();return}
  if(d.hs){histSel=d.hs;render(true);return}
+ if(d.rm){RH.m=d.rm==='l'?'l':'g';rhSave();render(true);return}
+ if(d.rmo){RH.mo=d.rmo;RH.open='';rhSave();render(true);return}
+ if(d.rop){RH.open=RH.open===d.rop?'':d.rop;render(true);return}
  if(d.copy){var rt=reportText();if(rt.indexOf('No data yet')===0){toast('No team volume yet, report not copied');return}copy(rt,'Copied. Open WhatsApp and paste.');return}
  if(d.wa){var wq=String(d.wa).toLowerCase(),wp=people.filter(function(x){return String(x.n||'').toLowerCase().indexOf(wq)>=0&&x.phone&&x.phone.length>=9})[0];if(wp){var wl=document.createElement('a');wl.href='https://wa.me/'+wp.phone+'?text='+encodeURIComponent(greetFor(wp));wl.target='_blank';wl.rel='noopener';document.body.appendChild(wl);wl.click();wl.remove()}else toast('WhatsApp number for '+d.wa+' is not in the People tab');return}
  if(d.ct){ctSel=+d.ct;render(true);return}

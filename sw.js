@@ -1,4 +1,4 @@
-const V='hq-v18';
+const V='hq-v19';
 const SHELL=['./','manifest.webmanifest','assets/fonts/gabarito-500.woff2','assets/fonts/gabarito-600.woff2','assets/fonts/gabarito-700.woff2','icons/icon-192.png','icons/apple-touch-icon.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>Promise.all(SHELL.map(u=>c.add(u).catch(()=>{})))));self.skipWaiting()});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V).map(x=>caches.delete(x)))));self.clients.claim()});

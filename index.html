@@ -1319,7 +1319,7 @@ var CT=[
  {id:5,t:'Why the scale lies',type:'YouTube',pillar:'Science',st:'Recorded',due:'Mon 9 Nov',kids:[6,7]},
  {id:6,t:'Reels: weight vs fat',type:'Reel',pillar:'Science',st:'Script',par:5},
  {id:7,t:'Carousel: 3 numbers besides weight',type:'Carousel',pillar:'Science',st:'Idea',par:5},
- {id:8,t:'Protein 1,6 gram per kg',type:'YouTube',pillar:'Science',st:'With editor',due:'Rab 4 Nov',kids:[9]},
+ {id:8,t:'Protein 1,6 gram per kg',type:'YouTube',pillar:'Science',st:'With editor',due:'Wed 4 Nov',kids:[9]},
  {id:9,t:'Reels: count your daily protein',type:'Reel',pillar:'Science',st:'Edited',par:8},
  {id:10,t:'Reels: 30 g protein breakfast',type:'Reel',pillar:'Science',st:'Scheduled',pub:0,at:'07.00'},
  {id:11,t:'Threads: nasi padang portions',type:'Thread',pillar:'Habits',st:'Scheduled',pub:0,at:'12.00'},
@@ -2050,7 +2050,7 @@ function team(){
 
 /* ---------- Content: board on iPad and Mac, capture on iPhone ---------- */
 function ccard(c){
- var kids=c.kids?'<small>'+c.kids.length+' spin-offs</small>':'';
+ var kids=c.kids?'<small>'+c.kids.length+(c.kids.length===1?' spin-off':' spin-offs')+'</small>':'';
  return '<button class="cc'+(ctSel===c.id?' sel':'')+'" data-ct="'+c.id+'"><span class="tg '+TGC[c.type]+'">'+esc(c.type)+'</span><span class="tg">'+esc(c.pillar)+'</span><b style="margin-top:7px">'+esc(c.t)+'</b>'+(c.due?'<small>Deadline '+esc(c.due)+'</small>':'')+kids+'</button>'}
 function ctDetail(){
  var c=ctById(ctSel);if(!c)return '';

@@ -2771,8 +2771,8 @@ function lsPick(){
  if(!m.length){if(vs.length&&!LSN.noVoice){LSN.noVoice=1;toast('No '+(lg==='id'?'Indonesian':'English')+' voice found. Using the default voice.')}return null}
  m.sort(function(a,b){return lsScore(b,code)-lsScore(a,code)});return m[0]}
 /* sentence chunks with start and end offsets in the chapter text */
-function lsChunks(t,from){
- var out=[],n=t.length,st=from,j=from,AB=/\b(Mr|Mrs|Ms|Dr|Prof|St|Jr|Sr|vs|etc|No)$/;
+function lsChunks(t,from,brk){
+ brk=brk||[];var bi=0,out=[],n=t.length,st=from,j=from,AB=/\b(Mr|Mrs|Ms|Dr|Prof|St|Jr|Sr|vs|etc|No)$/;
  function emit(s,e){
   while(s<e&&/\s/.test(t.charAt(s)))s++;
   while(e>s&&/\s/.test(t.charAt(e-1)))e--;
@@ -2782,6 +2782,7 @@ function lsChunks(t,from){
    out.push([s,s+k]);s+=k;while(s<e&&/\s/.test(t.charAt(s)))s++}
   if(e>s&&/[\p{L}\p{N}]/u.test(t.slice(s,e)))out.push([s,e])}
  for(;j<n;j++){
+  while(bi<brk.length&&brk[bi]<=j){var b=brk[bi++];if(b>st&&b>from){emit(st,b);st=b}}
   var ch=t.charAt(j);
   if(ch==='\n'){emit(st,j);st=j+1;continue}
   if(ch==='.'||ch==='!'||ch==='?'||ch==='…'){
@@ -2817,10 +2818,22 @@ function lsSpeak(){
   lsStop();toast('Reading stopped: '+(er||'unknown error'))};
  try{sy.speak(u)}catch(e){lsStop();toast('Reading stopped: '+(e&&e.message||'could not speak'))}
  lsMS()}
+function lsBreaks(){
+ var BL=/^(P|DIV|H[1-6]|LI|BLOCKQUOTE|TD|TH|TR|SECTION|ARTICLE|ASIDE|HEADER|FOOTER|NAV|PRE|DT|DD|FIGCAPTION|FIGURE|TABLE|UL|OL|DL|BODY)$/,tn=lbTN(),o=0,pb=null,br=[];
+ for(var i=0;i<tn.length;i++){
+  var nd=tn[i],e=nd.parentNode,x=nd;
+  while(e&&!(e.tagName&&BL.test(String(e.tagName).toUpperCase())))e=e.parentNode;
+  var afterBr=0;
+  while(x){var ps=x.previousSibling;while(ps&&ps.nodeType===3&&!/\S/.test(ps.nodeValue))ps=ps.previousSibling;
+   if(ps){afterBr=ps.tagName&&String(ps.tagName).toUpperCase()==='BR';break}
+   x=x.parentNode;if(!x||x===e)break}
+  if(i>0&&(e!==pb||afterBr))br.push(o);
+  pb=e;o+=nd.nodeValue.length}
+ return br}
 function lsBegin(from){
  var R=LBR;if(!R||!R.ok||!LSN.on)return;
  var off=from!=null?from:(R.off||0);
- LSN.ch=lsChunks(lbRaw(),off);LSN.k=0;
+ LSN.ch=lsChunks(lbRaw(),off,lsBreaks());LSN.k=0;
  if(!LSN.ch.length){lsChEnd();return}
  lsSpeak()}
 function lsChEnd(){
